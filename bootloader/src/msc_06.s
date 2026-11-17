@@ -1192,7 +1192,7 @@ fn_08001190:
 @ ----------------------------------------------------------------------------
 @ scsi_start_stop_unit - START STOP UNIT, dispatched for CDB opcode 0x1B
 @ (0x08000C96). Sets word [[r0+4]+0x24]+0x18 = 0 and returns 0 in r0 (movs
-@ r0,#0 at 0x080011E0 stays in r0; Ghidra shows void). Nothing else is read or
+@ r0,#0 at 0x080011E0 stays in r0). Nothing else is read or
 @ written; the load/eject bits are ignored.
 @ ----------------------------------------------------------------------------
 	.section .text.scsi_start_stop_unit,"ax",%progbits
@@ -1517,8 +1517,8 @@ fn_080013e8:
 
 @ ----------------------------------------------------------------------------
 @ fn_08001402 - does r1 = r0 and returns 0 in r0 (movs r0,#0 at 0x08001404); no
-@ memory access (Ghidra shows a 64-bit return). Address stored as a word at
-@ 0x20000108 (rwdata_20000000.bin offset 0x108); no direct caller. Purpose not
+@ memory access. Address stored as a word at
+@ 0x20000108 (initial RAM data, offset 0x108); no direct caller. Purpose not
 @ determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08001402,"ax",%progbits

@@ -41,7 +41,7 @@ compare_bytes:
 @ ----------------------------------------------------------------------------
 @ copy_bytes - forward byte copy.
 @ r0 = destination, r1 = source, r2 = n. Copies n bytes forward one at a time;
-@ returns n in r0 (Ghidra shows void; callers 0x08001E4A, 0x08001E74,
+@ returns n in r0 (callers 0x08001E4A, 0x08001E74,
 @ 0x08001E8E and 0x08001E9A use the value: each is followed by add r4, r0).
 @ Other caller 0x08001C5A does not use it.
 @ ----------------------------------------------------------------------------
@@ -66,8 +66,8 @@ copy_bytes:
 
 @ ----------------------------------------------------------------------------
 @ fill_bytes - stores one byte value n times.
-@ r0 = destination, r1 = byte value, r2 = n. Returns n in r0 (Ghidra shows
-@ void); no caller uses the value (callers 0x08001CA2, 0x08001E5A, 0x08001E82,
+@ r0 = destination, r1 = byte value, r2 = n. Returns n in r0; no caller
+@ uses the value (callers 0x08001CA2, 0x08001E5A, 0x08001E82,
 @ 0x08001EA8, 0x08001EB8).
 @ ----------------------------------------------------------------------------
 	.section .text.fill_bytes,"ax",%progbits

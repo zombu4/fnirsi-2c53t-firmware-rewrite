@@ -1,5 +1,5 @@
 /* link.ld - memory layout of the stock FNIRSI 2C53T bootloader, rebuilt from source.
- * Written by ghidra/scripts/port_link.py from ghidra/boot/port/units.tsv.  Layout: vector table 0x08000000,
+ * Layout: vector table 0x08000000,
  * the original functions in their original order from 0x08000184, the fixed data from 0x080049A4 (strings,
  * byte tables, scatter-load region table, packed RAM image) to 0x08005873.  The settings / calibration page
  * at 0x08006000 is not part of this image and is never linked over (FLASH ends at 0x08006000).
