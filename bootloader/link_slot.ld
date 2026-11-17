@@ -1,8 +1,8 @@
 /* link_slot.ld - the bootloader's slot build (make slot): the same sections in the stock order as
  * link.ld, linked from SLOT_BASE + 0x200 (vector table on a 512-byte boundary, VTOR alignment for 97
  * entries) instead of fixed stock addresses, plus .text.slot (slot_11.s).  SLOT_BASE and SLOT_SIZE come
- * from the command line (--defsym): slot F 0x080D8000 / 0x8000, A 0x080E0000 / 0x10000, B 0x080F0000 /
- * 0x10000 (common/layout.inc).  The first 0x200 bytes of the slot hold the header, which the installer
+ * from the command line (--defsym): slot F 0x080E8000, A 0x080F0000, B 0x080F8000, each
+ * 0x8000 (common/layout.inc).  The first 0x200 bytes of the slot hold the header, which the installer
  * writes (it computes the image CRC); they are not part of this image.
  * RAM addresses stay absolute (0x20000000..0x20001A07, stack top 0x20001A08), as in the stock image. */
 ENTRY(reset_handler)

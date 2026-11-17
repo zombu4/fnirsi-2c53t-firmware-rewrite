@@ -45,12 +45,12 @@ build/slot/BOOT_%.bin: build/slot/boot_%.elf
 	$(OBJCOPY) -O binary $< $@
 	@echo "$@: $$(wc -c < $@ | tr -d ' ') bytes"
 
-SLOT_BASE_F := 0x080D8000
+SLOT_BASE_F := 0x080E8000
 SLOT_SIZE_F := 0x8000
-SLOT_BASE_A := 0x080E0000
-SLOT_SIZE_A := 0x10000
-SLOT_BASE_B := 0x080F0000
-SLOT_SIZE_B := 0x10000
+SLOT_BASE_A := 0x080F0000
+SLOT_SIZE_A := 0x8000
+SLOT_BASE_B := 0x080F8000
+SLOT_SIZE_B := 0x8000
 
 build/slot:
 	mkdir -p $@

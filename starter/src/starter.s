@@ -154,18 +154,15 @@ starter_reset:
 	bx	r2
 
 @ ----------------------------------------------------------------------------
-@ header_ok - r0 = slot base, r1 = slot id; returns 1 when the header and the image's first two
+@ header_ok - r0 = slot base (r1 unused); returns 1 when the header and the image's first two
 @ vector words are valid, else 0.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 header_ok:
 	push	{r4, r5, lr}
 	mov	r4, r0
-	ldr	r5, =SLOT_AB_SIZE	@ r5 = slot size
-	cmp	r1, #SLOT_ID_F
-	bne	1f
-	ldr	r5, =SLOT_F_SIZE
-1:	ldr	r0, [r4, #HDR_MAGIC]
+	ldr	r5, =SLOT_SIZE		@ r5 = slot size (the same for every slot)
+	ldr	r0, [r4, #HDR_MAGIC]
 	ldr	r1, =SLOT_MAGIC
 	cmp	r0, r1
 	bne	.Lhdr_bad

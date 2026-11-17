@@ -5,20 +5,20 @@
 @   0x08000000..0x080007FF  starter (this program), written once
 @   0x08006000..0x080067FF  the meter's settings / calibration page: never written by any of these
 @   0x08006800..0x08006FFF  "8KTA" page (update success mark, as the stock bootloader)
-@   0x08007000..0x080CFFFF  application
-@   0x080D0000, 0x080D0800  record pages (append-only records, two pages used in turn)
-@   0x080D8000..0x080DFFFF  slot F (factory bootloader, written once, never erased)
-@   0x080E0000..0x080EFFFF  slot A
-@   0x080F0000..0x080FFFFF  slot B
+@   0x08007000..0x080E6FFF  application area (896 KB)
+@   0x080E7000, 0x080E7800  record pages (append-only records, two pages used in turn)
+@   0x080E8000..0x080EFFFF  slot F (factory bootloader, written once, never erased)
+@   0x080F0000..0x080F7FFF  slot A
+@   0x080F8000..0x080FFFFF  slot B
+@ Slots are 32 KB: the slot build of the bootloader is 23476 bytes (make -C bootloader slot).
 @ A slot holds a header in its first 0x200 bytes and the bootloader image (vector table first) from
 @ slot + 0x200 (VTOR needs a 512-byte boundary for the 97-entry table).  The header is written last
 @ and is the slot's valid mark.
 
-	.equ	SLOT_F_BASE,	0x080D8000
-	.equ	SLOT_F_SIZE,	0x00008000
-	.equ	SLOT_A_BASE,	0x080E0000
-	.equ	SLOT_B_BASE,	0x080F0000
-	.equ	SLOT_AB_SIZE,	0x00010000
+	.equ	SLOT_F_BASE,	0x080E8000
+	.equ	SLOT_A_BASE,	0x080F0000
+	.equ	SLOT_B_BASE,	0x080F8000
+	.equ	SLOT_SIZE,	0x00008000	@ every slot, header included
 	.equ	SLOT_IMAGE_OFS,	0x200
 
 @ slot header (at the slot base)
@@ -33,8 +33,8 @@
 	.equ	SLOT_FORMAT,	1
 
 @ record pages and records (16 bytes; an erased cell reads all 0xFF)
-	.equ	REC_PAGE0,	0x080D0000
-	.equ	REC_PAGE1,	0x080D0800
+	.equ	REC_PAGE0,	0x080E7000
+	.equ	REC_PAGE1,	0x080E7800
 	.equ	REC_PAGE_SIZE,	0x800
 	.equ	REC_CELLS,	128
 	.equ	REC_MAGIC_OFS,	0x00		@ halfword 0xB007
@@ -75,11 +75,11 @@
 	.equ	RAM_HI,		0x20038000
 
 @ application area and the slot bootloader's flash gate (stock layout: "8KTA" page 0x08006800, the
-@ application from 0x08007000; the record pages start at 0x080D0000)
+@ application from 0x08007000; the record pages start at APP_END)
 	.equ	APP_BASE,	0x08007000
-	.equ	APP_END,	0x080D0000
-	.equ	APP_AREA_SIZE,	0x000D0000	@ APP_END - 0x08000000 (the geometry word 0x2000041C)
+	.equ	APP_END,	0x080E7000
+	.equ	APP_AREA_SIZE,	0x000E7000	@ APP_END - 0x08000000 (the geometry word 0x2000041C)
 	.equ	KTA_ADDR,	0x08006800	@ "8KTA" success mark (stock 0x0800208C / 0x080020AC)
 	.equ	KTA_WORD,	0x41544B38
 	.equ	GATE_LO,	0x08006800
-	.equ	GATE_HI,	0x080D0000
+	.equ	GATE_HI,	0x080E7000

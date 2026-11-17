@@ -303,7 +303,7 @@ fn_08001cd8:
 	str	r1, [r2, #0x24]
 	lsls	r1, r0, #10
 .ifdef SLOT
-	cmp	r1, #APP_AREA_SIZE	@ slot build: the area ends at APP_END (0x08000000 + 0xD0000), below
+	cmp	r1, #APP_AREA_SIZE	@ slot build: the area ends at APP_END (0x08000000 + 0xE7000), below
 	it	hi			@ the record pages and the slots, whatever the flash size word says
 	movhi	r1, #APP_AREA_SIZE
 .endif
