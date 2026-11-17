@@ -7,8 +7,10 @@ and the build is checked against the original image.
 
 ## Status
 
-- Base port: the assembled image is identical to the vendor V1.2.0 application image, byte for
-  byte (`make check`). Functions are in sections of their own, except small groups of functions
+- Release V1.2.1 (`make`): the port with one change, the version text in About ("V1.2.1").
+  Installed and running on a meter.
+- Proof of the port: `make check` builds the same source with the vendor version text and
+  verifies it is identical to the vendor V1.2.0 application image, byte for byte. Functions are in sections of their own, except small groups of functions
   that branch into each other with short (16-bit) instructions, which share one section.
 - Code addresses are symbols. Some pointers into the fixed data (texts, tables) and the pointers
   stored inside `assets/rodata.bin` are still plain numbers; this is correct while the data stays
@@ -49,8 +51,8 @@ and the build is checked against the original image.
 Requires the GNU Arm Embedded toolchain (`arm-none-eabi-as`, `arm-none-eabi-ld`,
 `arm-none-eabi-objcopy`), binutils 2.39 or newer (for `--no-warn-rwx-segments`).
 
-    make          # build/APP_2C53T.bin
-    make check    # compares the SHA-256 of the image with the vendor V1.2.0 image
+    make          # build/APP_2C53T.bin (V1.2.1)
+    make check    # vendor-text build in build/vendor/, SHA-256 compared with vendor V1.2.0
 
 ## Flashing
 
@@ -60,7 +62,14 @@ its checks (file name, size) are not known from here:
 
 1. Switch the meter off and connect it to a computer by USB.
 2. Hold MENU and press Power: the bootloader starts its update mode and a USB drive appears.
-3. Copy the `.bin` file onto that drive. The meter installs it and restarts.
+3. Copy the `.bin` file onto that drive. The meter installs it and restarts. A file named in the
+   vendor pattern (`APP_2C53T_V1.2.1_261117.bin`) was accepted.
+
+On macOS, copying with Finder or `cp` did not work here: the file disappeared without being
+installed. macOS also adds `._` and `.fseventsd` entries to the drive. What worked: unmount the
+drive, read the volume with `dd` from the raw device, add the file to that volume image with
+`mcopy` (mtools, `MTOOLS_SKIP_CHECK=1`), remove the macOS entries, and write back only the
+changed 2048-byte sectors with `dd`.
 
 Restoring the original FNIRSI V1.2.0 file this way has been done on a meter. The image built
 here starts at 0x08007000 and contains nothing for the area below it.

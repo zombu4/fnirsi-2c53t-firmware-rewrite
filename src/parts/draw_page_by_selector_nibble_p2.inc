@@ -202,7 +202,11 @@
 .L0801e118:
 	.asciz	"V%s"
 .L0801e11c:
-	.asciz	"1.2.0"
+	.ifdef	VENDOR_V120
+	.asciz	"1.2.0"		@ vendor V1.2.0 text (make check builds this to prove the port byte for byte)
+	.else
+	.asciz	"1.2.1"		@ version shown in About as "V%s": this rewrite
+	.endif
 	.short	0x0000	@ padding
 .L0801e124:
 	.asciz	"3:/System file/142.jpg"
