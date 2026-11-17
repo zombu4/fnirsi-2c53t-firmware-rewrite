@@ -332,6 +332,7 @@ fill_bytes_body:
 @ fn_08008300 - returns the constant address 0x20001260.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08008300,"ax",%progbits
+	.p2align 2
 	.global fn_08008300
 	.thumb_func
 	.type fn_08008300, %function
@@ -345,6 +346,7 @@ fn_08008300:
 @ fn_08008308 - returns the constant address 0x20001240.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08008308,"ax",%progbits
+	.p2align 2
 	.global fn_08008308
 	.thumb_func
 	.type fn_08008308, %function
@@ -471,6 +473,7 @@ fill_bytes_aligned_body:
 @ fn_080085cc - returns the constant address 0x20001240.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_080085cc,"ax",%progbits
+	.p2align 2
 	.global fn_080085cc
 	.thumb_func
 	.type fn_080085cc, %function
@@ -894,6 +897,7 @@ is_ascii_digit:
 @ 0x08044efa); otherwise it returns 0.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08044ed8,"ax",%progbits
+	.p2align 2
 	.global fn_08044ed8
 	.thumb_func
 	.type fn_08044ed8, %function
@@ -931,6 +935,7 @@ fn_08044ed8:
 @ of fn_08044ed8 with a different returned address.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08044f04,"ax",%progbits
+	.p2align 2
 	.global fn_08044f04
 	.thumb_func
 	.type fn_08044f04, %function

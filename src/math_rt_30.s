@@ -95,6 +95,7 @@
 @ special operands follow the cases above.
 @ ----------------------------------------------------------------------------
 	.section .text.float_pow,"ax",%progbits
+	.p2align 2
 	.global float_pow
 	.thumb_func
 	.type float_pow, %function
@@ -1248,6 +1249,7 @@ double_to_float_special_case:
 @ carry-out shift and rounding are in those two functions, not in this body.
 @ ----------------------------------------------------------------------------
 	.section .text.double_add,"ax",%progbits
+	.p2align 2
 	.global double_add
 	.thumb_func
 	.type double_add, %function
@@ -1517,6 +1519,7 @@ fn_0804510c:
 @ (NaN high word, 080453d4).
 @ ----------------------------------------------------------------------------
 	.section .text.double_div,"ax",%progbits
+	.p2align 2
 	.global double_div
 	.thumb_func
 	.type double_div, %function

@@ -16,6 +16,7 @@
 @ &state) to store a terminating zero byte. Returns the fn_08008092 result.
 @ ----------------------------------------------------------------------------
 	.section .text.format_to_buffer_08007370,"ax",%progbits
+	.p2align 2
 	.global format_to_buffer_08007370
 	.thumb_func
 	.type format_to_buffer_08007370, %function
@@ -48,6 +49,7 @@ format_to_buffer_08007370:
 @ 0x20002ac8.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0800739c,"ax",%progbits
+	.p2align 2
 	.global fn_0800739c
 	.thumb_func
 	.type fn_0800739c, %function
@@ -71,6 +73,7 @@ fn_0800739c:
 @ the fn_08008092 result.
 @ ----------------------------------------------------------------------------
 	.section .text.format_to_buffer_080073b4,"ax",%progbits
+	.p2align 2
 	.global format_to_buffer_080073b4
 	.thumb_func
 	.type format_to_buffer_080073b4, %function
@@ -1491,6 +1494,7 @@ format_float_efg:
 @ lr = caller of format_one_conversion.
 @ ----------------------------------------------------------------------------
 	.section .text.format_float_hex,"ax",%progbits
+	.p2align 2
 	.global format_float_hex
 	.thumb_func
 	.type format_float_hex, %function
@@ -1966,6 +1970,7 @@ L_080080e6:
 @ adds 0x080080FA, i.e. the address of the character output routine 08036ba4.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_080080f0,"ax",%progbits
+	.p2align 2
 	.global fn_080080f0
 	.thumb_func
 	.type fn_080080f0, %function
@@ -2414,6 +2419,7 @@ L_08008440:
 @ (n+0x1b9b)/0x37 and %0x37.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08008448,"ax",%progbits
+	.p2align 2
 	.global fn_08008448
 	.thumb_func
 	.type fn_08008448, %function

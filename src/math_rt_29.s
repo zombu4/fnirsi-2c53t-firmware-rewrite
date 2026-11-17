@@ -145,6 +145,7 @@
 @ 08045978, 080459e4, 08045b94, 08044c58, 080461c8.
 @ ----------------------------------------------------------------------------
 	.section .text.double_pow,"ax",%progbits
+	.p2align 2
 	.global double_pow
 	.thumb_func
 	.type double_pow, %function

@@ -303,6 +303,7 @@ nop_return_080072ec:
 @ sequence at 08007310 belongs to the function at 08007310.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_080072f0,"ax",%progbits
+	.p2align 2
 	.global fn_080072f0
 	.thumb_func
 	.type fn_080072f0, %function

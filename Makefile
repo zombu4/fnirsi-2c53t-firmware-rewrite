@@ -24,7 +24,12 @@ build/APP_2C53T.bin: build/app.elf
 build:
 	mkdir -p build
 
+# SHA-256 of the vendor application image V1.2.0 (APP_2C53T_V1.2.0_251015.bin)
+VENDOR_SHA256 := a17c5c35c97bb898f15672a1747bc1041d8ed507c16999ddba0d1e4e2ec0c760
+check: build/APP_2C53T.bin
+	@echo "$(VENDOR_SHA256)  build/APP_2C53T.bin" | shasum -a 256 -c -
+
 clean:
 	rm -rf build
 
-.PHONY: all clean
+.PHONY: all clean check

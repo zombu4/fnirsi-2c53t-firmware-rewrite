@@ -25,6 +25,7 @@
 @ privileged tests in the decompiled C are not in the disassembly).
 @ ----------------------------------------------------------------------------
 	.section .text.psp_context_save_restore,"ax",%progbits
+	.p2align 2
 	.global psp_context_save_restore
 	.thumb_func
 	.type psp_context_save_restore, %function
@@ -79,6 +80,7 @@ psp_context_save_restore:
 @ registers are restored here).
 @ ----------------------------------------------------------------------------
 	.section .text.svc_restore_context,"ax",%progbits
+	.p2align 2
 	.global svc_restore_context
 	.thumb_func
 	.type svc_restore_context, %function
@@ -1315,6 +1317,7 @@ queue_is_full:
 @ not determined by this function.
 @ ----------------------------------------------------------------------------
 	.section .text.reset_msp_and_call_svc0,"ax",%progbits
+	.p2align 2
 	.global reset_msp_and_call_svc0
 	.thumb_func
 	.type reset_msp_and_call_svc0, %function
