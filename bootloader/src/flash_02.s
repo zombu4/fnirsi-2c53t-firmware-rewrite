@@ -4,7 +4,11 @@
 	.arch armv7e-m
 	.fpu fpv4-sp-d16
 	.thumb
+.ifdef SLOT
+	.include "common/layout.inc"
+.endif
 
+.ifndef SLOT		@ not in the slot build (no option-byte code there)
 @ ----------------------------------------------------------------------------
 @ fn_08001938 - reads the halfword at 0x1FFFF810 (option byte area). If its low
 @ byte is not 0xFE it calls flash_unlock_keys (0x080022A4),
@@ -37,6 +41,7 @@ fn_08001938:
 	.short	0x0000			@ padding
 .L0800195c:
 	.word	0x1FFFF810
+.endif
 
 @ ----------------------------------------------------------------------------
 @ read_flash_status_bank1 - reads the word at 0x4002200C: returns 0 if bit 0 is
@@ -201,6 +206,16 @@ fn_08001a58:
 	mov	r4, r0
 	mov	r5, r1
 	movs	r6, #3
+.ifdef SLOT
+	movw	r0, #:lower16:GATE_LO	@ slot build: the flash gate, GATE_LO <= address < GATE_HI
+	movt	r0, #:upper16:GATE_LO	@ (the "8KTA" page and the application area) or no write
+	cmp	r4, r0
+	blo	.L08001ac8
+	movw	r0, #:lower16:GATE_HI
+	movt	r0, #:upper16:GATE_HI
+	cmp	r4, r0
+	bhs	.L08001ac8
+.endif
 	cmp.w	r4, #0x8000000
 	bcc.n	.L08001a94
 	ldr	r0, .L08001acc
@@ -337,6 +352,7 @@ fn_08001ad4:
 .L08001b60:
 	.word	0x00140006
 
+.ifndef SLOT		@ not in the slot build (no option-byte code there)
 @ ----------------------------------------------------------------------------
 @ read_bit1_4002201c - returns bit 1 of the word at 0x4002201C ((v & 3) >> 1).
 @ Caller 0x080022CA.
@@ -354,6 +370,7 @@ read_bit1_4002201c:
 	.short	0x0000			@ padding
 .L08001b70:
 	.word	0x40022000
+.endif
 
 @ ----------------------------------------------------------------------------
 @ fn_080020f8 - sets bit 7 of the word at 0x40022010 and bit 7 of the word at
@@ -483,6 +500,16 @@ flash_erase_sector:
 	push	{r4, r5, lr}
 	mov	r4, r0
 	movs	r5, #3
+.ifdef SLOT
+	movw	r0, #:lower16:GATE_LO	@ slot build: the flash gate, GATE_LO <= address < GATE_HI
+	movt	r0, #:upper16:GATE_LO	@ (the "8KTA" page and the application area) or no write
+	cmp	r4, r0
+	blo	.L0800223e
+	movw	r0, #:lower16:GATE_HI
+	movt	r0, #:upper16:GATE_HI
+	cmp	r4, r0
+	bhs	.L0800223e
+.endif
 	cmp.w	r4, #0x8000000
 	bcc.n	.L080021b4
 	ldr	r0, .L08002244
@@ -683,6 +710,7 @@ flash_unlock_keys:
 .L080022c0:
 	.word	0xCDEF89AB
 
+.ifndef SLOT		@ not in the slot build (no option-byte code there)
 @ ----------------------------------------------------------------------------
 @ flash_option_erase_then_write_a5 - erases the option-byte area and writes
 @ 0xa5 to the halfword 0x1ffff800.
@@ -772,7 +800,9 @@ flash_option_erase_then_write_a5:
 	.word	0xCDEF89AB
 .L08002358:
 	.word	0x1FFFF800
+.endif
 
+.ifndef SLOT		@ not in the slot build (no option-byte code there)
 @ ----------------------------------------------------------------------------
 @ flash_option_program_halfword - programs one halfword in the option-byte
 @ area: r0 = address, r1 = value.
@@ -840,6 +870,7 @@ flash_option_program_halfword:
 	.word	0x40022000
 .L080023c0:
 	.word	0xCDEF89AB
+.endif
 
 @ ----------------------------------------------------------------------------
 @ flash_program_word - programs one 32-bit word: r0 = address, r1 = value.
@@ -864,6 +895,16 @@ flash_program_word:
 	mov	r4, r0
 	mov	r5, r1
 	movs	r6, #3
+.ifdef SLOT
+	movw	r0, #:lower16:GATE_LO	@ slot build: the flash gate, GATE_LO <= address < GATE_HI
+	movt	r0, #:upper16:GATE_LO	@ (the "8KTA" page and the application area) or no write
+	cmp	r4, r0
+	blo	.L0800246a
+	movw	r0, #:lower16:GATE_HI
+	movt	r0, #:upper16:GATE_HI
+	cmp	r4, r0
+	bhs	.L0800246a
+.endif
 	cmp.w	r4, #0x8000000
 	bcc.n	.L08002400
 	ldr	r0, .L08002470

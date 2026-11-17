@@ -4,6 +4,9 @@
 	.arch armv7e-m
 	.fpu fpv4-sp-d16
 	.thumb
+.ifdef SLOT
+	.include "common/layout.inc"
+.endif
 
 @ ----------------------------------------------------------------------------
 @ fn_08001b74 - parse the hexadecimal load address from a directory entry.
@@ -135,6 +138,48 @@ fn_08001c0c:
 	adds	r4, #0x20
 	adds	r4, #0x20
 	adds	r6, #0x40
+.ifdef SLOT
+@ Slot build: the entry chosen is the regular file with the largest size field (first one on equal
+@ size), not the first file followed by an unused entry: a macOS "._" file (4 KB, written after the
+@ file with long-name entries between) is no longer chosen instead of the firmware file.  Regular:
+@ name byte 0 not 0xE5 (deleted), attribute bits 0x1E clear (not hidden, system, volume label,
+@ directory or long-name part 0x0F).  A name byte 0 of 0x00 ends the directory.  r9 (r0 on entry,
+@ unused) holds the best size, r10 the best entry (0 none), r7 its buffer offset.
+	mov.w	r10, #0
+.Lsel_entry:
+	cmp	r6, r5
+	bhs	.Lsel_done		@ end of the written data
+	cmp.w	r6, #0x4000
+	bhs	.Lsel_done		@ end of the root directory (512 entries)
+	ldrb	r0, [r4, #0]
+	cbz	r0, .Lsel_done		@ unused entry: end of the directory
+	cmp	r0, #0xe5
+	beq	.Lsel_next		@ deleted
+	ldrb	r0, [r4, #0xb]
+	tst	r0, #0x1e
+	bne	.Lsel_next		@ not a regular file
+	ldr	r0, [r4, #0x1c]		@ size field
+	cmp	r10, #0
+	beq	.Lsel_take
+	cmp	r0, r9
+	bls	.Lsel_next
+.Lsel_take:
+	mov	r10, r4
+	mov	r9, r0
+	mov	r7, r6
+.Lsel_next:
+	adds	r4, #0x20
+	adds	r6, #0x20
+	b	.Lsel_entry
+.Lsel_done:
+	movs	r8, #2			@ any index <= 0x200 for the test at .L08001c48
+	cmp	r10, #0
+	itee	eq
+	moveq	r6, r5			@ none: offset = count, so the entry copy is cleared
+	movne	r4, r10
+	movne	r6, r7
+	b	.L08001c48
+.else
 	b.n	.L08001c38
 .L08001c26:
 	ldrb	r0, [r4, #0xb]
@@ -154,6 +199,7 @@ fn_08001c0c:
 	bcs.n	.L08001c48
 	cmp	r6, r5
 	bcc.n	.L08001c26
+.endif
 .L08001c48:
 	nop
 	cmp.w	r8, #0x200
@@ -256,6 +302,11 @@ fn_08001cd8:
 	str	r1, [r2, #4]
 	str	r1, [r2, #0x24]
 	lsls	r1, r0, #10
+.ifdef SLOT
+	cmp	r1, #APP_AREA_SIZE	@ slot build: the area ends at APP_END (0x08000000 + 0xD0000), below
+	it	hi			@ the record pages and the slots, whatever the flash size word says
+	movhi	r1, #APP_AREA_SIZE
+.endif
 	str	r1, [r2, #8]
 	mov	r1, r2
 	ldr	r1, [r1, #4]
@@ -561,6 +612,41 @@ fn_08001ed8:
 	ldr	r0, [r5, #4]
 	str	r0, [r1]
 .L08001f02:
+.ifdef SLOT
+@ Slot build: for the default target (no "A"+hex name, fn_08001b74 returns -1) only content that
+@ starts with an application vector table is accepted, whatever the extension: word 0 (0x20000080)
+@ a stack pointer RAM_LO < sp <= RAM_HI, word 1 (0x20000084) odd and inside APP_BASE..APP_END
+@ (BOOTLOADER_DESIGN.md rev 2 (8); an AppleDouble "._" file starts with 0x00051607).  Anything else
+@ goes to the "JUMP" name test as in the stock code.  "A"+hex targets keep the stock rule below.
+	ldr	r0, .L08002030
+	bl	fn_08001b74
+	adds	r0, #1
+	bne	.Lacc_stock		@ "A"+hex name
+	ldr	r0, .L08002034
+	ldr	r0, [r0]		@ word 0
+	movw	r1, #:lower16:RAM_LO
+	movt	r1, #:upper16:RAM_LO
+	cmp	r0, r1
+	bls	fn_08002018
+	movw	r1, #:lower16:RAM_HI
+	movt	r1, #:upper16:RAM_HI
+	cmp	r0, r1
+	bhi	fn_08002018
+	ldr	r0, .L08002038
+	ldr	r0, [r0]		@ word 1
+	tst	r0, #1
+	beq	fn_08002018
+	movw	r1, #:lower16:APP_BASE
+	movt	r1, #:upper16:APP_BASE
+	cmp	r0, r1
+	blo	fn_08002018
+	movw	r1, #:lower16:APP_END
+	movt	r1, #:upper16:APP_END
+	cmp	r0, r1
+	bhs	fn_08002018
+	b	.L08001f3a
+.Lacc_stock:
+.endif
 	movs	r2, #3
 	adr	r1, .L0800203c
 	ldr	r0, .L08002030
@@ -577,12 +663,20 @@ fn_08001ed8:
 	ldr	r0, [r0]
 	and.w	r0, r0, #0xf0000000
 	cmp.w	r0, #0x20000000
+.ifdef SLOT
+	bne.w	fn_08002018		@ slot build: the size check at .L08001f94 puts it out of 16-bit reach
+.else
 	bne.n	fn_08002018
+.endif
 	ldr	r0, .L08002038
 	ldr	r0, [r0]
 	and.w	r0, r0, #0xff000000
 	cmp.w	r0, #0x8000000
+.ifdef SLOT
+	bne.w	fn_08002018		@ slot build: the size check at .L08001f94 puts it out of 16-bit reach
+.else
 	bne.n	fn_08002018
+.endif
 .L08001f3a:
 	ldr	r0, .L08002044
 	ldrb.w	r0, [r0, #0x2c]
@@ -642,13 +736,32 @@ fn_08001f50:
 	ldr	r1, .L08002044
 	str	r0, [r1, #0x24]
 .L08001f94:
+.ifdef SLOT
+	ldr	r0, .L08002044		@ slot build: the size against the room from the target to APP_END
+	ldr	r0, [r0, #0x24]		@ before fn_08001cb8 erases the "8KTA" page: a file that is too
+	movw	r1, #:lower16:APP_END	@ large leaves the installed application startable
+	movt	r1, #:upper16:APP_END
+	subs	r0, r1, r0
+	ldr	r1, .L08002030
+	ldr	r1, [r1, #0x1c]
+	cmp	r0, r1
+	bcc	.L0800200e		@ state 4 ("Large"), nothing erased
+.endif
 	bl	fn_08001cb8
 	movs	r0, #1
 	ldr	r1, .L08002044
 	strb.w	r0, [r1, #0x2c]
 .L08001fa0:
+.ifdef SLOT
+	ldr	r0, .L08002044		@ slot build: the size limit is the room from the target address
+	ldr	r0, [r0, #0x24]		@ ([0x20000438]) to APP_END, so an "A"+hex target cannot run past
+	movw	r1, #:lower16:APP_END	@ the application area (stock: [0x20000420] = flash - 0x7000)
+	movt	r1, #:upper16:APP_END
+	subs	r0, r1, r0
+.else
 	ldr	r0, .L08002044
 	ldr	r0, [r0, #0xc]
+.endif
 	ldr	r1, .L08002030
 	ldr	r1, [r1, #0x1c]
 	cmp	r0, r1
@@ -919,6 +1032,13 @@ fn_080020b0:
 fn_08002784:
 	push	{r4, r5, r6, lr}
 	mov	r4, r0
+.ifdef SLOT
+	bl	slot_app_ok		@ slot build: r0 = vector table address; 0 = do not start it
+	cbnz	r0, 1f
+	pop	{r4, r5, r6, pc}	@ refused: back to the caller, which stays in update mode
+1:	bl	slot_confirm		@ the bootloader got here: confirm its slot (TRIAL -> OK)
+	bl	slot_quiesce		@ every NVIC interrupt and SysTick off, as after a reset
+.endif
 	ldr	r5, [r4]
 	ldr	r6, [r4, #4]
 	movs	r1, #0

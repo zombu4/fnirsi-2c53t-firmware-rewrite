@@ -59,8 +59,8 @@ scatter_load_regions:
 	orr.w	r3, r3, #1
 	bx	r3
 .L080001b8:
-	.word	0x0000558c
-	.word	0x000055ac
+	.word	region_table - .L080001b8	@ 0x0000558C in the stock image
+	.word	region_table_end - .L080001b8	@ 0x000055AC in the stock image
 
 @ ----------------------------------------------------------------------------
 @ unpack_literal_run_stream - decompressor handler of region table entry 0.
@@ -250,11 +250,15 @@ fn_08000256:
 	.thumb_func
 	.type reset_handler, %function
 reset_handler:
+.ifndef SLOT
 	movw	r0, #0x1000
 	movt	r0, #0x2000
 	mov	sp, r0
 	ldr	r0, .L080002a8
 	blx	r0
+.endif
+@ Slot build: the option-byte check fn_08001938 is not called (BOOTLOADER_DESIGN.md rev 2 (7): only
+@ the application checks the option bytes, 0x08033F7C); the stack pointer comes from the vector table.
 	movw	r0, #:lower16:vectors+0x0
 	movt	r0, #:upper16:vectors+0x0
 	ldr.w	sp, [r0, #0]
@@ -386,8 +390,10 @@ heap_stack_constants:
 	ldr	r3, .L080002bc
 	bx	lr
 	.short	0x0000	@ padding
+.ifndef SLOT
 .L080002a8:
 	.word	fn_08001938	@ function pointer 0x08001939
+.endif
 .L080002ac:
 	.word	init_fpu_clock_vtor	@ function pointer 0x08000981
 .L080002b0:
@@ -704,7 +710,11 @@ init_fpu_clock_vtor:
 	str	r0, [r1, #0x30]
 	mov.w	r0, #0x9f0000
 	str	r0, [r1, #8]
+.ifdef SLOT
+	ldr	r0, =vectors		@ slot build: VTOR = this image's own vector table (slot + 0x200)
+.else
 	lsls	r0, r1, #0xf
+.endif
 	ldr	r1, .L080009e4
 	subs	r1, #0x80
 	str	r0, [r1, #0]
@@ -715,6 +725,9 @@ init_fpu_clock_vtor:
 	.word	0x40021000
 .L080009ec:
 	.word	0xfef2ffff
+.ifdef SLOT
+	.ltorg
+.endif
 
 @ ----------------------------------------------------------------------------
 @ usage_fault_handler - nop; falls into 0x08000A02 (b . loop). Vector word 6
@@ -859,6 +872,9 @@ fn_08002938:
 	bl	fn_08003886
 	ldr	r0, .L08002a5c
 	bl	fn_080037c0
+.ifdef SLOT
+	bl	slot_confirm		@ slot build: USB started, confirm the slot (TRIAL -> OK)
+.endif
 	b.n	.L08002a2a
 .L08002a10:
 	bl	fn_08001d2c
@@ -1018,6 +1034,7 @@ scb_set_priority_grouping:
 .L08002bc8:
 	.word	0x05fa0000
 
+.ifndef SLOT		@ not in the slot build (no option-byte code there)
 @ ----------------------------------------------------------------------------
 @ system_reset - dsb, then 0xe000ed0c = (old & 0x700) | 0x05fa0000 + 4
 @ (request system reset), dsb, then branches to itself forever (never
@@ -1049,6 +1066,7 @@ system_reset:
 	.word	0xe000ed0c
 .L08002bf4:
 	.word	0x05fa0000
+.endif
 
 @ ----------------------------------------------------------------------------
 @ set_fpscr_3000000 - writes the value 0x03000000 to the FPSCR with vmsr (sets

@@ -73,3 +73,13 @@
 @ valid application / bootloader stack pointer range (vendor application SP 0x20036F90)
 	.equ	RAM_LO,		0x20000000
 	.equ	RAM_HI,		0x20038000
+
+@ application area and the slot bootloader's flash gate (stock layout: "8KTA" page 0x08006800, the
+@ application from 0x08007000; the record pages start at 0x080D0000)
+	.equ	APP_BASE,	0x08007000
+	.equ	APP_END,	0x080D0000
+	.equ	APP_AREA_SIZE,	0x000D0000	@ APP_END - 0x08000000 (the geometry word 0x2000041C)
+	.equ	KTA_ADDR,	0x08006800	@ "8KTA" success mark (stock 0x0800208C / 0x080020AC)
+	.equ	KTA_WORD,	0x41544B38
+	.equ	GATE_LO,	0x08006800
+	.equ	GATE_HI,	0x080D0000

@@ -2,6 +2,10 @@
 #   make         -> build/BOOT.bin, the bootloader part only: 0x08000000..0x08005873 (0x5874 bytes)
 #   make padded  -> build/BOOT_padded.bin, the same bytes padded with 0xFF to 0x08005FFF (0x6000 bytes)
 #   make check   -> compares both with the stock bootloader dump (SHA-256 below)
+#   make slot    -> build/slot/BOOT_F.bin, BOOT_A.bin, BOOT_B.bin: the slot build (assembled with
+#                   --defsym SLOT=1: slot_11.s and every .ifdef SLOT change), one image per slot, each
+#                   linked for slot base + 0x200 (link_slot.ld); the slot header is written by the
+#                   installer, not here
 #   make clean
 # The settings / calibration page 0x08006000.. is NOT part of this source and is never built or linked
 # (link.ld ends FLASH at 0x08006000).  Padding rule: the dump bytes 0x5874..0x5FFF are all 0xFF (checked
@@ -26,6 +30,31 @@ build/boot.elf: $(OBJ) link.ld
 build/BOOT.bin: build/boot.elf
 	$(OBJCOPY) -O binary $< $@
 
+slot: build/slot/BOOT_F.bin build/slot/BOOT_A.bin build/slot/BOOT_B.bin
+
+SLOT_OBJ := $(patsubst src/%.s,build/slot/%.o,$(SRC))
+
+build/slot/%.o: src/%.s $(INC) ../common/layout.inc ../common/records.inc | build/slot
+	$(AS) $(ASFLAGS) -I .. --defsym SLOT=1 -o $@ $<
+
+build/slot/boot_%.elf: $(SLOT_OBJ) link_slot.ld
+	$(LD) --no-warn-rwx-segments -T link_slot.ld --defsym SLOT_BASE=$(SLOT_BASE_$*) \
+		--defsym SLOT_SIZE=$(SLOT_SIZE_$*) -Map build/slot/boot_$*.map -o $@ $(SLOT_OBJ)
+
+build/slot/BOOT_%.bin: build/slot/boot_%.elf
+	$(OBJCOPY) -O binary $< $@
+	@echo "$@: $$(wc -c < $@ | tr -d ' ') bytes"
+
+SLOT_BASE_F := 0x080D8000
+SLOT_SIZE_F := 0x8000
+SLOT_BASE_A := 0x080E0000
+SLOT_SIZE_A := 0x10000
+SLOT_BASE_B := 0x080F0000
+SLOT_SIZE_B := 0x10000
+
+build/slot:
+	mkdir -p $@
+
 padded: build/BOOT_padded.bin
 
 build/BOOT_padded.bin: build/boot.elf
@@ -47,4 +76,6 @@ check: build/BOOT.bin build/BOOT_padded.bin
 clean:
 	rm -rf build
 
-.PHONY: all padded clean check
+.PHONY: all padded slot clean check
+
+.PRECIOUS: build/slot/boot_%.elf build/slot/%.o

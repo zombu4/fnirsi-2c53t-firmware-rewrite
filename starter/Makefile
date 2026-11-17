@@ -8,8 +8,8 @@ OBJCOPY := $(CROSS)objcopy
 
 all: build/STARTER.bin
 
-build/starter.o: src/starter.s src/layout.inc | build
-	$(AS) -I . -o $@ $<
+build/starter.o: src/starter.s ../common/layout.inc ../common/records.inc | build
+	$(AS) -I . -I .. -o $@ $<
 
 build/starter.elf: build/starter.o link.ld
 	$(LD) --no-warn-rwx-segments -T link.ld -Map build/starter.map -o $@ build/starter.o

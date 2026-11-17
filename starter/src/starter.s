@@ -25,7 +25,7 @@
 	.arch armv7e-m
 	.fpu fpv4-sp-d16
 	.thumb
-	.include "src/layout.inc"
+	.include "common/layout.inc"
 
 @ ----------------------------------------------------------------------------
 @ Vector table at 0x08000000: initial SP as the stock bootloader (0x20001A08), reset, and every other
@@ -63,14 +63,13 @@ starter_fault:
 
 @ ----------------------------------------------------------------------------
 @ starter_reset - entry after reset.
-@ Frame (sp): [0] best record address (0 none), [4] best sequence, [8] last used cell of page 0
-@ (0 none), [12] last used cell of page 1, [16..31] record buffer for an append.
+@ Frame (sp): the 16-byte scan state of rec_scan / rec_append (common/records.inc).
 @ ----------------------------------------------------------------------------
 	.global	starter_reset
 	.thumb_func
 	.type	starter_reset, %function
 starter_reset:
-	sub	sp, #32
+	sub	sp, #16
 	@ 1. fault flag
 	ldr	r0, =FAULT_FLAG_ADDR
 	ldr	r1, [r0]
@@ -86,17 +85,8 @@ starter_reset:
 	cmp	r0, #0
 	bne	.Lstart_f
 	@ 3. records
-	movs	r0, #0
-	str	r0, [sp, #0]
-	str	r0, [sp, #4]
-	str	r0, [sp, #8]
-	str	r0, [sp, #12]
-	ldr	r0, =REC_PAGE0
-	add	r1, sp, #8
-	bl	scan_page
-	ldr	r0, =REC_PAGE1
-	add	r1, sp, #12
-	bl	scan_page
+	mov	r0, sp
+	bl	rec_scan
 	ldr	r4, [sp, #0]		@ r4 = best record or 0
 	cbnz	r4, .Lhave_record
 	movs	r0, #SLOT_ID_A		@ no record: slot A
@@ -115,7 +105,8 @@ starter_reset:
 	movs	r0, #ST_TRIAL		@ INSTALL: start it once, record TRIAL
 	mov	r1, r6
 	adds	r2, r7, #1
-	bl	append_record
+	mov	r3, sp
+	bl	rec_append
 	mov	r0, r6
 	b	.Lstart_id
 .Lnot_install:
@@ -127,7 +118,8 @@ starter_reset:
 	movs	r0, #ST_OK
 	mov	r1, r6
 	adds	r2, r7, #1
-	bl	append_record
+	mov	r3, sp
+	bl	rec_append
 	mov	r0, r6
 	@ fall through
 .Lstart_id:
@@ -160,26 +152,6 @@ starter_reset:
 	ldr	r2, [r0, #4]		@ reset vector of the slot
 	msr	msp, r1
 	bx	r2
-
-@ ----------------------------------------------------------------------------
-@ slot_base_of - r0 = slot id; returns the slot base in r0, or 0 for an unknown id.
-@ ----------------------------------------------------------------------------
-	.thumb_func
-slot_base_of:
-	cmp	r0, #SLOT_ID_F
-	beq	1f
-	cmp	r0, #SLOT_ID_A
-	beq	2f
-	cmp	r0, #SLOT_ID_B
-	beq	3f
-	movs	r0, #0
-	bx	lr
-1:	ldr	r0, =SLOT_F_BASE
-	bx	lr
-2:	ldr	r0, =SLOT_A_BASE
-	bx	lr
-3:	ldr	r0, =SLOT_B_BASE
-	bx	lr
 
 @ ----------------------------------------------------------------------------
 @ header_ok - r0 = slot base, r1 = slot id; returns 1 when the header and the image's first two
@@ -240,101 +212,6 @@ header_ok:
 	pop	{r4, r5, pc}
 
 @ ----------------------------------------------------------------------------
-@ crc32 - r0 = address, r1 = length in bytes; returns the CRC-32 (reflected polynomial 0xEDB88320,
-@ initial value and final xor 0xFFFFFFFF, the CRC of zlib) in r0.  Bitwise, no table, no clock.
-@ ----------------------------------------------------------------------------
-	.thumb_func
-crc32:
-	mvn	r2, #0
-	ldr	r12, =0xEDB88320
-1:	cbz	r1, 3f
-	ldrb	r3, [r0], #1
-	eors	r2, r2, r3
-	movs	r3, #8
-2:	lsrs	r2, r2, #1		@ carry = bit shifted out
-	it	cs
-	eorcs	r2, r2, r12
-	subs	r3, #1
-	bne	2b
-	subs	r1, #1
-	b	1b
-3:	mvn	r0, r2
-	bx	lr
-
-@ ----------------------------------------------------------------------------
-@ record_valid - r0 = cell address; returns 1 when the magic halfword is 0xB007 and the CRC-32 of
-@ bytes 0..11 equals the word at 12, else 0.
-@ ----------------------------------------------------------------------------
-	.thumb_func
-record_valid:
-	push	{r4, lr}
-	mov	r4, r0
-	ldrh	r1, [r4, #REC_MAGIC_OFS]
-	movw	r2, #REC_MAGIC
-	cmp	r1, r2
-	bne	1f
-	mov	r0, r4
-	movs	r1, #REC_CRC_OFS
-	bl	crc32
-	ldr	r1, [r4, #REC_CRC_OFS]
-	cmp	r0, r1
-	bne	1f
-	movs	r0, #1
-	pop	{r4, pc}
-1:	movs	r0, #0
-	pop	{r4, pc}
-
-@ ----------------------------------------------------------------------------
-@ scan_page - r0 = record page, r1 = address of that page's "last used cell" word in the frame of
-@ starter_reset (frame + 8 for page 0, frame + 12 for page 1, so the frame base is r1 - 8 or r1 - 12;
-@ frame [0] = best record, [4] = its sequence number).  A cell is used when any of its four words is
-@ not 0xFFFFFFFF (the last used cell is stored); it is a candidate when record_valid; a candidate
-@ with a higher sequence number than the best so far becomes the best record (the first one wins on
-@ equal numbers).
-@ ----------------------------------------------------------------------------
-	.thumb_func
-scan_page:
-	push	{r4, r5, r6, r7, lr}
-	mov	r4, r0			@ r4 = cell
-	add	r5, r0, #REC_PAGE_SIZE	@ r5 = page end
-	mov	r6, r1			@ r6 = last-used word
-	ldr	r7, =REC_PAGE0		@ frame base = r6 - 8 for page 0, r6 - 12 for page 1
-	cmp	r4, r7
-	ite	eq
-	subeq	r7, r6, #8
-	subne	r7, r6, #12		@ r7 = frame base ([0] best, [4] best sequence)
-.Lscan_cell:
-	cmp	r4, r5
-	bhs	.Lscan_done
-	ldr	r0, [r4, #0]		@ used: any word not erased
-	ldr	r1, [r4, #4]
-	ands	r0, r0, r1
-	ldr	r1, [r4, #8]
-	ands	r0, r0, r1
-	ldr	r1, [r4, #12]
-	ands	r0, r0, r1
-	adds	r0, r0, #1		@ 0 only when all four words were 0xFFFFFFFF
-	beq	.Lscan_next
-	str	r4, [r6]		@ last used cell of this page
-	mov	r0, r4
-	bl	record_valid
-	cbz	r0, .Lscan_next
-	ldr	r0, [r4, #REC_SEQ_OFS]
-	ldr	r1, [r7, #0]
-	cbz	r1, .Lscan_take		@ no best yet
-	ldr	r1, [r7, #4]
-	cmp	r0, r1
-	bls	.Lscan_next		@ not newer
-.Lscan_take:
-	str	r4, [r7, #0]
-	str	r0, [r7, #4]
-.Lscan_next:
-	adds	r4, #16
-	b	.Lscan_cell
-.Lscan_done:
-	pop	{r4, r5, r6, r7, pc}
-
-@ ----------------------------------------------------------------------------
 @ newest_ok_other - r0 = slot id to avoid; returns the slot id of the valid OK record with the
 @ highest sequence number whose slot differs, or SLOT_ID_F when there is none.
 @ ----------------------------------------------------------------------------
@@ -350,7 +227,7 @@ newest_ok_other:
 	cmp	r4, r5
 	bhs	.Lok_done
 	mov	r0, r4
-	bl	record_valid
+	bl	rec_valid
 	cbz	r0, .Lok_next
 	ldrb	r0, [r4, #REC_STATE_OFS]
 	cmp	r0, #ST_OK
@@ -370,154 +247,6 @@ newest_ok_other:
 .Lok_done:
 	mov	r0, r6
 	pop	{r4, r5, r6, r7, r8, pc}
-
-@ ----------------------------------------------------------------------------
-@ append_record - r0 = state, r1 = slot id, r2 = sequence number.  Uses the caller's frame of
-@ starter_reset ([0] best record, [8] / [12] last used cells, [16..31] buffer): found at sp + 24
-@ after the push below (4 words pushed + the caller's sp).  Builds the 16-byte record (version from
-@ the slot's header, 0 if the slot id is unknown), chooses the cell after the last used cell of the
-@ page that holds the best record (page 0 when there is none); when that page is full it erases the
-@ other page first and uses its first cell.  Programs the four words, locks the flash.  A failed or
-@ interrupted write leaves a cell that fails record_valid and is skipped.
-@ ----------------------------------------------------------------------------
-	.thumb_func
-append_record:
-	push	{r4, r5, r6, r7, r8, lr}
-	add	r8, sp, #24		@ r8 = frame of starter_reset
-	mov	r4, r0
-	mov	r5, r1
-	mov	r6, r2
-	@ build the record in [r8 + 16]
-	add	r7, r8, #16
-	movw	r0, #REC_MAGIC
-	strh	r0, [r7, #REC_MAGIC_OFS]
-	strb	r4, [r7, #REC_STATE_OFS]
-	strb	r5, [r7, #REC_SLOT_OFS]
-	str	r6, [r7, #REC_SEQ_OFS]
-	mov	r0, r5
-	bl	slot_base_of
-	cbz	r0, 1f
-	ldr	r0, [r0, #HDR_VERSION]
-1:	str	r0, [r7, #REC_VERSION_OFS]
-	mov	r0, r7
-	movs	r1, #REC_CRC_OFS
-	bl	crc32
-	str	r0, [r7, #REC_CRC_OFS]
-	@ choose the cell
-	ldr	r0, [r8, #0]		@ best record
-	ldr	r4, =REC_PAGE0		@ r4 = page
-	cbz	r0, 2f
-	lsrs	r4, r0, #11		@ page of the best record: clear the low 11 bits (0x800 pages)
-	lsls	r4, r4, #11
-2:	ldr	r1, =REC_PAGE0
-	cmp	r4, r1
-	ite	eq
-	ldreq	r5, [r8, #8]		@ r5 = last used cell of that page (0 none)
-	ldrne	r5, [r8, #12]
-	cbz	r5, 3f
-	adds	r5, #16
-	b	4f
-3:	mov	r5, r4
-4:	add	r0, r4, #REC_PAGE_SIZE
-	cmp	r5, r0
-	blo	5f
-	ldr	r1, =REC_PAGE0		@ page full: erase the other page, use its first cell
-	cmp	r4, r1
-	ite	eq
-	ldreq	r5, =REC_PAGE1
-	ldrne	r5, =REC_PAGE0
-	bl	flash_unlock2
-	mov	r0, r5
-	bl	flash_erase_page2
-	b	6f
-5:	bl	flash_unlock2
-6:	mov	r0, r5
-	ldr	r1, [r7, #0]
-	bl	flash_program_word2
-	add	r0, r5, #4
-	ldr	r1, [r7, #4]
-	bl	flash_program_word2
-	add	r0, r5, #8
-	ldr	r1, [r7, #8]
-	bl	flash_program_word2
-	add	r0, r5, #12
-	ldr	r1, [r7, #12]
-	bl	flash_program_word2
-	bl	flash_lock2
-	pop	{r4, r5, r6, r7, r8, pc}
-
-@ ----------------------------------------------------------------------------
-@ Bank-2 flash primitives (registers as the stock bootloader uses them).
-@ ----------------------------------------------------------------------------
-	.thumb_func
-flash_unlock2:
-	ldr	r0, =FLASH_KEYR2
-	ldr	r1, =FLASH_KEY1
-	str	r1, [r0]
-	ldr	r1, =FLASH_KEY2
-	str	r1, [r0]
-	bx	lr
-
-	.thumb_func
-flash_lock2:
-	ldr	r0, =FLASH_CTRL2
-	ldr	r1, [r0]
-	orr	r1, r1, #0x80
-	str	r1, [r0]
-	bx	lr
-
-@ flash_wait2 - waits while bit 0 (busy) of FLASH_STS2 is set, at most 0x00400000 polls.
-	.thumb_func
-flash_wait2:
-	ldr	r0, =FLASH_STS2
-	ldr	r1, =0x00400000
-1:	ldr	r2, [r0]
-	tst	r2, #1
-	beq	2f
-	subs	r1, #1
-	bne	1b
-2:	bx	lr
-
-@ flash_erase_page2 - r0 = page address (bank 2).
-	.thumb_func
-flash_erase_page2:
-	push	{r4, lr}
-	mov	r4, r0
-	bl	flash_wait2
-	ldr	r0, =FLASH_CTRL2
-	ldr	r1, [r0]
-	orr	r1, r1, #0x02		@ PER
-	str	r1, [r0]
-	ldr	r1, =FLASH_ADDR2
-	str	r4, [r1]
-	ldr	r1, [r0]
-	orr	r1, r1, #0x40		@ STRT
-	str	r1, [r0]
-	bl	flash_wait2
-	ldr	r0, =FLASH_CTRL2
-	ldr	r1, [r0]
-	bic	r1, r1, #0x02
-	str	r1, [r0]
-	pop	{r4, pc}
-
-@ flash_program_word2 - r0 = address (bank 2), r1 = word.
-	.thumb_func
-flash_program_word2:
-	push	{r4, r5, lr}
-	mov	r4, r0
-	mov	r5, r1
-	bl	flash_wait2
-	ldr	r0, =FLASH_CTRL2
-	ldr	r1, [r0]
-	orr	r1, r1, #0x01		@ PG
-	str	r1, [r0]
-	str	r5, [r4]
-	bl	flash_wait2
-	ldr	r0, =FLASH_CTRL2
-	ldr	r1, [r0]
-	bic	r1, r1, #0x01
-	str	r1, [r0]
-	pop	{r4, r5, pc}
 
 @ ----------------------------------------------------------------------------
 @ key_pressed - returns 1 when the PE2 / PE3 key is held, else 0.  Port E clock on (RCC_APB2EN bit 6),
@@ -578,5 +307,7 @@ settle:
 1:	subs	r0, #1
 	bne	1b
 	bx	lr
+
+	.include "common/records.inc"
 
 	.ltorg
