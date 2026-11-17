@@ -1,4 +1,4 @@
-@ lcd_05.s - lcd module, batch 05: window fill, orientation / window setup, pixel write, panel init sequence, window-to-dimensions write, the 0x60020000 / 0x6001FFFE halfword writers and the glyph drawer.
+@ lcd_05.s - LCD:window fill, orientation / window setup, pixel write, panel init sequence, window-to-dimensions write, the 0x60020000 / 0x6001FFFE halfword writers and the glyph drawer.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m

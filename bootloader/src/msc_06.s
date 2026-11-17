@@ -1,4 +1,4 @@
-@ msc_06.s - SCSI command validation and dispatch for the USB mass-storage class (batch 06 of module msc).
+@ msc_06.s - SCSI command validation and dispatch for the USB mass-storage class.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m

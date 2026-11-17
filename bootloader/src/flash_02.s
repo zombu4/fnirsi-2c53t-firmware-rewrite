@@ -1,4 +1,4 @@
-@ flash_02.s - flash module, batch 02: option-byte check, flash status polling, byte program and buffer compare/write routines.
+@ flash_02.s - flash:option-byte check, flash status polling, byte program and buffer compare/write routines.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m

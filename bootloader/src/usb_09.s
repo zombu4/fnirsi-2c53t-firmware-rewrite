@@ -1,4 +1,4 @@
-@ usb_09.s - usb module, batch 09: USB interrupt vector 20, descriptor / string accessors, serial-number text, 0x200000c0 helpers and the endpoint-register helpers of the 0x40005c00 block.
+@ usb_09.s - USB:USB interrupt vector 20, descriptor / string accessors, serial-number text, 0x200000c0 helpers and the endpoint-register helpers of the 0x40005c00 block.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m

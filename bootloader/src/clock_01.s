@@ -1,4 +1,4 @@
-@ clock_01.s - clock module, batch 01: small register read-modify-write helpers for 0x40015804.. and the 0x40021000 / 0x40023000 blocks.
+@ clock_01.s - clock:small register read-modify-write helpers for 0x40015804.. and the 0x40021000 / 0x40023000 blocks.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m

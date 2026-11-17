@@ -1,4 +1,4 @@
-@ usb_10.s - USB module, batch 10: endpoint-entry table initialisation, endpoint configuration, receive arming, IN queueing and the endpoint transfer-complete handler.
+@ usb_10.s - USB:endpoint-entry table initialisation, endpoint configuration, receive arming, IN queueing and the endpoint transfer-complete handler.
 @ Part of the FNIRSI 2C53T firmware rewrite: port of the stock bootloader (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m
