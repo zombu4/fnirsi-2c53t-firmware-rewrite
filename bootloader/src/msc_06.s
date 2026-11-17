@@ -736,7 +736,7 @@ scsi_op_12_copy_response:
 @ (0x08000cae..0x08000cb6). Param r0 = USB device handle; MSC state
 @ S = [[r0+4]+0x24]. Sets S+0x18 = 8 (response length), then copies 8 bytes
 @ from RAM 0x200000F4..0x200000FB to S+0x1C..S+0x23, index 7 down to 0.
-@ Initial table bytes (rwdata_20000000.bin offset 0xF4): 00 06 00 00 00 00 00
+@ Initial table bytes (initial RAM data offset 0xF4): 00 06 00 00 00 00 00
 @ 00; the only reference to 0x200000F4 is this function's literal at
 @ 0x08000F40. No clamp to the CBW length. Returns 0.
 @ ----------------------------------------------------------------------------
@@ -775,7 +775,7 @@ scsi_mode_sense_10:
 @ ----------------------------------------------------------------------------
 @ scsi_mode_sense_6 - MODE SENSE(6), dispatched for CDB opcode 0x1A
 @ (0x08000c9e..0x08000ca6). Same as 0x08000F14 but the source is RAM
-@ 0x200000EC..0x200000F3, all zero in rwdata_20000000.bin (offset 0xEC); the
+@ 0x200000EC..0x200000F3, all zero in initial RAM data (offset 0xEC); the
 @ only reference to 0x200000EC is this function's literal at 0x08000F70. Sets
 @ S+0x18 = 8, copies 8 bytes to S+0x1C.. index 7 down to 0. Returns 0.
 @ ----------------------------------------------------------------------------
@@ -960,7 +960,7 @@ scsi_read_10:
 @ (0x08000CF6). r0 = device handle. Copies 18 bytes from RAM
 @ 0x200000D4..0x200000E5 into S+0x1C..S+0x2D (S = [[r0+4]+0x24]), source index
 @ 17 down to 0; sets S+0x18 = min(S+0x1028, 0x12). Initial source bytes
-@ (rwdata_20000000.bin offset 0xD4): 70 00 05 00 00 00 00 00 0A 00 00 00 00 00
+@ (initial RAM data offset 0xD4): 70 00 05 00 00 00 00 00 0A 00 00 00 00 00
 @ 00 00 20 00; byte index 2 is 0x200000D6 (written by 0x08001184 arg 2), byte
 @ index 16 is 0x200000E4 (written by arg 3). Returns 0.
 @ ----------------------------------------------------------------------------
@@ -1471,7 +1471,7 @@ scsi_write_10:
 @ ----------------------------------------------------------------------------
 @ fn_080013cc - calls 0x08003C14(dev, 0x81) then 0x08003C14(dev, 1) and
 @ returns 0. Address stored as a word in the initial RAM table at 0x20000100
-@ (rwdata_20000000.bin offset 0x100); no direct caller. Purpose not determined
+@ (initial RAM data offset 0x100); no direct caller. Purpose not determined
 @ from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_080013cc,"ax",%progbits
@@ -1496,7 +1496,7 @@ fn_080013cc:
 @ ----------------------------------------------------------------------------
 @ fn_080013e8 - calls 0x08004240(dev, 0) (result discarded, it reads a
 @ halfword at dev+0x11C) and returns 0. Address stored as a word at
-@ 0x2000010C (rwdata_20000000.bin offset 0x10C); no direct caller. Purpose not
+@ 0x2000010C (initial RAM data offset 0x10C); no direct caller. Purpose not
 @ determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_080013e8,"ax",%progbits
@@ -1537,7 +1537,7 @@ fn_08001402:
 @ branches to 0x08001420 (nop); 0x0800141A, 0x0800141C and 0x0800141E each
 @ branch to 0x08001422 (nop), and 0x08001420 falls into it; all paths end at
 @ the bx lr at 0x08001424 with no effect. Returns 0 in r0. Address stored as a
-@ word at 0x2000011C (rwdata_20000000.bin offset 0x11C); no direct caller.
+@ word at 0x2000011C (initial RAM data offset 0x11C); no direct caller.
 @ Purpose not determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08001408,"ax",%progbits
@@ -1568,7 +1568,7 @@ fn_08001408:
 
 @ ----------------------------------------------------------------------------
 @ fn_08001426 - calls 0x08000D58(r0, r1) and returns 0. Address stored as a
-@ word at 0x20000110 (rwdata_20000000.bin offset 0x110); no direct caller.
+@ word at 0x20000110 (initial RAM data offset 0x110); no direct caller.
 @ Purpose not determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08001426,"ax",%progbits
@@ -1590,7 +1590,7 @@ fn_08001426:
 @ fn_0800143a - calls 0x08003D2E(dev, 0x81, 1, 0x40), 0x08003D2E(dev, 1, 1,
 @ 0x40) (0x08003D2E sets up an endpoint record: direction by bit 7 of arg 2,
 @ type arg 3, size arg 4 + 1 rounded down to even) and 0x08000E70(dev);
-@ returns 0. Address stored as a word at 0x200000FC (rwdata_20000000.bin
+@ returns 0. Address stored as a word at 0x200000FC (initial RAM data
 @ offset 0xFC); no direct caller. Purpose not determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0800143a,"ax",%progbits
@@ -1619,7 +1619,7 @@ fn_0800143a:
 
 @ ----------------------------------------------------------------------------
 @ fn_08001464 - calls 0x08000D9C(r0, r1) and returns 0. Address stored as a
-@ word at 0x20000114 (rwdata_20000000.bin offset 0x114); no direct caller.
+@ word at 0x20000114 (initial RAM data offset 0x114); no direct caller.
 @ Purpose not determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08001464,"ax",%progbits
@@ -1650,7 +1650,7 @@ fn_08001464:
 @ initial 0 set by 0x080010C8); P[1] == 0xFF: 0x080010C8(dev) then
 @ 0x080039BE(dev); other P[1]: 0x080039D6(dev). Other values of P[0] & 0x60
 @ (0x40, 0x60): 0x080039D6(dev) (calls 0x08004538 on endpoints 0 and 0x80).
-@ Returns 0. Address stored as a word at 0x20000104 (rwdata_20000000.bin
+@ Returns 0. Address stored as a word at 0x20000104 (initial RAM data
 @ offset 0x104); no direct caller.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08001478,"ax",%progbits
@@ -1764,7 +1764,7 @@ fn_08001478:
 @ ----------------------------------------------------------------------------
 @ fn_0800154a - does r1 = r0 and returns 0 in r0; no memory access (same body
 @ as 0x08001402). Address stored as a word at 0x20000118
-@ (rwdata_20000000.bin offset 0x118); no direct caller. Purpose not determined
+@ (initial RAM data offset 0x118); no direct caller. Purpose not determined
 @ from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0800154a,"ax",%progbits

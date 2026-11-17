@@ -32,7 +32,7 @@ irq20_handler:
 @ (0x08004626) (text, 0x200014a4); stores the returned halfword at 0x200001c0
 @ and 0x200014a4 at 0x200001c4; returns 0x200001c0.
 @ Address stored at slot 0x20000148 of the pointer table that starts at
-@ 0x20000124 (rwdata_20000000.bin).
+@ 0x20000124 (initial RAM data).
 @ ----------------------------------------------------------------------------
 	.section .text.usb_string_config,"ax",%progbits
 	.p2align 2
@@ -60,7 +60,7 @@ usb_string_config:
 
 @ ----------------------------------------------------------------------------
 @ usb_config_descriptor_ref - returns 0x200001a8.
-@ The word pair there initially is {0x20, 0x20000160} (rwdata_20000000.bin
+@ The word pair there initially is {0x20, 0x20000160} (initial RAM data
 @ 0x1a8), and 0x20000160 holds the bytes 09 02 20 00 01 01 04 c0 32 09 04 00
 @ 00 02 08 06 50 05 07 05 81 02 40 00 00 07 05 01 02 40 00 00.
 @ Address stored at slot 0x2000012c of the table at 0x20000124.

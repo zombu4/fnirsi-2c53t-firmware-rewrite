@@ -729,7 +729,7 @@ fn_0800186c:
 @ ----------------------------------------------------------------------------
 @ fn_0800188c - calls systick_clock_source(4), then stores RAM 0x200000C4 /
 @ 1000000 into 0x200000A8 and that quotient * 1000 into 0x200000AC (0x200000C4
-@ holds 0x007A1200 in rwdata_20000000.bin). 0x200000AC is the reload
+@ holds 0x007A1200 in initial RAM data). 0x200000AC is the reload
 @ multiplier used by systick_delay. Caller 0x0800294A. Purpose not determined
 @ from the code.
 @ ----------------------------------------------------------------------------
