@@ -204,7 +204,7 @@
 .L0801e11c:
 	.global	firmware_version_text	@ also reported by the USB control channel (usb_ctl.s INFO)
 firmware_version_text:
-	.asciz	"1.3.7"		@ version shown in About as "V%s": this rewrite
+	.asciz	"1.3.8"		@ version shown in About as "V%s": this rewrite
 	.short	0x0000	@ padding
 .L0801e124:
 	.asciz	"3:/System file/142.jpg"

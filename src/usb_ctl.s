@@ -1717,7 +1717,8 @@ cmd_mem_read:
 	ldrh	r6, [r5, #4]			@ r6 = length
 	cmp	r6, #256
 	bhi	8f
-	add	r0, r4, r6			@ r0 = end
+	adds	r0, r4, r6			@ r0 = end
+	bcs	7f				@ the range wraps past 0xFFFFFFFF: outside both windows
 	ldr	r1, =0x08000000
 	cmp	r4, r1
 	blo	1f

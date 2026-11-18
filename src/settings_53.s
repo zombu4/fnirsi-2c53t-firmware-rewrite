@@ -21,7 +21,7 @@
 @ 0x20000114 = 0x32 (s16), 0x20000125 = 0xd, 0x20000144 = 0x01050105,
 @ s16 0x2000032a = -75, 0x2000032c = 75, 0x2000032e = 50, 0x20000330 = -50,
 @ 0x20000f50 = 1, 0x20000f51 = 0, 0x20000f54 = 1000, 0x20000f58 = 0x32,
-@ 0x20000f59 = 0x1e, 0x20001058 = 0x00016401, and zeroes halfword 0x20000100,
+@ 0x20000f59 = 0x1e, 0x20001058 = 0x00016402 (language byte 2, English, as first start stores; nothing reads it for texts), and zeroes halfword 0x20000100,
 @ halfword 0x20000102, 0x20000140, 0x2000012c..0x2000012d, 0x20000134,
 @ 0x20000332, 0x2000044c, halfword 0x2000105c (the 16-bit tables
 @ 0x20000358..0x20000447 and bytes 0x20000448..0x2000044b are not touched by
@@ -186,7 +186,7 @@ save_settings_to_flash_body:
 	strh.w	r2, [r7, #0xe60]
 	mov.w	r2, #0x3e8
 	str.w	r2, [r7, #0xe5c]
-	movw	r2, #0x6401
+	movw	r2, #0x6402
 	movt	r2, #0x1
 	str.w	r2, [r7, #0xf60]
 	mov.w	r2, #0x5000000

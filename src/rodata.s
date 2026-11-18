@@ -930,9 +930,9 @@ d_0806ef34:
 @ ============================================================================
 @ The 8 fonts (own data, DATA_DESIGN.md step 4). The binary pieces come from tools/make_fonts.py of
 @ the project folder: the 7 text fonts are DejaVu Sans Condensed 2.37 (licence
-@ assets/fonts/LICENSE-DejaVu.txt) rendered at 4 bits per pixel, 99 glyphs each (0x20..0x7F,
-@ U+03A9 Omega, U+2103 degree Celsius, U+2109 degree Fahrenheit); the 63 px font is an own 7-segment
-@ drawing at 1 bit per pixel with the 23 keys 0x20 - . 0-9 A C E L O P T U r s.
+@ assets/fonts/LICENSE-DejaVu.txt) rendered at 4 bits per pixel, 100 glyphs each (0x20..0x7F,
+@ U+03A9 Omega, U+2103 degree Celsius, U+2109 degree Fahrenheit, U+221E infinity); the 63 px font is an own 7-segment
+@ drawing at 1 bit per pixel with the 24 keys 0x20 - . 0-9 A C E L O P S T U r s.
 @ Each font is described by its context in the initial RAM image (src/ram_init.s): +0 data base,
 @ +4 record table, +8 range descriptor, +0x12 bits per pixel. The labels keep the names of the
 @ V1.2.0 addresses (d_<address>) that src/ram_init.s and tests/test_ram_init.py name.
@@ -963,7 +963,7 @@ d_0806ef34:
 
 @ ----------------------------------------------------------------------------
 @ 12 px font (font object 0x20001084, context 0x20001098): DejaVu Sans Condensed size 9, 4 bpp,
-@ 99 glyphs. Font object loaded directly by draw_arc_gauge (src/waveform_84.s).
+@ 100 glyphs. Font object loaded directly by draw_arc_gauge (src/waveform_84.s).
 @ ----------------------------------------------------------------------------
 	.p2align 2
 @ d_0806f334: data base of the 12 px font (context word +0, 0x20001098)
@@ -978,11 +978,11 @@ d_0806f9d8:
 	.global d_0806fcd8
 d_0806fcd8:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_0806fcec		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_0806fcec: key array of the 12 px font (descriptor + 0x14)
 	.global d_0806fcec
@@ -992,16 +992,16 @@ d_0806fcec:
 	.if (d_0806f9d8 - d_0806f334) & 3
 	.error "12 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_0806fcd8 - d_0806f9d8) != 8 * 99
-	.error "12 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_0806fcd8 - d_0806f9d8) != 8 * 100
+	.error "12 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont12_end - d_0806fcec) != ((2 * 99 + 3) & ~3)
-	.error "12 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont12_end - d_0806fcec) != ((2 * 100 + 3) & ~3)
+	.error "12 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 15 px font (font object 0x200010B4, context 0x200010C8): DejaVu Sans Condensed size 10, 4 bpp,
-@ 99 glyphs. Font object loaded directly by the waveform display (src/parts/draw_waveform_display_p6.inc).
+@ 100 glyphs. Font object loaded directly by the waveform display (src/parts/draw_waveform_display_p6.inc).
 @ ----------------------------------------------------------------------------
 	.p2align 2
 @ d_0806fdae: data base of the 15 px font (context word +0, 0x200010C8)
@@ -1016,11 +1016,11 @@ d_08076938:
 	.global d_08077b10
 d_08077b10:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_08077b24		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_08077b24: key array of the 15 px font (descriptor + 0x14)
 	.global d_08077b24
@@ -1030,16 +1030,16 @@ d_08077b24:
 	.if (d_08076938 - d_0806fdae) & 3
 	.error "15 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_08077b10 - d_08076938) != 8 * 99
-	.error "15 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_08077b10 - d_08076938) != 8 * 100
+	.error "15 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont15_end - d_08077b24) != ((2 * 99 + 3) & ~3)
-	.error "15 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont15_end - d_08077b24) != ((2 * 100 + 3) & ~3)
+	.error "15 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 16 px font (font object 0x200010E4, context 0x200010F8): DejaVu Sans Condensed size 12, 4 bpp,
-@ 99 glyphs. Font object loaded directly by the waveform display, fn_080114c4, draw_image_two_texts_and_s_value,
+@ 100 glyphs. Font object loaded directly by the waveform display, fn_080114c4, draw_image_two_texts_and_s_value,
 @ draw_arc_gauge.
 @ ----------------------------------------------------------------------------
 	.p2align 2
@@ -1055,11 +1055,11 @@ d_080807f0:
 	.global d_080819a8
 d_080819a8:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_080819bc		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_080819bc: key array of the 16 px font (descriptor + 0x14)
 	.global d_080819bc
@@ -1069,16 +1069,16 @@ d_080819bc:
 	.if (d_080807f0 - d_08077f9c) & 3
 	.error "16 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_080819a8 - d_080807f0) != 8 * 99
-	.error "16 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_080819a8 - d_080807f0) != 8 * 100
+	.error "16 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont16_end - d_080819bc) != ((2 * 99 + 3) & ~3)
-	.error "16 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont16_end - d_080819bc) != ((2 * 100 + 3) & ~3)
+	.error "16 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 18 px font (font object 0x20001114, context 0x20001128): DejaVu Sans Condensed size 13, 4 bpp,
-@ 99 glyphs. The most loaded font object (direct loads): menus, lists, settings pages, the text column highlight.
+@ 100 glyphs. The most loaded font object (direct loads): menus, lists, settings pages, the text column highlight.
 @ ----------------------------------------------------------------------------
 	.p2align 2
 @ d_08081e2c: data base of the 18 px font (context word +0, 0x20001128)
@@ -1093,11 +1093,11 @@ d_0808b214:
 	.global d_0808c3cc
 d_0808c3cc:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_0808c3e0		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_0808c3e0: key array of the 18 px font (descriptor + 0x14)
 	.global d_0808c3e0
@@ -1107,16 +1107,16 @@ d_0808c3e0:
 	.if (d_0808b214 - d_08081e2c) & 3
 	.error "18 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_0808c3cc - d_0808b214) != 8 * 99
-	.error "18 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_0808c3cc - d_0808b214) != 8 * 100
+	.error "18 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont18_end - d_0808c3e0) != ((2 * 99 + 3) & ~3)
-	.error "18 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont18_end - d_0808c3e0) != ((2 * 100 + 3) & ~3)
+	.error "18 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 20 px font (font object 0x20001144, context 0x20001158): DejaVu Sans Condensed size 15, 4 bpp,
-@ 99 glyphs. Font object loaded directly by menu and list pages, draw_value_panel, message boxes, the waveform display.
+@ 100 glyphs. Font object loaded directly by menu and list pages, draw_value_panel, message boxes, the waveform display.
 @ ----------------------------------------------------------------------------
 	.p2align 2
 @ d_0808c850: data base of the 20 px font (context word +0, 0x20001158)
@@ -1131,11 +1131,11 @@ d_08098fdc:
 	.global d_0809a194
 d_0809a194:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_0809a1a8		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_0809a1a8: key array of the 20 px font (descriptor + 0x14)
 	.global d_0809a1a8
@@ -1145,17 +1145,17 @@ d_0809a1a8:
 	.if (d_08098fdc - d_0808c850) & 3
 	.error "20 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_0809a194 - d_08098fdc) != 8 * 99
-	.error "20 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_0809a194 - d_08098fdc) != 8 * 100
+	.error "20 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont20_end - d_0809a1a8) != ((2 * 99 + 3) & ~3)
-	.error "20 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont20_end - d_0809a1a8) != ((2 * 100 + 3) & ~3)
+	.error "20 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 25 px font (font object 0x20001174, context 0x20001188): DejaVu Sans Condensed size 19, 4 bpp
 @ (V1.2.0's 25 px font was 1 bpp; context word +0x10 at 0x20001198 is 0x08010000 now, src/ram_init.s),
-@ 99 glyphs. Font object loaded directly by the waveform display, fn_08010014, fn_080114c4, fn_08012d2c,
+@ 100 glyphs. Font object loaded directly by the waveform display, fn_08010014, fn_080114c4, fn_08012d2c,
 @ draw_image_two_texts_and_s_value, draw_arc_gauge.
 @ ----------------------------------------------------------------------------
 	.p2align 2
@@ -1171,11 +1171,11 @@ d_080a0468:
 	.global d_080a1630
 d_080a1630:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_080a1644		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_080a1644: key array of the 25 px font (descriptor + 0x14)
 	.global d_080a1644
@@ -1185,16 +1185,16 @@ d_080a1644:
 	.if (d_080a0468 - d_0809a618) & 3
 	.error "25 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_080a1630 - d_080a0468) != 8 * 99
-	.error "25 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_080a1630 - d_080a0468) != 8 * 100
+	.error "25 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont25_end - d_080a1644) != ((2 * 99 + 3) & ~3)
-	.error "25 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont25_end - d_080a1644) != ((2 * 100 + 3) & ~3)
+	.error "25 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 28 px font (font object 0x200011A4, context 0x200011B8): DejaVu Sans Condensed size 21, 4 bpp,
-@ 99 glyphs. Font object loaded directly by fn_08010a94, draw_header_image_120, draw_arc_gauge.
+@ 100 glyphs. Font object loaded directly by fn_08010a94, draw_header_image_120, draw_arc_gauge.
 @ ----------------------------------------------------------------------------
 	.p2align 2
 @ d_080a1ab8: data base of the 28 px font (context word +0, 0x200011B8)
@@ -1209,11 +1209,11 @@ d_080b9000:
 	.global d_080ba1b8
 d_080ba1b8:
 	.word	0x00000020		@ +0x00: low bound, key 0x20 (space)
-	.hword	0x2109			@ +0x04: high bound, the highest key U+2109
+	.hword	0x221e			@ +0x04: high bound, the highest key U+221E (infinity)
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_080ba1cc		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	99			@ +0x10: glyph count
+	.hword	100			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_080ba1cc: key array of the 28 px font (descriptor + 0x14)
 	.global d_080ba1cc
@@ -1223,16 +1223,16 @@ d_080ba1cc:
 	.if (d_080b9000 - d_080a1ab8) & 3
 	.error "28 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_080ba1b8 - d_080b9000) != 8 * 99
-	.error "28 px font: the record table must hold 99 records (descriptor glyph count)"
+	.if (d_080ba1b8 - d_080b9000) != 8 * 100
+	.error "28 px font: the record table must hold 100 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont28_end - d_080ba1cc) != ((2 * 99 + 3) & ~3)
-	.error "28 px font: the key array must hold 99 keys (descriptor glyph count)"
+	.if (.Lfont28_end - d_080ba1cc) != ((2 * 100 + 3) & ~3)
+	.error "28 px font: the key array must hold 100 keys (descriptor glyph count)"
 	.endif
 
 @ ----------------------------------------------------------------------------
 @ 63 px font (font object 0x200011D4, context 0x200011E8): own 7-segment digits, 1 bpp (context
-@ word +0x10 0x02010000), 23 glyphs: 0x20 - . 0-9 A C E L O P T U r s (V1.2.0's key set).
+@ word +0x10 0x02010000), 24 glyphs: 0x20 - . 0-9 A C E L O P S T U r s (V1.2.0's key set and S, for "PAS").
 @ Full characters are 28 x 41 pixels (advance 31), 11 rows above the cell bottom. Font object loaded
 @ directly by draw_arc_gauge (src/waveform_84.s).
 @ ----------------------------------------------------------------------------
@@ -1253,7 +1253,7 @@ d_080bb3a8:
 	.hword	0x0000			@ +0x06: 0 (not read by the lookups)
 	.word	d_080bb3bc		@ +0x08: key array
 	.word	0x00000000		@ +0x0C: 0 (not read by the lookups)
-	.hword	23			@ +0x10: glyph count
+	.hword	24			@ +0x10: glyph count
 	.hword	0x0003			@ +0x12: 3 (not read by the lookups)
 @ d_080bb3bc: key array of the 63 px font (descriptor + 0x14)
 	.global d_080bb3bc
@@ -1263,11 +1263,11 @@ d_080bb3bc:
 	.if (d_080bb2f0 - d_080ba63c) & 3
 	.error "63 px font: the bitmaps must be a multiple of 4 bytes (record table word aligned)"
 	.endif
-	.if (d_080bb3a8 - d_080bb2f0) != 8 * 23
-	.error "63 px font: the record table must hold 23 records (descriptor glyph count)"
+	.if (d_080bb3a8 - d_080bb2f0) != 8 * 24
+	.error "63 px font: the record table must hold 24 records (descriptor glyph count)"
 	.endif
-	.if (.Lfont63_end - d_080bb3bc) != ((2 * 23 + 3) & ~3)
-	.error "63 px font: the key array must hold 23 keys (descriptor glyph count)"
+	.if (.Lfont63_end - d_080bb3bc) != ((2 * 24 + 3) & ~3)
+	.error "63 px font: the key array must hold 24 keys (descriptor glyph count)"
 	.endif
 
 	.global d_080bb3ec

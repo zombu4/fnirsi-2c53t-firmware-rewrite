@@ -1241,9 +1241,10 @@
 	pop.w	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	b.w	create_idle_and_tmr_svc_tasks
 	.byte	0x00, 0xbf		@ padding
-.L0802e6d0:
-	.asciz	"\033[1;32m[DEBUG] file[%s] line[%d] \345\274\200\345\247\213\r\n\033[0m\n"
-	.byte	0x00			@ padding
-.L0802e700:
-	.asciz	"../../../project/bsp_sys.c"
-	.byte	0x00			@ padding
+	.p2align 2			@ adr targets are word aligned
+.L0802e6d0:					@ start-up debug line (own English text; V1.2.0 printed a Chinese word)
+	.asciz	"\033[1;32m[DEBUG] file[%s] line[%d] start\r\n\033[0m\n"
+	.p2align 2
+.L0802e700:					@ source tag printed by that line (own; V1.2.0: the vendor's build path)
+	.asciz	"system_bring_up"
+	.p2align 2

@@ -18,7 +18,7 @@ build/%.o: src/%.s $(INC) | build
 	$(AS) $(ASFLAGS) -o $@ $<
 
 # binary assets included by src/rodata.s (.incbin)
-build/rodata.o: $(wildcard assets/*.bin assets/fonts/*.bin assets/pictures/*.bin)
+build/rodata.o: $(wildcard assets/*.bin assets/fonts/*.bin assets/pictures/*.bin assets/tables/*.bin assets/vendor_kept/*.bin)
 
 # images embedded by src/boot_install.s (its object is rebuilt whenever a sub-make ran)
 IMAGES := starter/build/STARTER.bin \
