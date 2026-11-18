@@ -105,6 +105,35 @@ boot_hook_then_file_open:
 	b.w	file_open		@ the original call, arguments unchanged
 
 @ ----------------------------------------------------------------------------
+@ charge_screen_or_skip - replaces the format_to_buffer_080073b4 call in system_bring_up's start-up
+@ picture loop. That loop shows the charging pictures ("3:/System file/163..167.jpg", 162.jpg) for as
+@ long as the power key is released (bit 8 of 0x40011008 set) and only then sets the power hold and
+@ continues: the vendor behaviour when USB is plugged into a switched-off meter. After a reset by
+@ this firmware (update, RESET command, power key while external power keeps the board on) or by
+@ the watchdog, the start must continue at once: when CRM_CTRLSTS (0x40021024) has SWRSTF (bit 28)
+@ or WDTRSTF (bit 29) set, the flags are cleared (RSTFC, bit 24) and execution continues at the
+@ loop's exit charge_loop_exit with r2 = 0x40011000, the state the loop's own exit has (RM
+@ AT32F403A 4.3.10: the flags survive system resets and are cleared by a power reset or RSTFC). The
+@ first call comes before the loop's first key test, so nothing of the loop has run. Otherwise the
+@ original call (r0 = buffer, r1 = format, r2 = number).
+@ ----------------------------------------------------------------------------
+	.global	charge_screen_or_skip
+	.thumb_func
+	.type	charge_screen_or_skip, %function
+charge_screen_or_skip:
+	ldr	r3, =0x40021024
+	ldr	r12, [r3]
+	tst	r12, #0x30000000		@ SWRSTF | WDTRSTF
+	beq	1f
+	ldr	r12, [r3]
+	orr	r12, r12, #0x01000000		@ RSTFC
+	str	r12, [r3]
+	movw	r2, #0x1000
+	movt	r2, #0x4001
+	b	charge_loop_exit
+1:	b	format_to_buffer_080073b4
+
+@ ----------------------------------------------------------------------------
 @ power_off_wait - end of save_settings_to_flash in this firmware (replaces its reset_system call): the
 @ caller has driven PC9 (power hold) low. A reset here would let the bootloader, which drives PC9 high
 @ at start (slot build), keep the meter on; so this waits instead: backlight off (0x40015034 = 0, as

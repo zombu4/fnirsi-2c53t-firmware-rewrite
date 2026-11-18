@@ -48,8 +48,8 @@
 
 	.equ	MAX_PAYLOAD,	512
 	.equ	PROTO_VERSION,	1
-	.equ	CAPS,		0x000003FF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
-						@ 6 DRIVE, 7 FW update, 8 BATTERY, 9 KEEP_AWAKE
+	.equ	CAPS,		0x000007FF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
+						@ 6 DRIVE, 7 FW update, 8 BATTERY, 9 KEEP_AWAKE, 10 MEM_READ
 
 @ RAM: 0x20036F90..0x20037DFF (above the application's stack top 0x20036F90, below the bootloader
 @ words at 0x20037FE0)
@@ -824,6 +824,8 @@ cmd_table:
 	.word	cmd_fw_end
 	.byte	0x83, 0, 0, 0
 	.word	cmd_fw_install
+	.byte	0xF0, 0, 0, 0
+	.word	cmd_mem_read
 	.byte	0xFF, 0, 0, 0
 
 @ ----------------------------------------------------------------------------
@@ -1625,6 +1627,48 @@ cmd_fw_install:
 	movs	r1, #1
 	bl	answer
 	pop	{r4, pc}
+
+@ MEM_READ: address (u32), length (u16, at most 256). Read-only, allowed for the internal flash
+@ 0x08000000..0x080FFFFF and the bootloader words 0x20037FE0..0x20037FFF (diagnostics: records, slot
+@ headers and images, request / hand-over words); anything else: status 6.
+	.thumb_func
+cmd_mem_read:
+	push	{r4, r5, r6, lr}
+	cmp	r6, #6
+	bne	8f
+	ldr	r4, [r5, #0]			@ r4 = address
+	ldrh	r6, [r5, #4]			@ r6 = length
+	cmp	r6, #256
+	bhi	8f
+	add	r0, r4, r6			@ r0 = end
+	ldr	r1, =0x08000000
+	cmp	r4, r1
+	blo	1f
+	ldr	r1, =0x08100000
+	cmp	r0, r1
+	bls	2f
+1:	ldr	r1, =0x20037FE0
+	cmp	r4, r1
+	blo	7f
+	ldr	r1, =0x20038000
+	cmp	r0, r1
+	bhi	7f
+2:	ldr	r0, =ANSWER + 1
+	mov	r1, r4
+	mov	r2, r6
+	bl	copy_bytes_n
+	movs	r0, #0
+	add	r1, r6, #1
+	bl	answer
+	pop	{r4, r5, r6, pc}
+7:	movs	r0, #6
+	movs	r1, #1
+	bl	answer
+	pop	{r4, r5, r6, pc}
+8:	movs	r0, #2
+	movs	r1, #1
+	bl	answer
+	pop	{r4, r5, r6, pc}
 
 @ crc32_update - r0 = register (start 0xFFFFFFFF), r1 = data, r2 = length; zlib CRC-32 register.
 	.thumb_func

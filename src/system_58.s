@@ -1159,7 +1159,11 @@ system_bring_up:
 	uxtb	r2, r0
 	mov	r0, r4
 	mov	r1, r6
+	.ifdef	VENDOR_V120
 	bl	format_to_buffer_080073b4
+	.else
+	bl	charge_screen_or_skip		@ boot_install.s: no charging screen after a software reset
+	.endif
 	movw	r2, #0x1000
 	movt	r2, #0x4001
 	ldr	r0, [r2, #8]
@@ -1211,6 +1215,11 @@ system_bring_up:
 	beq.n	.L0802b3e4
 	b.n	.L0802b354
 .L0802b40e:
+	.ifndef	VENDOR_V120
+	.global	charge_loop_exit
+	.thumb_func
+charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
+	.endif
 	mov.w	r0, #0x200
 	str	r0, [r2, #0x10]
 	movw	r0, #0x6b80

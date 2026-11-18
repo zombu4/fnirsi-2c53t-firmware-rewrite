@@ -17,7 +17,7 @@ The project contains:
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.2.7**).
+- Runs on the meter as assembly firmware (About shows **V1.2.9**).
 - Functionally identical to the vendor application V1.2.0: `make check` builds the same source with
   the vendor version text and verifies it is **byte-identical** to the vendor image.
 - Additions in this build: a start-up hook for the bootloader installer and the flash dump

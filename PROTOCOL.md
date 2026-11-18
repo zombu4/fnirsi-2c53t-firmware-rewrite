@@ -185,12 +185,12 @@ The host confirms the result afterwards with INFO (new firmware version).
 | 0x92 | BATTERY_LOW | level |
 | 0x93 | POWER_OFF_SOON | seconds |
 
-### 4.13 Test build only
+### 4.13 Diagnostics
 
 | cmd | Name | Request | Answer data |
 |---|---|---|---|
-| 0xF0 | MEM_READ | address (u32), length (u16) | bytes |
-| 0xF1 | MEM_WRITE | address (u32), bytes | - (only inside the test build's allowed RAM ranges; never flash, flash controller, option bytes or calibration) |
+| 0xF0 | MEM_READ | address (u32), length (u16, at most 256) | bytes; read-only, only internal flash 0x08000000..0x080FFFFF and the bootloader words 0x20037FE0..0x20037FFF (status 6 otherwise); capability bit 10 |
+| 0xF1 | MEM_WRITE (test build only) | address (u32), bytes | - (only inside the test build's allowed RAM ranges; never flash, flash controller, option bytes or calibration) |
 
 ## 5. Open items of this draft
 
