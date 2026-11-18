@@ -195,11 +195,8 @@
 	movw	r0, #:lower16:t_080bc18b
 	movt	r0, #:upper16:t_080bc18b
 	bl	scan_capture_files
-	ldrb.w	r1, [r9, #0xf60]
-	movw	r2, #:lower16:d_0804bfd0
-	movt	r2, #:upper16:d_0804bfd0
-	add.w	r1, r2, r1, lsl #2
-	ldr.w	r1, [r1, #-4]
+	movw	r1, #:lower16:t_080bb68e	@ "Saving..."
+	movt	r1, #:upper16:t_080bb68e
 	movw	r7, #0x1174
 	movt	r7, #0x2000
 	strb.w	r0, [r9, #0xe1b]
@@ -249,17 +246,13 @@
 	bl	queue_send_timeout
 	b.n	.L0801c8ba
 .L0801c876:
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c010
-	movt	r1, #:upper16:d_0804c010
+	movw	r0, #:lower16:t_080bc04f	@ "Save failed"
+	movt	r0, #:upper16:t_080bc04f
 	b.n	.L0801c890
 .L0801c884:
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804bff0
-	movt	r1, #:upper16:d_0804bff0
+	movw	r0, #:lower16:t_080bc05b	@ "Saved"
+	movt	r0, #:upper16:t_080bc05b
 .L0801c890:
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000
@@ -278,11 +271,8 @@
 	bne.n	.L0801c8fe
 	ldrb.w	r0, [r9, #0x2e]
 	cbz	r0, .L0801c8fe
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c030
-	movt	r1, #:upper16:d_0804c030
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bb712	@ "Await Trigger..."
+	movt	r0, #:upper16:t_080bb712
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000
@@ -298,11 +288,8 @@
 .L0801c8fe:
 	ldrb.w	r0, [r9, #0x2f]
 	cbz	r0, .L0801c93a
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c050
-	movt	r1, #:upper16:d_0804c050
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bb779	@ "Awaiting Auto Measurement..."
+	movt	r0, #:upper16:t_080bb779
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000
@@ -318,11 +305,8 @@
 .L0801c93a:
 	ldrb.w	r0, [r9, #0x30]
 	cbz	r0, .L0801c976
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c070
-	movt	r1, #:upper16:d_0804c070
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bb6c7	@ "Awaiting auto-correction..."
+	movt	r0, #:upper16:t_080bb6c7
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000
@@ -344,11 +328,8 @@
 	mov.w	r0, #0
 	sbcs	r0, r1
 	bcc.n	.L0801c9c6
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c090
-	movt	r1, #:upper16:d_0804c090
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bcde0	@ "Exceeded Limit"
+	movt	r0, #:upper16:t_080bcde0
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000
@@ -364,11 +345,8 @@
 .L0801c9c6:
 	ldrb.w	r0, [r9, #0x33]
 	cbz	r0, .L0801ca02
-	ldrb.w	r0, [r9, #0xf60]
-	movw	r1, #:lower16:d_0804c0b0
-	movt	r1, #:upper16:d_0804c0b0
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bc87a	@ "Waiting for automatic amplitude calibration"
+	movt	r0, #:upper16:t_080bc87a
 	movw	r2, #0x1174
 	movw	r1, #0x55f
 	movt	r2, #0x2000

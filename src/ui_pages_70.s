@@ -128,8 +128,7 @@ fn_08010e70:
 @ Sets the region record 0x20008350..56 = (x=0, y=0, w=0x10c, h=0x14),
 @ allocates w*h*2 = 0x29e0 bytes with alloc_units_of_32_bytes (0803acfc) into
 @ [0x20008358]. When that succeeds draws the image "3:/System file/71.jpg" at
-@ (0,0) with decode_image_file_with_offset (08039f6c) and the text pointer at
-@ 0x0804c3b4 + 4*[0x20001058] (table at 0x0804c3b8, entry index -1) with
+@ (0,0) with decode_image_file_with_offset (08039f6c) and "System Settings" with
 @ draw_wrapped_text_in_box (0800f154)(0x34, 0, 0xd8, 0x14, text, 0x20001144,
 @ 0xffff, 1). Then fn_08042ee0 and
 @ semaphore_take_timeout([0x20002d84], 0xffffffff); when that returns 1 and
@@ -174,11 +173,8 @@ fn_08010f68:
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r5, #0xf60]	@ [0x20001058]
-	movw r1, #:lower16:d_0804c3b8
-	movt r1, #:upper16:d_0804c3b8
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-4]	@ text pointer
+	movw r0, #:lower16:t_080bccfe	@ "System Settings"
+	movt r0, #:upper16:t_080bccfe
 	movw r2, #0x1144
 	movw r1, #0xffff
 	movt r2, #0x2000	@ r2 = 0x20001144
@@ -776,10 +772,10 @@ fn_08011238:
 @ (x=0x46, y=0x43, w=0xb4, h=0x6a), allocates w*h*2 = 0x9510 bytes with
 @ alloc_units_of_32_bytes (0803acfc) into [0x20008358]. When that succeeds it
 @ zero-fills w*h halfwords, draws the image "3:/System file/145.jpg" at
-@ (0x46,0x43) with decode_image_file_with_offset (08039f6c), draws the text
-@ pointer [0x0804c1c4 + 4*[0x20001058]] (table 0x0804c1c8, index -1) with
+@ (0x46,0x43) with decode_image_file_with_offset (08039f6c), draws "Battery low,
+@ charge now" with
 @ draw_wrapped_text_in_box (0800f154)(0x48,0x48,0xb0,0x14,text,0x200010e4,0,1),
-@ draws the text pointer [0x0804c1e4 + 4*[0x20001058]] with
+@ draws "Auto shutdown soon" with
 @ 0800f154(0x48,0x7a,0xb0,0x28,text,0x200010e4,0xf800,0x81), formats "%ds" with
 @ 0xe - [0x2000105e] into 0x20008360 (format_to_buffer_080073b4) and draws it
 @ with 0800f154(0x48,0x61,0xb0,0x19,0x20008360,0x20001174,0xf800,0x81). Then
@@ -858,11 +854,8 @@ fn_080114c4:
 	bl decode_image_file_with_offset
 	movw r4, #0xf8
 	movt r4, #0x2000	@ r4 = 0x200000f8
-	ldrb.w r0, [r4, #0xf60]	@ [0x20001058]
-	movw r1, #:lower16:d_0804c1c8
-	movt r1, #:upper16:d_0804c1c8
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-4]	@ text pointer
+	movw r0, #:lower16:t_080bceb4	@ "Battery low, charge now"
+	movt r0, #:upper16:t_080bceb4
 	movs r1, #1
 	movs r2, #0
 	movw r7, #0x10e4
@@ -875,11 +868,8 @@ fn_080114c4:
 	movs r3, #0x14
 	str r7, [sp, #4]
 	bl draw_wrapped_text_in_box
-	ldrb.w r0, [r4, #0xf60]	@ [0x20001058]
-	movw r1, #:lower16:d_0804c1e8
-	movt r1, #:upper16:d_0804c1e8
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-4]	@ text pointer
+	movw r0, #:lower16:t_080bc8ae	@ "Auto shutdown soon"
+	movt r0, #:upper16:t_080bc8ae
 	mov.w r8, #0x81
 	mov.w r6, #0xf800
 	strd r0, r7, [sp]
@@ -1017,8 +1007,7 @@ fn_08011660:
 @ Sets the region record 0x20008350..56 = (x=0, y=0, w=0x10c, h=0x14),
 @ allocates w*h*2 = 0x29e0 bytes with alloc_units_of_32_bytes (0803acfc) into
 @ [0x20008358]. When that succeeds draws the image "3:/System file/71.jpg" at
-@ (0,0) with decode_image_file_with_offset (08039f6c) and the text pointer
-@ [0x0804c1a4 + 4*[0x20001058]] (table 0x0804c1a8, index -1) with
+@ (0,0) with decode_image_file_with_offset (08039f6c) and "Image Viewer" with
 @ draw_wrapped_text_in_box (0800f154)(0x34, 0, 0xd8, 0x14, text, 0x20001144,
 @ 0xffff, 1). Then fn_08042ee0 and
 @ semaphore_take_timeout([0x20002d84], 0xffffffff); when that returns 1 and
@@ -1063,11 +1052,8 @@ fn_080116ec:
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r5, #0xf60]	@ [0x20001058]
-	movw r1, #:lower16:d_0804c1a8
-	movt r1, #:upper16:d_0804c1a8
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-4]	@ text pointer
+	movw r0, #:lower16:t_080bcb6e	@ "Image Viewer"
+	movt r0, #:upper16:t_080bcb6e
 	movw r2, #0x1144
 	movw r1, #0xffff
 	movt r2, #0x2000	@ r2 = 0x20001144

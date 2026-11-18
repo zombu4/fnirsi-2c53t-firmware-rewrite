@@ -21,7 +21,6 @@ SECTIONS
   {
     KEEP(*(.text.fn_08007184))                                 /* 0x08007184 */
     KEEP(*(.text.__scatterload))                               /* 0x0800718c */
-    KEEP(*(.text.unpack_token_stream))                         /* 0x080071c0 */
     KEEP(*(.text.zero_fill_words))                             /* 0x0800721c */
     KEEP(*(.text.format_one_conversion))                       /* 0x08007238 */
     KEEP(*(.text.fn_080072c8))                                 /* 0x080072c8 */
@@ -174,7 +173,6 @@ SECTIONS
     KEEP(*(.text.fn_08011d08))                                 /* 0x08011d08 */
     KEEP(*(.text.fn_08011dfc))                                 /* 0x08011dfc */
     KEEP(*(.text.fn_08011e84))                                 /* 0x08011e84 */
-    KEEP(*(.text.fn_0801215c))                                 /* 0x0801215c */
     KEEP(*(.text.fn_08012244))                                 /* 0x08012244 */
     KEEP(*(.text.fn_08012344))                                 /* 0x08012344 */
     KEEP(*(.text.fn_08012478))                                 /* 0x08012478 */
@@ -206,7 +204,6 @@ SECTIONS
     KEEP(*(.text.draw_thumbnail_grid))                         /* 0x0801ede8 */
     KEEP(*(.text.draw_image_and_three_texts))                  /* 0x0801f19c */
     KEEP(*(.text.draw_bitmap_and_text))                        /* 0x0801f2c4 */
-    KEEP(*(.text.draw_language_list))                          /* 0x0801f324 */
     KEEP(*(.text.draw_channel_offset_markers_0801f608))        /* 0x0801f608 */
     KEEP(*(.text.fn_0801f60c))                                 /* 0x0801f60c */
     KEEP(*(.text.draw_percent_bar))                            /* 0x0801f660 */

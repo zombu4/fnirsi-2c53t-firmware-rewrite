@@ -71,7 +71,7 @@
 @ unit index below use i-16), divided by 1000 up to three times while
 @ |v|>999999, to float, /100 for i=2,3, /1000 for i=6..11, /1000 again with unit
 @ index+1 when |f|>=1000; text "%s%.2f%s" when |f|<100 else "%s%.1f%s" (label
-@ from word 0x0804bf28+((byte 0x20001058==1 ? 12 : 0)+i)*4, unit from the
+@ from the English label table d_0804bf28 word i, unit from the
 @ two-level table at 0x0801ca18/0x0801ca24: Hz/KHz/MHz, nS/uS/mS/S, %, mV/V),
 @ drawn with 0800f154(x,y,100,0xf,font 0x200010b4,colour from halfword table,0).
 @ Cursor lines and their label list (only when byte 0x2000012c==0): byte
@@ -116,18 +116,18 @@
 @ (0x3e,0x59,0x101,0x55,0x3e,0xa1), (0x101,0x55,0x3e,0xa1,0x101,0x98),
 @ (0x3e,0xa1,0x101,0x98,0xfa,0xa1) and draw_4bpp_bitmap
 @ 0801ffcc(0x3d,0x50,0xc6,0x53,bitmap 0x0804fd00,0x55f).
-@ Pop-up texts (0800f154, font 0x20001174, colour 0x55f, word at table +
-@ (byte 0x20001058 - 1)*4): byte 0x20000f08==3 table 0x0804c010 and ==2 table
-@ 0x0804bff0 at (0x3f,0x50,0xc2,0x53,flag 1); ==1: byte
-@ 0x20000f13=0803b878("2:/Screenshot simple file"), text table 0x0804bfd0 at
+@ Pop-up texts (0800f154, font 0x20001174, colour 0x55f, English text named
+@ directly; V1.2.0 read them from 8-word language rows): byte 0x20000f08==3
+@ "Save failed" and ==2 "Saved" at (0x3f,0x50,0xc2,0x53,flag 1); ==1: byte
+@ 0x20000f13=0803b878("2:/Screenshot simple file"), "Saving..." at
 @ (0x3f,0x60,0xc2,0x19,flag 1), "%d.bmp" of byte 0x20000f09 at
 @ (0x3f,0x76,0xc2,0x19,flag 1), byte 0x20000f08=0xff, byte 0x20001060=10, then
 @ 08041cf0(word 0x20002d6c, &byte, -1) with byte 0x24 and again with byte 3;
-@ byte 0x2000010f==2 and 0x20000126!=0: table 0x0804c030 at
-@ (0x3f,0x50,0xc2,0x53,1); byte 0x20000127: table 0x0804c050, byte 0x20000128:
-@ table 0x0804c070, (0x20000126==0 and 0x20000f04==0 and 0x20000f00<10): table
-@ 0x0804c090, byte 0x2000012b: table 0x0804c0b0, each at
-@ (0x3f,0x58,0xc2,0x4b,flag 0x81).
+@ byte 0x2000010f==2 and 0x20000126!=0: "Await Trigger..." at
+@ (0x3f,0x50,0xc2,0x53,1); byte 0x20000127: "Awaiting Auto Measurement...", byte
+@ 0x20000128: "Awaiting auto-correction...", (0x20000126==0 and 0x20000f04==0 and
+@ 0x20000f00<10): "Exceeded Limit", byte 0x2000012b: "Waiting for automatic
+@ amplitude calibration", each at (0x3f,0x58,0xc2,0x4b,flag 0x81).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_waveform_display,"ax",%progbits
 	.p2align 2

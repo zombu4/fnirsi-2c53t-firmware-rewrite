@@ -5,12 +5,12 @@
 @ (reference only: nothing depends on that address; it ties each label to the vendor slot or code
 @ literal that used it). Each string is its own .asciz (V1.2.0 shared tails between strings, e.g.
 @ "Hz" inside "MHz"; here every label has its own bytes).
-@ Users: the text pointer tables of src/rodata.s (d_0804bf28 .. d_0804c988), whose every language
-@ slot names the English label here, and the code (movw / movt pairs and literal words).
-@ Characters: ASCII plus U+03A9 (Ohm), U+2103 (degree C), U+2109 (degree F) of the unit table, and
-@ the language name "中文" of the language list (draw_language_list, ui_pages_80.s; the language
-@ page shows the name of each language in that language, so the name is the same in every UI
-@ language). No string contains "FNIRSI" (none in V1.2.0's text either).
+@ Users: the text pointer tables of src/rodata.s (d_0804bf28 .. d_0804c988, one word per item)
+@ and the code (movw / movt pairs and literal words).
+@ Characters: ASCII plus U+03A9 (Ohm), U+2103 (degree C), U+2109 (degree F) of the unit table.
+@ (V1.2.0's language page and its names "中文" / "English", the menu item "Language" and the
+@ pictures of the Chinese layout, 81 / 83 / 85 / 152.jpg, are removed with the language choice.)
+@ No string contains "FNIRSI" (none in V1.2.0's text either).
 @ Section .rodata.text, placed by link.ld after .rodata.fixed (src/rodata.s); byte alignment.
 	.syntax unified
 	.arch armv7e-m
@@ -103,7 +103,7 @@ t_080bd0d6:	.asciz "℉"
 t_080bb5ef:	.asciz "%"
 
 @ ----------------------------------------------------------------------------
-@ Status messages (8-word rows d_0804bfd0 .. d_0804c0b0, d_0804c188 .. d_0804c1e8)
+@ Status messages (named directly by draw_waveform_display and the page routines)
 @ ----------------------------------------------------------------------------
 	.global t_080bb68e
 t_080bb68e:	.asciz "Saving..."
@@ -137,8 +137,6 @@ t_080bc8ae:	.asciz "Auto shutdown soon"
 t_080bba71:	.asciz "Version:"
 	.global t_080bba52
 t_080bba52:	.asciz " Model:"
-	.global t_080bc168
-t_080bc168:	.asciz "Language"
 	.global t_080bcdd0
 t_080bcdd0:	.asciz "Sound and light"
 	.global t_080bce6b
@@ -153,7 +151,8 @@ t_080bce87:	.asciz "About"
 t_080bcdab:	.asciz "Factory Reset"
 
 @ ----------------------------------------------------------------------------
-@ Page titles (8-word rows .L0804c338 .. d_0804c3b8, d_0804c904, .L0804c934 of src/rodata.s)
+@ Page titles and choice texts (named directly by the page routines, and tables d_0804c208,
+@ d_0804c924 of src/rodata.s)
 @ ----------------------------------------------------------------------------
 	.global t_080bc220
 t_080bc220:	.asciz "None"
@@ -502,14 +501,6 @@ t_080bc767:	.asciz "Confirm"
 t_080bc70e:	.asciz "Cancel"
 
 @ ----------------------------------------------------------------------------
-@ Language list names (draw_language_list, draw_page_by_selector_nibble)
-@ ----------------------------------------------------------------------------
-	.global t_080bd09b
-t_080bd09b:	.asciz "中文"
-	.global t_080bc6ae
-t_080bc6ae:	.asciz "English"
-
-@ ----------------------------------------------------------------------------
 @ Kernel task names (create_idle_and_tmr_svc_tasks, create_tmr_svc_record_or_halt)
 @ ----------------------------------------------------------------------------
 	.global t_080bbc32
@@ -569,16 +560,10 @@ t_080bc5fc:	.asciz "3:/System file/78.jpg"
 t_080bc63f:	.asciz "3:/System file/79.jpg"
 	.global t_080bc429
 t_080bc429:	.asciz "3:/System file/80.jpg"
-	.global t_080bc46c
-t_080bc46c:	.asciz "3:/System file/81.jpg"
 	.global t_080bc4af
 t_080bc4af:	.asciz "3:/System file/82.jpg"
-	.global t_080bc4dc
-t_080bc4dc:	.asciz "3:/System file/83.jpg"
 	.global t_080bc508
 t_080bc508:	.asciz "3:/System file/84.jpg"
-	.global t_080bc560
-t_080bc560:	.asciz "3:/System file/85.jpg"
 	.global t_080bc5a2
 t_080bc5a2:	.asciz "3:/System file/86.jpg"
 	.global t_080bc612
@@ -603,5 +588,3 @@ t_080bc43f:	.asciz "3:/System file/141.jpg"
 t_080bc4c5:	.asciz "3:/System file/143.jpg"
 	.global t_080bc533
 t_080bc533:	.asciz "3:/System file/145.jpg"
-	.global t_080bc482
-t_080bc482:	.asciz "3:/System file/152.jpg"

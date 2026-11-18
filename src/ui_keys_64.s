@@ -47,12 +47,16 @@
 @      by 1 when [0x20001062]+5 is below the new value, sends 8,0x17,0x18,0x19
 @      and tail-calls 08029e14.
 @   Sub-states 1 and 2 then send 0x19.
-@ State 4: edits [0x20001062]/[0x20001063] upward (limits from table
-@   0x0800b1d8) with codes 0x20,0x21.
+@ State 4 (system settings menu, items 0..5: Sound and light, Startup on Boot,
+@   Auto Shutdown, USB Sharing, About, Factory Reset): sub 0 moves the item
+@   [0x20001062] down to at most 5 (V1.2.0: 6, with the language item 0), sub 1
+@   raises the value [0x20001063] up to the item's limit (table .L0800b1d8);
+@   codes 0x20,0x21.
 @ State 5: [0x20000f14]==0 raises [0x20000f15] by 3 up to [0x20000f13]-1,
 @   sends 0x27,0x28; ==1 sets [0x20000f14]=2, sends 0x2a.
 @ State 6: [0x20000f14]==1 sets 2, sends 0x2a.
-@ State 8: increments byte [0x20001058] up to 2, sends 0x2c.
+@ State 8: returns (V1.2.0: the language page, incremented byte [0x20001058] up
+@   to 2 and sent 0x2c; there is no language page any more).
 @ State 9: edits [0x20001061..63] upward (limits table 0x0800b1f0) with codes
 @   0x13,0x14.
 @ Other states return. Purpose not determined from the code.
@@ -80,9 +84,9 @@ fn_0800a900:
 	.short (.L0800aa3c - .L0800a920)/2
 	.short (.L0800aa9a - .L0800a920)/2
 	.short (.L0800aaec - .L0800a920)/2
-	.short (.L0800b1b2 - .L0800a920)/2
-	.short (.L0800ab12 - .L0800a920)/2
-	.short (.L0800ab38 - .L0800a920)/2
+	.short (.L0800b1b2 - .L0800a920)/2	@ state 7: return
+	.short (.L0800b1b2 - .L0800a920)/2	@ state 8: return (no such page; V1.2.0: language page)
+	.short (.L0800ab38 - .L0800a920)/2	@ state 9
 .L0800a932:
 	ldrb.w r0, [r6, #0xf2d]
 	ldrb.w r1, [r6, #0xf5d]
@@ -185,8 +189,8 @@ fn_0800a900:
 	cmp r0, #0
 	bne.w .L0800b1b2
 	ldrb.w r0, [r6, #0xf6a]
-	and.w r1, r0, #0xe
-	cmp r1, #5
+	and.w r1, r0, #0xf		@ system settings item 0..5
+	cmp r1, #4			@ item 5 (Factory Reset) is the last
 	bhi.w .L0800b1b2
 	adds r1, r0, #1
 	uxtb r2, r1
@@ -253,19 +257,6 @@ fn_0800a900:
 	ldr r0, [r0]
 	movt r1, #0x2000
 	movs r3, #0x2a
-	b.n .L0800b00e
-.L0800ab12:
-	ldrb.w r0, [r6, #0xf60]
-	cmp r0, #1
-	bhi.w .L0800b1b2
-	adds r0, #1
-	strb.w r0, [r6, #0xf60]
-	movw r0, #0x2d6c
-	movt r0, #0x2000
-	movw r1, #0x2d53
-	ldr r0, [r0]
-	movt r1, #0x2000
-	movs r3, #0x2c
 	b.n .L0800b00e
 .L0800ab38:
 	ldrb.w r0, [r6, #0xf69]
@@ -862,7 +853,12 @@ fn_0800a900:
 .L0800b1d0:
 	.word 0x00000000, 0x40240000	@ double 10.0
 .L0800b1d8:
-	.byte 0x01, 0x01, 0x03, 0x03, 0x00, 0x00, 0x01, 0x00	@ limit table (state 4, indexed by [0x20001062]&0xf)
+	@ limit table (state 4, indexed by the system settings item [0x20001062]&0xf):
+	@ highest value [0x20001063] of item 0 Sound and light (row 0 / 1), 1 Startup on
+	@ Boot (4 choices), 2 Auto Shutdown (4 choices), 3 USB Sharing, 4 About, 5 Factory
+	@ Reset (2 buttons); bytes 6, 7 belong to no item (V1.2.0 had the language item 0,
+	@ limit 1, in front)
+	.byte 0x01, 0x03, 0x03, 0x00, 0x00, 0x01, 0x00, 0x00
 .L0800b1e0:
 	.word 0x43480000	@ float 200.0
 .L0800b1e4:
@@ -895,7 +891,8 @@ fn_0800a900:
 @   [0x20002d6c] and 1 to queue [0x20002d78], then 08025fc0.
 @ State 3: when [0x20001061]==2 adds 0x10 to [0x20001063] within limits
 @   (0x40, 0x20) and sends 0x19.
-@ State 4: when [0x20001061]==1 and [0x20001062]&0xf==1 lowers byte
+@ State 4: when [0x20001061]==1 and [0x20001062]&0xf==0 (system settings item
+@   Sound and light; 1 in V1.2.0, which had the language item 0) lowers byte
 @   [0x2000105a] by 1 when nonzero ([0x20001063]==0) or otherwise byte
 @   [0x20001059] by 5 when it is at least 26 (written to 0x40015034) and
 @   sends 0x21.
@@ -1115,7 +1112,7 @@ fn_0800b1f8:
 	bne.w .L0800b7c4
 	ldrb.w r0, [r5, #0xf6a]
 	and.w r0, r0, #0xf
-	cmp r0, #1
+	cmp r0, #0			@ system settings item 0 = Sound and light
 	bne.w .L0800b7c4
 	ldrb.w r0, [r5, #0xf6b]
 	cmp r0, #0

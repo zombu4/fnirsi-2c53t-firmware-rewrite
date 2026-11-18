@@ -198,5 +198,5 @@ R0.15, Copyright (C) ChaN, under the FatFs license (`assets/tables/LICENSE-FatFs
 
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
 names are trademarks of their owners. Content derived from the vendor's firmware (the application
-port, the stock bootloader port, `assets/rodata.bin` and `assets/vendor_kept/`) is not licensed by
+port, the stock bootloader port, and `assets/vendor_kept/`) is not licensed by
 this project.

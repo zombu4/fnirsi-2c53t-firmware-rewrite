@@ -29,10 +29,15 @@
 @   and copies 0x2000044e.. to 0x200006a8.. and 0x2000057b.. to 0x20000aa8..;
 @   sends 2.
 @ state 3: advances [0x20001061] (wraps to 1 with [0x20001063]&=0xf), sends 0x19.
-@ state 4: sub-state advance on [0x20001062]&0xf; at sub 2 applies the item:
-@   0 sets byte [0x20001058]=[0x20001063]+1 (sends 0x1f,0x20), 2/3 store
-@   [0x20001063] into [0x2000105c]/[0x2000105d], 4 sets state 7 and calls
-@   08012908, 6 with value 0 calls 080293bc(0) (never returns); sends 0x21.
+@ state 4 (system settings menu; item = [0x20001062]&0xf: 0 Sound and light,
+@   1 Startup on Boot, 2 Auto Shutdown, 3 USB Sharing, 4 About, 5 Factory Reset):
+@   with sub [0x20001061] <= 1, sub becomes sub+1 (item 4: stays 0); Factory
+@   Reset opened (sub 1) sets value [0x20001063]=1; at sub 2 applies the item:
+@   0 back to sub 1, 1/2 store [0x20001063] into [0x2000105c]/[0x2000105d] and
+@   back to sub 1, 3 sets state 7, calls 08012908 and back to sub 1, 5 with value
+@   0 calls 080293bc(0) (never returns), else sub 0; sends 0x21 while state is 4.
+@   (V1.2.0 had the language item 0 in front, which set byte [0x20001058] =
+@   [0x20001063]+1; the other items were numbered one higher.)
 @ state 5: [0x20000f14]==2 clears it and sends 0x26,0x28; ==1 sends 0,0x2b,
 @   sets state 5, calls 08012908 and stores state 0xb; ==0 toggles bit
 @   ([0x20000f15]%6) in the byte table 0x20000f0a.. (or enters state 6 when
@@ -40,7 +45,7 @@
 @ state 6: [0x20000f14]==2 clears it and sets state 5; ==1 sends 0x2b, runs
 @   08012908 with state 5 then stores state 0xc.
 @ state 7: sets state 4, sets bit1 of 0x40005c40 and 0x40005c60, calls 08012908.
-@ state 8: sets state 0 and calls 08012908.
+@ state 8: returns (V1.2.0: the language page, set state 0 and called 08012908).
 @ state 9: sub>=2 edits bit masks of the word [0x20000144] (item high nibble
 @   [0x20001063]>>4: 0xd clears halves, 0xc sets 0xfff, else toggles bit) and
 @   sends 0x14; sub<2 advances sub and at 2 applies item [0x20001062]&0xf:
@@ -76,7 +81,7 @@ fn_0800bd60:
 	.short (.L0800c11c - .L0800bd7c)/2
 	.short (.L0800c1a4 - .L0800bd7c)/2
 	.short (.L0800bf08 - .L0800bd7c)/2
-	.short (.L0800c1e6 - .L0800bd7c)/2
+	.short (.L0800c5a8 - .L0800bd7c)/2	@ state 8: return (no such page; V1.2.0: language page)
 	.short (.L0800bf28 - .L0800bd7c)/2
 .L0800bd90:
 	ldrb.w r0, [r5, #0xf69]
@@ -161,48 +166,27 @@ fn_0800bd60:
 	cmp r2, #1
 	bhi.w .L0800c5a8
 	ldrb.w r0, [r5, #0xf6a]
-	and.w r0, r0, #0xf
-	subs r1, r0, #5
+	and.w r0, r0, #0xf		@ system settings item 0..5
+	subs r1, r0, #4			@ item 4 About: sub stays 0
 	it ne
-	addne r1, r2, #1
-	cmp r0, #6
+	addne r1, r2, #1		@ other items: sub + 1
+	cmp r0, #5			@ item 5 Factory Reset
 	strb.w r1, [r5, #0xf69]
 	it eq
 	cmpeq r1, #1
-	beq.w .L0800c346
+	beq.w .L0800c346		@ Factory Reset opened: value 1 (Return)
 	cmp r1, #2
 	bne.w .L0800c58a
-	cmp r0, #6
+	cmp r0, #5
 	bhi.w .L0800c58a
-	tbh [pc, r0, lsl #1]
+	tbh [pc, r0, lsl #1]		@ sub reached 2: apply the item
 .L0800bebc:
-	.short (.L0800beca - .L0800bebc)/2
-	.short (.L0800bf04 - .L0800bebc)/2
-	.short (.L0800c554 - .L0800bebc)/2
-	.short (.L0800c560 - .L0800bebc)/2
-	.short (.L0800c56c - .L0800bebc)/2
-	.short (.L0800c58a - .L0800bebc)/2
-	.short (.L0800c57a - .L0800bebc)/2
-.L0800beca:
-	ldrb.w r0, [r5, #0xf6b]
-	movw r6, #0x2d6c
-	adds r0, #1
-	movw r4, #0x2d53
-	movt r6, #0x2000
-	strb.w r0, [r5, #0xf60]
-	movt r4, #0x2000
-	movs r1, #0x1f
-	ldr r0, [r6]
-	strb r1, [r4]
-	mov r1, r4
-	mov.w r2, #0xffffffff
-	bl queue_send_timeout
-	movs r1, #0x20
-	ldr r0, [r6]
-	strb r1, [r4]
-	mov r1, r4
-	mov.w r2, #0xffffffff
-	bl queue_send_timeout
+	.short (.L0800bf04 - .L0800bebc)/2	@ 0 Sound and light: back to sub 1
+	.short (.L0800c554 - .L0800bebc)/2	@ 1 Startup on Boot: [0x2000105c] = value
+	.short (.L0800c560 - .L0800bebc)/2	@ 2 Auto Shutdown: [0x2000105d] = value
+	.short (.L0800c56c - .L0800bebc)/2	@ 3 USB Sharing: state 7
+	.short (.L0800c58a - .L0800bebc)/2	@ 4 About
+	.short (.L0800c57a - .L0800bebc)/2	@ 5 Factory Reset: value 0 resets
 .L0800bf04:
 	movs r0, #1
 	b.n .L0800c586
@@ -437,10 +421,6 @@ fn_0800bd60:
 	strb.w r0, [r5, #0xf68]
 	add sp, #0x18
 	pop.w {r4, r5, r6, r7, r8, pc}
-.L0800c1e6:
-	movs r0, #0
-	strb.w r0, [r5, #0xf68]
-	b.n .L0800c392
 .L0800c1ee:
 	ldrb.w r1, [r5, #0xf6b]
 	movs r0, #1

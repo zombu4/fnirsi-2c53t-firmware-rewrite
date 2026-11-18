@@ -146,7 +146,7 @@ ram_init:
 	.error "ram_init: language byte not at 0x20001058"
 	.endif
 @ 0x20001058..0x2000105B: word 0x0800602C of the settings page when it is valid; otherwise
-@ system_bring_up sets the low byte (the language byte) to 1
+@ system_bring_up sets the low byte (the language byte, no longer read for texts) to 2
 	.byte	0x00			@ 0x20001058: language byte
 	.byte	0x64			@ 0x20001059: 100
 	.byte	0x01			@ 0x2000105A: 1

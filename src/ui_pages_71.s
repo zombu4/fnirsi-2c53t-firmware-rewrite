@@ -83,7 +83,7 @@ fn_08011dfc:
 @ halfwords), allocates 0x8064 bytes (= w*h*2) with 0803acfc into [0x20008358].
 @ When that succeeds it zero-fills w*h halfwords, draws with
 @ 0801ffcc(0x3d, 0x50, 0xc6, 0x53, 0x0804fd00, 0x55f) (4-bit bitmap draw) and the
-@ text pointer [0x0804c184 + 4*[0x20001058]] with
+@ text "Deleting..." with
 @ 0800f154(0x3f, 0x6d, 0xc2, 0x14, text, 0x20001144, 0x55f, 1). Then the hand-off:
 @ 08042ee0 and 080423a8([0x20002d84], 0xffffffff); when that returns 1 and
 @ [0x20008358] != 0 the buffer is released (callback (*[0x20001070])(0) if
@@ -175,11 +175,8 @@ fn_08011e84:
 	movs r3, #0x53
 	str r5, [sp, #0x4]
 	bl draw_4bpp_bitmap
-	ldrb.w r0, [r8, #0xf60]
-	movw r1, #:lower16:d_0804c188
-	movt r1, #:upper16:d_0804c188
-	add.w r0, r1, r0, lsl #2
-	ldr r0, [r0, #-0x4]
+	movw r0, #:lower16:t_080bb682	@ "Deleting..."
+	movt r0, #:upper16:t_080bb682
 	movw r1, #0x1144
 	movt r1, #0x2000
 	movs r7, #0x1
@@ -375,118 +372,6 @@ fn_08011e84:
 	strb.w r0, [r8, #0xf68]
 	add sp, #0x10
 	pop.w {r4, r5, r6, r7, r8, r9, r10, pc}
-	.short 0x0000	@ padding
-
-@ ----------------------------------------------------------------------------
-@ fn_0801215c - No parameters, no return value.
-@ Sets the region record [0x20008350..56] = (0x44, 0xc, 0xb8, 0xd8) (x, y, w, h
-@ halfwords) and allocates 0x13680 bytes (= w*h*2) with 0803acfc into
-@ [0x20008358]. When that succeeds it zero-fills w*h halfwords and calls
-@ 0801f324. Then 08042ee0 and 080423a8([0x20002d84], 0xffffffff); when that
-@ returns 1 and [0x20008358] != 0 the buffer is released (callback
-@ (*[0x20001070])(0) if [0x20001080] == 0, else when
-@ (buf - [0x20001078]) >> 10 < 0xaf 080082bc zeroes its entry range in the
-@ halfword table [0x2000107c]).
-@ ----------------------------------------------------------------------------
-	.section .text.fn_0801215c,"ax",%progbits
-	.p2align 2
-	.global fn_0801215c
-	.thumb_func
-	.type fn_0801215c, %function
-fn_0801215c:
-	push {r4, lr}
-	movw r4, #0x8350
-	movt r4, #0x2000
-	movs r0, #0x44
-	strh r0, [r4, #0x0]
-	movs r0, #0xc
-	strh r0, [r4, #0x2]
-	movs r0, #0xb8
-	strh r0, [r4, #0x4]
-	movs r0, #0xd8
-	strh r0, [r4, #0x6]
-	ldrh r0, [r4, #0x4]
-	ldrh r1, [r4, #0x6]
-	muls r0, r1, r0
-	lsls r0, r0, #1
-	bl alloc_units_of_32_bytes
-	str r0, [r4, #0x8]
-	ldr r0, [r4, #0x8]
-	cmp r0, #0x0
-	beq.n .L08012236
-	ldr.w r12, [r4, #0x8]
-	ldrh r0, [r4, #0x4]
-	ldrh r1, [r4, #0x6]
-	muls r0, r1, r0
-	cbz r0, .L080121e6
-	subs r1, r0, #1
-	and lr, r0, #3
-	movs r3, #0x0
-	cmp r1, #3
-	mov.w r2, #0x0
-	bcc.n .L080121c4
-	movw r1, #0xfffc
-	movt r1, #0x7fff
-	ands r0, r1
-	sub.w r1, r12, #8
-	movs r2, #0x0
-	nop
-.L080121b8:
-	adds r2, #4
-	str.w r3, [r1, #8]!
-	cmp r0, r2
-	str r3, [r1, #4]
-	bne.n .L080121b8
-.L080121c4:
-	cmp.w lr, #0x0
-	beq.n .L080121e6
-	movs r0, #0x0
-	cmp.w lr, #1
-	strh.w r0, [r12, r2, lsl #1]
-	beq.n .L080121e6
-	add.w r1, r12, r2, lsl #1
-	cmp.w lr, #2
-	strh r0, [r1, #2]
-	itt ne
-	movne r0, #0x0
-	strhne r0, [r1, #4]
-.L080121e6:
-	bl draw_language_list
-	bl fn_08042ee0
-	movw r0, #0x2d84
-	movt r0, #0x2000
-	ldr r0, [r0, #0x0]
-	mov.w r1, #0xffffffff
-	bl semaphore_take_timeout
-	cmp r0, #0x1
-	bne.n .L08012236
-	ldr r1, [r4, #0x8]
-	cbz r1, .L08012236
-	movw r0, #0x1070
-	movt r0, #0x2000
-	ldrb r2, [r0, #0x10]
-	cbz r2, .L08012238
-	ldr r2, [r0, #0x8]
-	subs r1, r1, r2
-	lsrs r2, r1, #0xa
-	cmp r2, #0xae
-	bhi.n .L08012236
-	ldr r0, [r0, #0xc]
-	lsrs r2, r1, #5
-	ldrh.w r1, [r0, r2, lsl #1]
-	cmp r1, #0x0
-	it eq
-	popeq {r4, pc}
-	add.w r0, r0, r2, lsl #1
-	lsls r1, r1, #1
-	bl zero_bytes
-.L08012236:
-	pop {r4, pc}
-.L08012238:
-	ldr r1, [r0, #0x0]
-	movs r0, #0x0
-	pop.w {r4, lr}
-	bx r1
 	.short 0x0000	@ padding
 
 @ ----------------------------------------------------------------------------
@@ -1367,8 +1252,8 @@ fn_08012ce8:
 @ ----------------------------------------------------------------------------
 @ fn_08012d2c - No parameters, no return value.
 @ When byte [0x20001061] < 4 draws with
-@ 0800f154(0x4b, 0xbe, 0xaa, 0x19, text, 0x20001174, 0x55f, 1) the text pointer
-@ read from address [0x0804c924 + 4*[0x20001061]] + 4*[0x20001058] - 4 (same
+@ 0800f154(0x4b, 0xbe, 0xaa, 0x19, text, 0x20001174, 0x55f, 1) the text
+@ = word [0x20001061] of d_0804c924 (Multimeter, Oscilloscope, Signal Generator, Settings) (same
 @ drawing step as in 08010014 without region record and buffer).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08012d2c,"ax",%progbits
@@ -1386,11 +1271,8 @@ fn_08012d2c:
 	bhi.n .L08012d7e
 	movw r2, #:lower16:d_0804c924
 	movt r2, #:upper16:d_0804c924
-	ldr.w r1, [r2, r1, lsl #2]
-	ldrb.w r0, [r0, #0xf60]
+	ldr.w r0, [r2, r1, lsl #2]	@ English text of entry [0x20001061]
 	movw r2, #0x1174
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-0x4]
 	movw r1, #0x55f
 	movt r2, #0x2000
 	mov.w r12, #0x1
@@ -1409,8 +1291,7 @@ fn_08012d2c:
 
 @ ----------------------------------------------------------------------------
 @ fn_08012d84 - No parameters, no return value.
-@ Draws "3:/System file/71.jpg" at (0, 0) with 08039f6c, then the text pointer at
-@ 0x0804c900 + 4*[0x20001058] with
+@ Draws "3:/System file/71.jpg" at (0, 0) with 08039f6c, then "Oscilloscope Settings" with
 @ 0800f154(0x34, 0, 0xd8, 0x14, text, 0x20001144, 0xffff, 1) (the drawing step of
 @ 08010314 without region record and buffer).
 @ ----------------------------------------------------------------------------
@@ -1427,13 +1308,8 @@ fn_08012d84:
 	movs r1, #0x0
 	movs r2, #0x0
 	bl decode_image_file_with_offset
-	movw r0, #0xf8
-	movt r0, #0x2000
-	ldrb.w r0, [r0, #0xf60]
-	movw r1, #:lower16:d_0804c904
-	movt r1, #:upper16:d_0804c904
-	add.w r0, r1, r0, lsl #2
-	ldr.w r0, [r0, #-0x4]
+	movw r0, #:lower16:t_080bcce8	@ "Oscilloscope Settings"
+	movt r0, #:upper16:t_080bcce8
 	movw r2, #0x1144
 	movw r1, #0xffff
 	movt r2, #0x2000
@@ -1458,10 +1334,8 @@ fn_08012d84:
 @ number H+0x3f (H+0x37 when D == 0), H+0x40 (H+0x38 when D == 1), H+0x41 (H+0x39
 @ when D == 2), H+0x42 (H+0x3a when D == 3), H+0x43 (H+0x3b when D == 4), H+0x44
 @ (H+0x3c when D == 5). After each image the text is drawn with
-@ 0800f154(0x18, y, 0x4c, 0x24, text, 0x20001114, 0xffff, 0) with the text pointer
-@ at 0x0804c7e4 + 0x20*[0x20001058] + 4*H (row 1), 0x0804c7e8 + 0x20*[0x20001058]
-@ + 4*H (row 2), +4 (row 3), +8 (row 4), 0x0804c7f4 + 0x20*[0x20001058] + 4*H
-@ (row 5), 0x0804c7f8 + 0x20*[0x20001058] + 4*H (row 6).
+@ 0800f154(0x18, y, 0x4c, 0x24, text, 0x20001114, 0xffff, 0) with the text
+@ = word H + row - 1 of the English item table d_0804c804 (rows 1..6).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08012de0,"ax",%progbits
 	.p2align 2
@@ -1495,12 +1369,9 @@ fn_08012de0:
 	movs r2, #0x18
 	mov.w r10, #0x0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
-	movw r11, #:lower16:d_0804c804
+	movw r11, #:lower16:d_0804c804	@ English item names, one word each
 	movt r11, #:upper16:d_0804c804
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0x20]
+	ldr.w r0, [r11, r7, lsl #2]	@ item H
 	movw r8, #0x1114
 	movw r1, #0xffff
 	movt r8, #0x2000
@@ -1527,11 +1398,9 @@ fn_08012de0:
 	movs r1, #0x0
 	movs r2, #0x3c
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
 	movs r1, #0x3c
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0x1c]
+	add.w r0, r11, r7, lsl #2
+	ldr r0, [r0, #0x4]	@ item H+1
 	movs r2, #0x4c
 	strd r0, r8, [sp]
 	movw r0, #0xffff
@@ -1554,11 +1423,9 @@ fn_08012de0:
 	movs r1, #0x0
 	movs r2, #0x60
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
 	movs r1, #0x60
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0x18]
+	add.w r0, r11, r7, lsl #2
+	ldr r0, [r0, #0x8]	@ item H+2
 	movs r2, #0x4c
 	strd r0, r8, [sp]
 	movw r0, #0xffff
@@ -1581,11 +1448,9 @@ fn_08012de0:
 	movs r1, #0x0
 	movs r2, #0x84
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
 	movs r1, #0x84
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0x14]
+	add.w r0, r11, r7, lsl #2
+	ldr r0, [r0, #0xc]	@ item H+3
 	movs r2, #0x4c
 	strd r0, r8, [sp]
 	movw r0, #0xffff
@@ -1608,11 +1473,9 @@ fn_08012de0:
 	movs r1, #0x0
 	movs r2, #0xa8
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
 	movs r1, #0xa8
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0x10]
+	add.w r0, r11, r7, lsl #2
+	ldr r0, [r0, #0x10]	@ item H+4
 	movs r2, #0x4c
 	strd r0, r8, [sp]
 	movw r0, #0xffff
@@ -1636,11 +1499,9 @@ fn_08012de0:
 	movs r1, #0x0
 	movs r2, #0xcc
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r9, #0xf60]
 	movs r1, #0xcc
-	add.w r0, r11, r0, lsl #5
-	add.w r0, r0, r7, lsl #2
-	ldr.w r0, [r0, #-0xc]
+	add.w r0, r11, r7, lsl #2
+	ldr r0, [r0, #0x14]	@ item H+5
 	movs r2, #0x4c
 	strd r0, r8, [sp]
 	movw r0, #0xffff

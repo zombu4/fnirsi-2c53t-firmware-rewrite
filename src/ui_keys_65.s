@@ -27,7 +27,8 @@
 @   for index >= 0x14), calls 08030a70 and 0803b2f8(0,0), writes 4 to 0x40011410,
 @   sends 2 to queue [0x20002d6c] and 1 to queue [0x20002d78], then 08025fc0.
 @ state 3: when [0x20001061] == 2 and [0x20001063] >= 0x10 subtracts 0x10, sends 0x19.
-@ state 4: when [0x20001061] == 1 and [0x20001062] & 0xf == 1 raises byte [0x2000105a]
+@ state 4: when [0x20001061] == 1 and [0x20001062] & 0xf == 0 (system settings item
+@   Sound and light; 1 in V1.2.0, which had the language item 0) raises byte [0x2000105a]
 @   by 1 when it is at most 9 ([0x20001063] == 0) or otherwise byte [0x20001059] by 5
 @   when it is at most 99 (written to 0x40015034), sends 0x21.
 @ state 5: raises [0x20000f15] below [0x20000f13]-1, sends 0x27, 0x28.
@@ -240,7 +241,7 @@ fn_0800b7cc:
 	bne.w	.L0800bb7c
 	ldrb.w	r0, [r5, #0xf6a]
 	and.w	r0, r0, #0xf
-	cmp	r0, #0x1
+	cmp	r0, #0x0		@ system settings item 0 = Sound and light
 	bne.w	.L0800bb7c
 	ldrb.w	r0, [r5, #0xf6b]
 	cmp	r0, #0x0

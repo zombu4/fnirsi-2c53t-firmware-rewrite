@@ -194,8 +194,8 @@ fn_0800ffb8:
 @ 0x2134 bytes (= w*h*2) with alloc_units_of_32_bytes (0803acfc) into
 @ [0x20008358]. When that succeeds it zero-fills w*h halfwords; when byte
 @ [0x20001061] < 4 it draws with draw_wrapped_text_in_box (0800f154)(0x4b, 0xbe,
-@ 0xaa, 0x19, text, 0x20001174, 0x55f, 1), the text pointer read from address
-@ [0x0804c924 + 4*[0x20001061]] + 4*[0x20001058] - 4. Then calls fn_08042ee0 and
+@ 0xaa, 0x19, text, 0x20001174, 0x55f, 1), the text = word [0x20001061] of
+@ d_0804c924 (Multimeter, Oscilloscope, Signal Generator, Settings). Then calls fn_08042ee0 and
 @ semaphore_take_timeout (080423a8)([0x20002d84], 0xffffffff); when that returns
 @ 1 and [0x20008358] != 0 the buffer is released: callback (*[0x20001070])(0) if
 @ [0x20001080] == 0, else when (buf - [0x20001078]) >> 10 < 0xaf zero_bytes
@@ -278,11 +278,8 @@ fn_08010014:
 	bhi.n .L080100f4
 	movw r1, #:lower16:d_0804c924
 	movt r1, #:upper16:d_0804c924
-	ldr.w r0, [r1, r0, lsl #2]
-	ldrb.w r1, [r5, #0xf60]
+	ldr.w r0, [r1, r0, lsl #2]	@ English text of entry [0x20001061]
 	movw r2, #0x1174
-	add.w r0, r0, r1, lsl #2
-	ldr r0, [r0, #-4]
 	movw r1, #0x55f
 	movt r2, #0x2000
 	movs r5, #1
@@ -557,8 +554,8 @@ fn_080102b8:
 @ [0x20008350..56] = (0, 0, 0x10c, 0x14) (x, y, w, h halfwords), allocates 0x29e0
 @ bytes (= w*h*2) with alloc_units_of_32_bytes (0803acfc) into [0x20008358].
 @ When that succeeds it draws "3:/System file/71.jpg" at (0, 0) with
-@ decode_image_file_with_offset (08039f6c), and the text pointer at
-@ 0x0804c900 + 4*[0x20001058] with draw_wrapped_text_in_box (0800f154)(0x34, 0,
+@ decode_image_file_with_offset (08039f6c), and "Oscilloscope Settings" with
+@ draw_wrapped_text_in_box (0800f154)(0x34, 0,
 @ 0xd8, 0x14, text, 0x20001144, 0xffff, 1). Then calls fn_08042ee0 and
 @ semaphore_take_timeout (080423a8)([0x20002d84], 0xffffffff); when that returns
 @ 1 and [0x20008358] != 0 the buffer is released: callback (*[0x20001070])(0) if
@@ -601,11 +598,8 @@ fn_08010314:
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r5, #0xf60]
-	movw r1, #:lower16:d_0804c904
-	movt r1, #:upper16:d_0804c904
-	add.w r0, r1, r0, lsl #2
-	ldr r0, [r0, #-4]
+	movw r0, #:lower16:t_080bcce8	@ "Oscilloscope Settings"
+	movt r0, #:upper16:t_080bcce8
 	movw r2, #0x1144
 	movw r1, #0xffff
 	movt r2, #0x2000
@@ -1022,8 +1016,8 @@ fn_0801067c:
 @ [0x20008350..56] = (0x34, 0, 0xd8, 0x14) (x, y, w, h halfwords), allocates
 @ 0x21c0 bytes (= w*h*2) with alloc_units_of_32_bytes (0803acfc) into
 @ [0x20008358]. When that succeeds it draws "3:/System file/88.jpg" at (0x34, 0)
-@ with decode_image_file_with_offset (08039f6c), and the text pointer at
-@ 0x0804c394 + 4*[0x20001058] with draw_wrapped_text_in_box (0800f154)(0x34, 0,
+@ with decode_image_file_with_offset (08039f6c), and "Signal Generator" with
+@ draw_wrapped_text_in_box (0800f154)(0x34, 0,
 @ 0xd8, 0x14, text, 0x20001144, 0xffff, 1). Then calls fn_08042ee0 and
 @ semaphore_take_timeout (080423a8)([0x20002d84], 0xffffffff); when that returns
 @ 1 and [0x20008358] != 0 the buffer is released: callback (*[0x20001070])(0) if
@@ -1067,11 +1061,8 @@ fn_080106e8:
 	movs r1, #0x34
 	movs r2, #0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r5, #0xf60]
-	movw r1, #:lower16:d_0804c398
-	movt r1, #:upper16:d_0804c398
-	add.w r0, r1, r0, lsl #2
-	ldr r0, [r0, #-4]
+	movw r0, #:lower16:t_080bcbab	@ "Signal Generator"
+	movt r0, #:upper16:t_080bcbab
 	movw r2, #0x1144
 	movw r1, #0xffff
 	movt r2, #0x2000
@@ -1458,8 +1449,8 @@ fn_08010a1c:
 @ [0x20008350..56] = (0x34, 0, 0xd8, 0x1d) (x, y, w, h halfwords), allocates
 @ 0x30f0 bytes (= w*h*2) with alloc_units_of_32_bytes (0803acfc) into
 @ [0x20008358]. When that succeeds it draws "3:/System file/120.jpg" at (0x34, 0)
-@ with decode_image_file_with_offset (08039f6c), and the text pointer at
-@ 0x0804c40c + 4*([0x20001026] + 12*[0x20001058]) with draw_wrapped_text_in_box
+@ with decode_image_file_with_offset (08039f6c), and word [0x20001026] of the
+@ English function name table d_0804c43c with draw_wrapped_text_in_box
 @ (0800f154)(0x34, 0, 0xd8, 0x1d, text, 0x200011a4, 0xffff, 1). Then calls
 @ fn_08042ee0 and semaphore_take_timeout (080423a8)([0x20002d84], 0xffffffff);
 @ when that returns 1 and [0x20008358] != 0 the buffer is released: callback
@@ -1504,14 +1495,10 @@ fn_08010a94:
 	movs r1, #0x34
 	movs r2, #0
 	bl decode_image_file_with_offset
-	ldrb.w r0, [r5, #0xf60]
-	movw r2, #:lower16:d_0804c43c
-	ldrb.w r1, [r5, #0xf2e]
-	add.w r0, r0, r0, lsl #1
+	movw r2, #:lower16:d_0804c43c	@ English multimeter function names
+	ldrb.w r1, [r5, #0xf2e]		@ function byte 0x20001026
 	movt r2, #:upper16:d_0804c43c
-	add.w r0, r2, r0, lsl #4
-	add.w r0, r0, r1, lsl #2
-	ldr r0, [r0, #-0x30]
+	ldr.w r0, [r2, r1, lsl #2]
 	movw r2, #0x11a4
 	movw r1, #0xffff
 	movt r2, #0x2000

@@ -6,15 +6,13 @@
 	.thumb
 
 @ ----------------------------------------------------------------------------
-@ fn_08015740 - draws an image file and a language-indexed text over it at the
-@ top of the screen.
+@ fn_08015740 - draws an image file and the title "Signal Generator" over it at
+@ the top of the screen.
 @ No parameters, no return value.
 @ Calls decode_image_file_with_offset (08039f6c) with
 @ ("3:/System file/88.jpg", 0x34, 0), then draw_wrapped_text_in_box (0800f154)
-@ with (0x34, 0, 0xd8, 0x14, string pointer = word at 0x0804c394 +
-@ byte(0x20001058)*4, font block 0x20001144, colour 0xffff, flag 1).
-@ Purpose: the image at (0x34,0) with a language-indexed text over it; the name
-@ of the screen it belongs to is not determined from the code.
+@ with (0x34, 0, 0xd8, 0x14, "Signal Generator", font block 0x20001144, colour
+@ 0xffff, flag 1) (V1.2.0 took the text from a language row).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08015740,"ax",%progbits
 	.p2align 2
@@ -29,13 +27,8 @@ fn_08015740:
 	movs	r1, #0x34
 	movs	r2, #0
 	bl	decode_image_file_with_offset
-	movw	r0, #0xf8
-	movt	r0, #0x2000				@ r0 = 0x200000f8 (RAM base)
-	ldrb.w	r0, [r0, #0xf60]			@ byte 0x20001058 (language index)
-	movw	r1, #:lower16:d_0804c398
-	movt	r1, #:upper16:d_0804c398
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]				@ word at 0x0804c394 + index*4
+	movw	r0, #:lower16:t_080bcbab		@ "Signal Generator"
+	movt	r0, #:upper16:t_080bcbab
 	movw	r2, #0x1144
 	movw	r1, #0xffff				@ colour 0xffff
 	movt	r2, #0x2000				@ font block 0x20001144
@@ -63,8 +56,8 @@ fn_08015740:
 @ Row i: if first+i == last it calls decode_image_file_with_offset (08039f6c)
 @ ("3:/System file/89.jpg", 0, y), otherwise draw_gradient_bar (08020134)
 @ (y, y+0x23) (e.g. 0x18, 0x3b).
-@ Then draw_wrapped_text_in_box (0800f154)(0, y, 100, 0x24, word at 0x0804c5e8 +
-@ (first+i + byte(0x20001058)*0xd)*4, font block 0x20001114, colour 0xffff,
+@ Then draw_wrapped_text_in_box (0800f154)(0, y, 100, 0x24, word first+i of the
+@ English waveform name table d_0804c61c, font block 0x20001114, colour 0xffff,
 @ flag 1).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_six_row_list_from_first_index,"ax",%progbits
@@ -92,13 +85,9 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0x3b
 	bl	draw_gradient_bar
 .L080157d0:
-	ldrb.w	r0, [r4, #0xf60]			@ byte 0x20001058 (language index)
-	movw	r9, #:lower16:d_0804c61c
+	movw	r9, #:lower16:d_0804c61c		@ English waveform names
 	movt	r9, #:upper16:d_0804c61c
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9				@ table + index*0x34
-	add.w	r0, r0, r7, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r7, lsl #2]			@ name of waveform first
 	movw	r10, #0x1114
 	movs	r1, #1
 	movt	r10, #0x2000				@ font block 0x20001114
@@ -125,11 +114,7 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0x5f
 	bl	draw_gradient_bar
 .L0801582e:
-	ldrb.w	r0, [r4, #0xf60]
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r5, lsl #2]			@ name of waveform r5
 	movs	r1, #1
 	strd	r0, r10, [sp]
 	str	r1, [sp, #0xc]
@@ -153,11 +138,7 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0x83
 	bl	draw_gradient_bar
 .L08015878:
-	ldrb.w	r0, [r4, #0xf60]
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r5, lsl #2]			@ name of waveform r5
 	movs	r1, #1
 	strd	r0, r10, [sp]
 	str	r1, [sp, #0xc]
@@ -181,11 +162,7 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0xa7
 	bl	draw_gradient_bar
 .L080158c2:
-	ldrb.w	r0, [r4, #0xf60]
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r5, lsl #2]			@ name of waveform r5
 	movs	r1, #1
 	strd	r0, r10, [sp]
 	str	r1, [sp, #0xc]
@@ -209,11 +186,7 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0xcb
 	bl	draw_gradient_bar
 .L0801590c:
-	ldrb.w	r0, [r4, #0xf60]
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r5, lsl #2]			@ name of waveform r5
 	movs	r1, #1
 	strd	r0, r10, [sp]
 	str	r1, [sp, #0xc]
@@ -237,11 +210,7 @@ draw_six_row_list_from_first_index:
 	movs	r1, #0xef
 	bl	draw_gradient_bar
 .L08015956:
-	ldrb.w	r0, [r4, #0xf60]
-	movs	r1, #0x34
-	smlabb	r0, r0, r1, r9
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x34]
+	ldr.w	r0, [r9, r5, lsl #2]			@ name of waveform r5
 	movs	r7, #1
 	strd	r0, r10, [sp]
 	movs	r0, #0
@@ -272,8 +241,8 @@ draw_six_row_list_from_first_index:
 @ 1 for the other rows. Label colour = halfword at 0x080be30a + idx*2 (0x8c73,
 @ 0xffff, 0x055f, 0x0000 for idx 0..3); the unit colour uses idx with 3
 @ replaced by 1.
-@ Label: draw_wrapped_text_in_box (0800f154)(0x7a, y, 0x36, 0x16, word at
-@ 0x0804c5b0 + (i + byte(0x20001058)*3)*4, font 0x20001114, label colour,
+@ Label: draw_wrapped_text_in_box (0800f154)(0x7a, y, 0x36, 0x16, word i of
+@ the English label table d_0804c5bc, font 0x20001114, label colour,
 @ flag 1); unit: 0800f154(0x10e, y, 0x14, 0x16, word at 0x08015be0 + i*4 ("Hz",
 @ "%", "V"), font 0x20001114, unit colour, flag 1).
 @ Value text into 0x20008360 via format_to_buffer_080073b4: i=0 "%02d %03d" of
@@ -342,7 +311,6 @@ draw_three_value_rows:
 	ldrb.w	r3, [r5, #0xf6b]
 	cmp	r2, #0
 	mov.w	r2, #3
-	ldrb.w	r1, [r5, #0xf60]
 	it	eq
 	moveq	r2, #1
 	subs	r0, #1
@@ -355,19 +323,16 @@ draw_three_value_rows:
 	movcc	r7, r2
 	cmp	r8, r0
 	mov.w	r6, #1
-	add.w	r0, r1, r1, lsl #1
-	movw	r1, #:lower16:d_0804c5bc
+	movw	r1, #:lower16:d_0804c5bc		@ English labels Frequency, Duty Cycle, Amplitude
 	it	eq
 	moveq	r6, #3
 	movt	r1, #:upper16:d_0804c5bc
 	cmp	r7, #3
 	it	ne
 	movne	r6, r7
-	add.w	r0, r1, r0, lsl #2
 	movw	r7, #:lower16:d_080be30a
-	add.w	r0, r0, r8, lsl #2
 	movt	r7, #:upper16:d_080be30a
-	ldr.w	r0, [r0, #-0xc]
+	ldr.w	r0, [r1, r8, lsl #2]			@ label of row i
 	ldrh.w	r1, [r7, r6, lsl #1]
 	movw	r11, #0x1114
 	movt	r11, #0x2000
@@ -505,8 +470,8 @@ draw_three_value_rows:
 @ No parameters, no return value.
 @ Calls decode_image_file_with_offset (08039f6c)
 @ ("3:/System file/120.jpg", 0x34, 0), then draw_wrapped_text_in_box (0800f154)
-@ (0x34, 0, 0xd8, 0x1d, word at 0x0804c40c + (byte(0x20001026) +
-@ byte(0x20001058)*0xc)*4, font block 0x200011a4, colour 0xffff, flag 1).
+@ (0x34, 0, 0xd8, 0x1d, word byte(0x20001026) of the English function name
+@ table d_0804c43c, font block 0x200011a4, colour 0xffff, flag 1).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_header_image_120,"ax",%progbits
 	.p2align 2
@@ -523,14 +488,10 @@ draw_header_image_120:
 	bl	decode_image_file_with_offset
 	movw	r0, #0xf8
 	movt	r0, #0x2000				@ r0 = 0x200000f8 (RAM base)
-	ldrb.w	r1, [r0, #0xf60]			@ byte 0x20001058 (language index)
-	movw	r2, #:lower16:d_0804c43c
+	movw	r2, #:lower16:d_0804c43c		@ English multimeter function names
 	ldrb.w	r0, [r0, #0xf2e]			@ byte 0x20001026
-	add.w	r1, r1, r1, lsl #1
 	movt	r2, #:upper16:d_0804c43c
-	add.w	r1, r2, r1, lsl #4			@ table + index*0x30
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-0x30]			@ word at 0x0804c40c + (...)*4
+	ldr.w	r0, [r2, r0, lsl #2]			@ name of function [0x20001026]
 	movw	r2, #0x11a4
 	movw	r1, #0xffff				@ colour 0xffff
 	movt	r2, #0x2000				@ font block 0x200011a4
@@ -553,8 +514,8 @@ draw_header_image_120:
 @ No parameters, no return value.
 @ Calls draw_4bpp_bitmap (0801ffcc)(10, 0xb8, 300, 0x34, bitmap 0x0804de88,
 @ colour 0xffff), then three columns x=10, 0x6e, 0xd2 (col c=0,1,2).
-@ Label: draw_wrapped_text_in_box (0800f154)(x, 0xc0, 100, 0x14, word at
-@ 0x0804c3d8 + 4*c + (3*(byte 0x20001058 != 1))*4, font block 0x20001144,
+@ Label: draw_wrapped_text_in_box (0800f154)(x, 0xc0, 100, 0x14, word c of the
+@ English label table d_0804c3d8 (MAX, MEAN, MIN), font block 0x20001144,
 @ colour 0x6bb0, flag 1).
 @ Value: if (float word 0x20001040/44/48 & 0x7fffffff) < 0x7f800001 (not NaN)
 @ and byte 0x2000104c/4d/4e < 5 it formats with format_to_buffer_080073b4 into
@@ -586,14 +547,9 @@ draw_value_panel:
 	bl	draw_4bpp_bitmap
 	movw	r7, #0xf8
 	movt	r7, #0x2000				@ r7 = 0x200000f8 (RAM base)
-	ldrb.w	r0, [r7, #0xf60]			@ byte 0x20001058
-	movw	r8, #:lower16:d_0804c3d8
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #1			@ 3 * (byte != 1)
+	movw	r8, #:lower16:d_0804c3d8		@ English labels MAX MEAN MIN
 	movt	r8, #:upper16:d_0804c3d8
-	ldr.w	r0, [r8, r0, lsl #2]			@ label of column 0
+	ldr.w	r0, [r8]				@ label of column 0
 	movw	r1, #0x1144
 	movt	r1, #0x2000				@ font block 0x20001144
 	mov.w	r10, #1
@@ -650,14 +606,8 @@ draw_value_panel:
 	str	r6, [sp, #8]
 	bl	draw_wrapped_text_in_box
 .L0801cba4:
-	ldrb.w	r0, [r7, #0xf60]
 	movs	r1, #0xc0
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #1
-	add.w	r0, r8, r0, lsl #2
-	ldr	r0, [r0, #4]				@ label of column 1
+	ldr.w	r0, [r8, #4]				@ label of column 1
 	strd	r11, r10, [sp, #8]
 	movw	r10, #0x1144
 	str	r0, [sp]
@@ -709,14 +659,8 @@ draw_value_panel:
 	str	r6, [sp, #8]
 	bl	draw_wrapped_text_in_box
 .L0801cc50:
-	ldrb.w	r0, [r7, #0xf60]
 	movs	r1, #1
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #1
-	add.w	r0, r8, r0, lsl #2
-	ldr	r0, [r0, #8]				@ label of column 2
+	ldr.w	r0, [r8, #8]				@ label of column 2
 	movw	r2, #0x6bb0
 	str	r0, [sp]
 	strd	r2, r1, [sp, #8]
@@ -770,13 +714,13 @@ draw_value_panel:
 	pop.w	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 
 @ ----------------------------------------------------------------------------
-@ fn_0801ccfc - draws an image file and a language-indexed text at the top of
-@ the screen; the screen it belongs to is not determined from the code.
+@ fn_0801ccfc - draws an image file and the title "System Settings" at the top
+@ of the screen.
 @ No parameters, no return value.
 @ Calls decode_image_file_with_offset (08039f6c)("3:/System file/71.jpg", 0, 0),
-@ then draw_wrapped_text_in_box (0800f154)(0x34, 0, 0xd8, 0x14, word at
-@ 0x0804c3b4 + byte(0x20001058)*4, font block 0x20001144, colour 0xffff,
-@ flag 1).
+@ then draw_wrapped_text_in_box (0800f154)(0x34, 0, 0xd8, 0x14, "System
+@ Settings", font block 0x20001144, colour 0xffff, flag 1) (V1.2.0 took the
+@ text from a language row).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0801ccfc,"ax",%progbits
 	.p2align 2
@@ -791,13 +735,8 @@ fn_0801ccfc:
 	movs	r1, #0
 	movs	r2, #0
 	bl	decode_image_file_with_offset
-	movw	r0, #0xf8
-	movt	r0, #0x2000				@ r0 = 0x200000f8 (RAM base)
-	ldrb.w	r0, [r0, #0xf60]			@ byte 0x20001058 (language index)
-	movw	r1, #:lower16:d_0804c3b8
-	movt	r1, #:upper16:d_0804c3b8
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]				@ word at 0x0804c3b4 + index*4
+	movw	r0, #:lower16:t_080bccfe		@ "System Settings"
+	movt	r0, #:upper16:t_080bccfe
 	movw	r2, #0x1144
 	movw	r1, #0xffff				@ colour 0xffff
 	movt	r2, #0x2000				@ font block 0x20001144
@@ -815,8 +754,13 @@ fn_0801ccfc:
 	.short	0x0000					@ padding
 
 @ ----------------------------------------------------------------------------
-@ draw_six_row_list - draws a six-row text list in which the row at index diff
+@ draw_six_row_list - draws the system settings menu (left half of state 4's
+@ page): a six-row text list in which the row at index diff
 @ is highlighted with 89.jpg and the other rows use a gradient.
+@ Menu items (d_0804c258, English): 0 Sound and light, 1 Startup on Boot, 2 Auto
+@ Shutdown, 3 USB Sharing, 4 About, 5 Factory Reset. All six are visible, so the
+@ key handlers keep hi = 0 (V1.2.0 had a seventh item, Language, in front and
+@ scrolled the 6-row window over 7 items).
 @ No parameters, no return value.
 @ diff = (byte 0x20001062 & 0xf) - (byte 0x20001062 >> 4),
 @ hi = byte 0x20001062 >> 4; rows n=0..5 at x=0, y=0x18+0x24*n.
@@ -824,9 +768,8 @@ fn_0801ccfc:
 @ ("3:/System file/89.jpg", 0, y), otherwise draw_gradient_bar (08020134)
 @ (y, y+0x23) (the arguments are 0x18,0x3b / 0x3c,0x5f / 0x60,0x83 / 0x84,0xa7 /
 @ 0xa8,0xcb / 0xcc,0xef).
-@ Text: draw_wrapped_text_in_box (0800f154)(0, y, 100, 0x24, word at 0x0804c23c
-@ + (n + hi + byte(0x20001058)*7)*4, font block 0x20001114, colour 0xffff,
-@ flag 1).
+@ Text: draw_wrapped_text_in_box (0800f154)(0, y, 100, 0x24, word n + hi of
+@ d_0804c258, font block 0x20001114, colour 0xffff, flag 1).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_six_row_list,"ax",%progbits
 	.p2align 2
@@ -855,13 +798,9 @@ draw_six_row_list:
 	movs	r2, #0x18
 	bl	decode_image_file_with_offset
 .L0801cd94:
-	ldrb.w	r0, [r4, #0xf60]			@ byte 0x20001058 (language index)
-	movw	r6, #:lower16:d_0804c258
-	rsb	r0, r0, r0, lsl #3			@ index*7
+	movw	r6, #:lower16:d_0804c258		@ English menu item names (6 words)
 	movt	r6, #:upper16:d_0804c258
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x1c]
+	ldr.w	r0, [r6, r5, lsl #2]			@ item hi + 0
 	movw	r9, #0x1114
 	movs	r1, #1
 	movt	r9, #0x2000				@ font block 0x20001114
@@ -887,12 +826,9 @@ draw_six_row_list:
 	movs	r1, #0x5f
 	bl	draw_gradient_bar
 .L0801cdf2:
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r1, #1
-	rsb	r0, r0, r0, lsl #3
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x18]
+	add.w	r0, r6, r5, lsl #2
+	ldr	r0, [r0, #4]				@ item hi + 1
 	str	r1, [sp, #0xc]
 	strd	r0, r9, [sp]
 	movs	r0, #0
@@ -914,12 +850,9 @@ draw_six_row_list:
 	movs	r1, #0x83
 	bl	draw_gradient_bar
 .L0801ce3c:
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r1, #1
-	rsb	r0, r0, r0, lsl #3
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x14]
+	add.w	r0, r6, r5, lsl #2
+	ldr	r0, [r0, #8]				@ item hi + 2
 	str	r1, [sp, #0xc]
 	strd	r0, r9, [sp]
 	movs	r0, #0
@@ -941,12 +874,9 @@ draw_six_row_list:
 	movs	r1, #0xa7
 	bl	draw_gradient_bar
 .L0801ce86:
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r1, #1
-	rsb	r0, r0, r0, lsl #3
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0x10]
+	add.w	r0, r6, r5, lsl #2
+	ldr	r0, [r0, #0xc]				@ item hi + 3
 	str	r1, [sp, #0xc]
 	strd	r0, r9, [sp]
 	movs	r0, #0
@@ -968,12 +898,9 @@ draw_six_row_list:
 	movs	r1, #0xcb
 	bl	draw_gradient_bar
 .L0801ced0:
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r1, #1
-	rsb	r0, r0, r0, lsl #3
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-0xc]
+	add.w	r0, r6, r5, lsl #2
+	ldr	r0, [r0, #0x10]				@ item hi + 4
 	str	r1, [sp, #0xc]
 	strd	r0, r9, [sp]
 	movs	r0, #0
@@ -995,12 +922,9 @@ draw_six_row_list:
 	movs	r1, #0xef
 	bl	draw_gradient_bar
 .L0801cf1a:
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r7, #1
-	rsb	r0, r0, r0, lsl #3
-	add.w	r0, r6, r0, lsl #2
-	add.w	r0, r0, r5, lsl #2
-	ldr.w	r0, [r0, #-8]
+	add.w	r0, r6, r5, lsl #2
+	ldr	r0, [r0, #0x14]				@ item hi + 5
 	movs	r1, #0xcc
 	strd	r0, r9, [sp]
 	movs	r0, #0
