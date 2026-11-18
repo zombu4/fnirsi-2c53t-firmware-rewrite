@@ -360,8 +360,8 @@ halt_loop_296:
 
 @ ----------------------------------------------------------------------------
 @ default_irq_handler - single instruction b . (e7fe): infinite loop, never
-@ returns. Target of the 76 vector table words equal to 0x08000299 (NOTES.md
-@ vector-table section; xxd of 0x08000000..0x08000183).
+@ returns. Target of the 76 vector table words equal to 0x08000299 (vectors.s;
+@ xxd of 0x08000000..0x08000183 of the dump).
 @ ----------------------------------------------------------------------------
 	.global default_irq_handler
 	.thumb_func

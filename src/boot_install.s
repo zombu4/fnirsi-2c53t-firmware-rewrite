@@ -427,7 +427,7 @@ usb_power_read:
 @ battery_read - four readings of the converter the application uses for its battery level, each
 @ taken the way the application takes it; returns r0 = the lowest and r1 = the highest reading, or
 @ r0 = r1 = 0x10000 when the converter does not finish.  At this point of the start-up the application has not set the converter up yet
-@ (its set-up, decompiled.c 32290..32340, runs after the logo open this hook replaces), so this
+@ (it is set up later in system_bring_up, after the logo open at 0x0802B444 this hook replaces), so this
 @ makes the same writes in the same order: 0x40021018 |= 0x200; 0x40021004 bits 15:14 = 2, bit 28
 @ clear; 0x40012404 &= ~0xF0000, |= 0x100; 0x40012408 |= 2, &= ~0x800; 0x4001242C &= ~0xF00000;
 @ 0x40012410 |= 0x38000000; 0x40012434 bits 4:0 = 9; 0x40012408 &= ~0x2000000, |= 0xE0000,

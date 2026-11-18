@@ -9,18 +9,19 @@ and the build is checked against the original image.
 
 - Application (`make`): the port with these changes: the version text in About ("V1.2.4") and a
   start-up hook (`src/boot_install.s`) that runs the bootloader installer or the flash dump when
-  their trigger files exist on the meter's USB drive. V1.2.1 to V1.2.3 were installed and run on
-  a meter; V1.2.4 (with the installer) is tested in an emulator only so far.
+  their trigger files exist on the meter's USB drive. Installed and running on a meter.
+- The application is this project's own hand-written source, but it behaves exactly like the
+  vendor V1.2.0 firmware: it is a complete port (proof below), not yet a redesign.
 - Proof of the port: `make check` builds the same source with the vendor version text and
   verifies it is identical to the vendor V1.2.0 application image, byte for byte. Functions are in
   sections of their own, except small groups of functions that branch into each other with short
   (16-bit) instructions, which share one section.
 - Stock bootloader (`bootloader/`, `make -C bootloader check`): hand-written port of the meter's
   bootloader, byte-identical to a dump of it.
-- Two-part bootloader (tested in an emulator, not yet installed on a meter): a starter in flash
-  page 0 (`starter/`) that is written once and chooses one of three bootloader slots, and the
-  bootloader port relinked for those slots (`make -C bootloader slot`) with safety changes (see
-  below). The application installs it.
+- Two-part bootloader: a starter in flash page 0 (`starter/`) that is written once and chooses one
+  of three bootloader slots, and the bootloader port relinked for those slots (`make -C bootloader
+  slot`) with safety changes (see below). Installed and running on a meter: written through the SWD
+  header after removing the flash access protection, see **[FLASHING_BOOTLOADER.md](FLASHING_BOOTLOADER.md)**.
 - Code addresses are symbols. Some pointers into the fixed data (texts, tables) and the pointers
   stored inside `assets/rodata.bin` are still plain numbers; this is correct while the data stays
   at its original address (0x08046254) and is the next thing to change before data is moved.
@@ -35,8 +36,8 @@ and the build is checked against the original image.
 
   | Address | Contents |
   |---|---|
-  | 0x08000000..0x080007FF | page 0: stock bootloader start, replaced by the starter on install |
-  | 0x08000800..0x08005873 | rest of the stock bootloader (kept, not used by the new chain) |
+  | 0x08000000..0x080007FF | page 0: the starter (the stock bootloader before the install) |
+  | 0x08000800..0x08005873 | rest of the stock bootloader (erased by the SWD install) |
   | 0x08006000..0x080067FF | the meter's settings / calibration page: never written by any bootloader code here |
   | 0x08006800 | "8KTA" mark: written by the bootloader when an application update is complete |
   | 0x08007000..0x080E6FFF | application area (vector table at 0x08007000) |
@@ -60,7 +61,8 @@ and the build is checked against the original image.
   inside 0x08006800..0x080E6FFF; file size checked against the target before anything is erased;
   the update file is the largest regular file on the drive (not the macOS "._" file) and must
   start with an application vector table.
-- Installer (in the application): create the file `BOOTINST.TXT` on the meter's drive (the
+- Installer (in the application; page 0 can only be written on a meter whose flash access protection
+  is off, so the first install goes through the SWD header, FLASHING_BOOTLOADER.md): create the file `BOOTINST.TXT` on the meter's drive (the
   storage the application shares over USB) and restart the meter. The report is written to
   `BOOTINST.LOG`. With the stock bootloader in page 0 it checks it (CRC-32), checks the battery
   reading, writes slots F and A and the records, and then replaces page 0 from a routine in RAM
@@ -84,6 +86,8 @@ and the build is checked against the original image.
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, slot bootloader and installer |
+| `swd/` | SWD loader and OpenOCD scripts for the first install through a debug probe |
+| `FLASHING_BOOTLOADER.md` | step-by-step guide for flashing the new bootloader |
 | `link.ld` | memory layout |
 | `Makefile` | build |
 
@@ -112,6 +116,13 @@ drive, read the volume with `dd` from the raw device, add the file to that volum
 changed 2048-byte sectors with `dd`.
 
 Restoring the original FNIRSI V1.2.0 file this way has been done on a meter.
+
+## Continuous build and releases
+
+Every push to `main` builds the application, the bootloader images and the SWD loader on GitHub
+Actions and runs both byte proofs (`.github/workflows/build.yml`); the files are attached to the run.
+A tag `v<version>` matching the About text in the source (for example `v1.2.4`) also creates a
+release with `APP_2C53T_V<version>_<yymmdd>.bin`, the bootloader images and `SHA256SUMS`.
 
 ## Legal
 

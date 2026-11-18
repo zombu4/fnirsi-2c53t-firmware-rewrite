@@ -1,0 +1,72 @@
+# Build and check the firmware on every push and pull request; publish a release for a version tag.
+#
+#   push / pull request: build the application (with the starter and the bootloader images it
+#     embeds), the SWD loader, and run both byte proofs:
+#       make check              vendor-text build == vendor V1.2.0 application (SHA-256)
+#       make -C bootloader check  stock bootloader port == the meter's bootloader dump (SHA-256)
+#     The built files are attached to the run (Actions -> the run -> Artifacts).
+#   tag v* (e.g. v1.2.4): the same, then a GitHub release with the application named in the vendor
+#     pattern APP_2C53T_V<version>_<yymmdd>.bin (version = the About text in the source), the slot
+#     bootloader images and the starter. The tag must match the About text.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-arm-none-eabi make
+          arm-none-eabi-as --version | head -1
+
+      - name: Build
+        run: |
+          make
+          make -C swd
+
+      - name: Byte proofs
+        run: |
+          make check
+          make -C bootloader check
+
+      - name: Collect
+        id: collect
+        run: |
+          VER=$(awk '/\.else/{e=1} e && /\.asciz/{gsub(/"/,"",$2); print $2; exit}' src/parts/draw_page_by_selector_nibble_p2.inc)
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          mkdir -p dist
+          cp build/APP_2C53T.bin "dist/APP_2C53T_V${VER}_$(date -u +%y%m%d).bin"
+          cp starter/build/STARTER.bin bootloader/build/slot/BOOT_F.bin bootloader/build/slot/BOOT_A.bin \
+             bootloader/build/slot/BOOT_B.bin swd/build/swd_loader.bin dist/
+          (cd dist && sha256sum * > SHA256SUMS)
+          cat dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ steps.collect.outputs.version }}
+          path: dist/
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VER="${{ steps.collect.outputs.version }}"
+          if [ "$TAG" != "v$VER" ]; then
+            echo "tag $TAG does not match the About text V$VER in the source"; exit 1
+          fi
+          gh release create "$TAG" dist/* --title "V$VER" --notes \
+            "Application V$VER (install: MENU + Power, copy the APP_2C53T file onto the drive IAP). STARTER.bin, BOOT_F/A/B.bin, swd_loader.bin: two-part bootloader, see FLASHING_BOOTLOADER.md. SHA256SUMS lists the checksums."
