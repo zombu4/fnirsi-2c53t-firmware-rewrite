@@ -17,7 +17,7 @@ The project contains:
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.2.4**).
+- Runs on the meter as assembly firmware (About shows **V1.2.5**).
 - Functionally identical to the vendor application V1.2.0: `make check` builds the same source with
   the vendor version text and verifies it is **byte-identical** to the vendor image.
 - Additions in this build: a start-up hook for the bootloader installer and the flash dump
@@ -131,7 +131,7 @@ make -C swd                # SWD loader for the first bootloader install
 2. Hold **MENU** and press **Power**: "Firmware upgrade" appears, and a USB drive named `IAP`.
 3. Copy the application `.bin` onto the drive. The meter installs it and starts it.
 
-File names in the vendor pattern (`APP_2C53T_V1.2.4_261117.bin`) are accepted by both bootloaders.
+File names in the vendor pattern (`APP_2C53T_V1.2.5_261117.bin`) are accepted by both bootloaders.
 
 **macOS:** with the stock bootloader, copying with Finder or `cp` did not work. The stock bootloader
 takes the first file entry followed by an unused one, which fits the macOS "._" file being taken
