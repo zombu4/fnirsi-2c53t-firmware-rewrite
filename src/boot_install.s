@@ -6,6 +6,8 @@
 @ "2:/LOGO/LOGO2C53T.jpg" in system_bring_up (system_58.s), with that call's arguments; drive "2:" is
 @ the storage the meter shares over USB.  It runs, each only when its trigger file exists:
 @   2:/BOOTDUMP.TXT  -> boot_dump (boot_dump.s): copies of the flash below 0x08007000 and of system words
+@   2:/BOOTTEST.TXT  -> boot_install dry run: every check, slots F / A and records written in a
+@                       first install, page 0 never; report in 2:/BOOTINST.LOG (wins over BOOTINST)
 @   2:/BOOTINST.TXT  -> boot_install: installs or updates the two-part bootloader, report in
 @                       2:/BOOTINST.LOG
 @ and then jumps to file_open with the original arguments, so the start-up continues as before.
@@ -75,26 +77,42 @@ boot_hook_then_file_open:
 	bl	file_close
 	mov	r0, r4
 	bl	boot_dump
-1:	mov	r0, r4
-	ldr	r1, =s_install_trigger
+1:	mov	r0, r4			@ the dry run first: with both files only the dry run happens
+	ldr	r1, =s_test_trigger
 	movs	r2, #1
 	bl	file_open
 	cbnz	r0, 2f
 	mov	r0, r4
 	bl	file_close
 	mov	r0, r4
+	movs	r1, #1			@ dry run
 	bl	boot_install
+	b	3f
 2:	mov	r0, r4
+	ldr	r1, =s_install_trigger
+	movs	r2, #1
+	bl	file_open
+	cbnz	r0, 3f
+	mov	r0, r4
+	bl	file_close
+	mov	r0, r4
+	movs	r1, #0			@ real install
+	bl	boot_install
+3:	mov	r0, r4
 	bl	free_units_of_32_bytes
 .Lhook_done:
 	pop	{r0, r1, r2, r3, r4, lr}
 	b.w	file_open		@ the original call, arguments unchanged
 
 @ ----------------------------------------------------------------------------
-@ boot_install - r0 = file object (not open).  See the file header.  The report goes to the buffer
-@ at r11 (LOG_SIZE bytes, [r11] = write pointer) and is written to 2:/BOOTINST.LOG at the end.
+@ boot_install - r0 = file object (not open), r1 = 1 for the dry run (BOOTTEST.TXT), 0 for the real
+@ install (BOOTINST.TXT).  See the file header.  The dry run does every check and, in a first
+@ install, writes slots F and A and the records (bank 2, nothing the stock bootloader uses) but
+@ never page 0; in an update it writes nothing and reports the slot it would write.  The report
+@ goes to the buffer at r11 (LOG_SIZE bytes, [r11] = write pointer) and is written to
+@ 2:/BOOTINST.LOG at the end.
 @ Frame: [sp + 0..15] scan state of rec_scan, [sp + 16] byte count of file_write.
-@ Registers: r4 file object, r5 / r6 / r7 work, r11 report buffer.
+@ Registers: r4 file object, r5 / r6 / r7 work, r10 dry-run flag, r11 report buffer.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 	.type	boot_install, %function
@@ -102,6 +120,7 @@ boot_install:
 	push	{r3, r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub	sp, #24
 	mov	r4, r0
+	mov	r10, r1			@ r10 = 1: dry run
 	mov	r0, #LOG_SIZE
 	bl	alloc_units_of_32_bytes
 	cmp	r0, #0
@@ -111,6 +130,11 @@ boot_install:
 	str	r1, [r0]		@ write pointer
 	ldr	r0, =s_title
 	bl	log_str
+	cmp	r10, #0
+	beq	1f
+	ldr	r0, =s_dry_title
+	bl	log_str
+1:
 
 	ldr	r0, =FLASH_SIZE_KB	@ the layout needs 1024 KB
 	ldrh	r0, [r0]
@@ -201,7 +225,12 @@ boot_install:
 	bne	.Li_rec_fail
 3:	ldr	r0, =s_records_ok
 	bl	log_str
-	bl	page0_install		@ r0 = result 0..4
+	cmp	r10, #0
+	beq	4f
+	ldr	r0, =s_dry_page0	@ dry run: page 0 is not touched
+	bl	log_str
+	b	.Li_finish
+4:	bl	page0_install		@ r0 = result 0..4
 	ldr	r1, =page0_texts
 	ldr	r0, [r1, r0, lsl #2]
 	bl	log_str
@@ -248,7 +277,15 @@ boot_install:
 	cmp	r6, #SLOT_ID_A
 	it	eq
 	moveq	r7, #SLOT_ID_B
-4:	mov	r0, r7
+4:	cmp	r10, #0
+	beq	5f
+	ldr	r1, =slot_names		@ dry run: report the slot, write nothing
+	ldr	r0, [r1, r7, lsl #2]
+	bl	log_str
+	ldr	r0, =s_dry_update
+	bl	log_str
+	b	.Li_finish
+5:	mov	r0, r7
 	bl	install_slot
 	cmp	r0, #0
 	bne	.Li_finish
@@ -1007,6 +1044,10 @@ slot_results:
 	.word	s_slot_written, s_slot_erase_fail, s_slot_image_fail, s_slot_header_fail
 s_dump_trigger:		.asciz	"2:/BOOTDUMP.TXT"
 s_install_trigger:	.asciz	"2:/BOOTINST.TXT"
+s_test_trigger:		.asciz	"2:/BOOTTEST.TXT"
+s_dry_title:		.asciz	"dry run (BOOTTEST.TXT): page 0 is not written\r\n"
+s_dry_page0:		.asciz	"dry run: page 0 not touched; BOOTINST.TXT (and no BOOTTEST.TXT) does the real install\r\n"
+s_dry_update:		.asciz	"would get the embedded image and an INSTALL record (dry run: nothing written)\r\n"
 s_log_file:		.asciz	"2:/BOOTINST.LOG"
 s_title:		.asciz	"FNIRSI 2C53T two-part bootloader installer\r\n"
 s_flash_size:		.asciz	"flash size is not 1024 KB: nothing written\r\n"

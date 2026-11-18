@@ -66,7 +66,9 @@ and the build is checked against the original image.
   reading, writes slots F and A and the records, and then replaces page 0 from a routine in RAM
   (erase first; a refused erase leaves the stock bootloader as it was; any later failure writes
   the stock page 0 back). With the starter in page 0 it writes a newer bootloader into the free
-  slot A / B and records INSTALL. Running it again writes nothing once done. `BOOTDUMP.TXT`
+  slot A / B and records INSTALL. Running it again writes nothing once done. `BOOTTEST.TXT` runs
+  it as a dry run: all checks, slots and records written in a first install, page 0 never (it
+  wins when both files exist). `BOOTDUMP.TXT`
   instead writes copies of the flash below 0x08007000 and of system words to the drive.
 
 ## Layout
