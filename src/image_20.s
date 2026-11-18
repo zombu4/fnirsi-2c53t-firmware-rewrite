@@ -69,6 +69,9 @@ parse_jpeg_header:
 	mov r9, r2
 	strd r2, r3, [r8, #0x6c]
 	strh.w r5, [r8, #0x1a]
+	str.w r5, [r8, #0x1c]		@ width and height 0 until a SOF segment sets them (this rewrite):
+	str.w r5, [r8, #0x20]		@ SOS refuses 0, so a file without SOF never reaches the table
+					@ selectors ctx+0x10..0x12, which only SOF checks (<= 3)
 	bl zero_bytes_aligned
 	cmp.w r5, r7, lsr #9
 	bne.n .L08038f62

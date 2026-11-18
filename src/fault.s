@@ -9,7 +9,9 @@
 @
 @ Record at FAULT_ADDR (common/layout.inc; RAM that no start-up initialises, so it survives the
 @ restart; lost when the power goes):
-@   +0  FAULT_MAGIC              +4  IPSR (exception number: 3 hard, 4 memory, 5 bus, 6 usage fault)
+@   +0  FAULT_MAGIC              +4  IPSR (exception number; 3 = hard fault: the memory, bus and usage
+@                                    faults (4..6) are not enabled in SHCSR 0xE000ED24, no code writes
+@                                    it, so they escalate to the hard fault and CFSR names the cause)
 @   +8  stacked PC               +12 stacked LR             +16 stacked xPSR
 @   +20 CFSR 0xE000ED28          +24 HFSR 0xE000ED2C        +28 MMFAR 0xE000ED34
 @   +32 BFAR 0xE000ED38          +36 stack pointer of the frame (MSP or PSP by EXC_RETURN bit 2)

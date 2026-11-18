@@ -1539,7 +1539,8 @@ str_equal:
 	bx	lr
 
 @ FILE_WRITE: offset (u32), total (u32), path (zero-terminated), chunk. Offset 0 creates / truncates
-@ the file and keeps it open; each further chunk must continue at the bytes written so far; the file
+@ the file and keeps it open (on drive 3: only a picture that is already there: status 6 otherwise,
+@ so the names with leading zeros and new files cannot fill the system drive); each further chunk must continue at the bytes written so far; the file
 @ is closed when the total is reached (or by a new offset 0, or by FILE_DELETE).
 	.global	cmd_file_write
 	.thumb_func
@@ -1583,7 +1584,18 @@ cmd_file_write:
 	beq	95f
 	str	r0, [r4, #V_WOBJ]
 	bl	storage_lock
+	ldrb	r0, [r7]			@ drive 3: only pictures that exist are replaced, none added
+	cmp	r0, #'3'
+	bne	3f
 	ldr	r0, [r4, #V_WOBJ]
+	mov	r1, r7
+	movs	r2, #1				@ read, open existing: fails when the file is not there
+	bl	file_open
+	cmp	r0, #0
+	bne	97f
+	ldr	r0, [r4, #V_WOBJ]
+	bl	file_close
+3:	ldr	r0, [r4, #V_WOBJ]
 	mov	r1, r7
 	movs	r2, #10				@ write, create / truncate
 	bl	file_open
@@ -1630,7 +1642,9 @@ cmd_file_write:
 94:	bl	write_close
 95:	movs	r0, #5
 	b	90f
-96:	movs	r0, #6				@ not on drive 2:
+97:	bl	storage_unlock			@ no such picture on 3:
+	bl	write_free
+96:	movs	r0, #6				@ path not allowed
 	b	90f
 91:	movs	r0, #3				@ no file open
 	b	90f

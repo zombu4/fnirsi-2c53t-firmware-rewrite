@@ -32,7 +32,7 @@ All 160 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screens
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.4.6**). It started as a byte-identical
+- Runs on the meter as assembly firmware (About shows **V1.4.7**). It started as a byte-identical
   port of the vendor application V1.2.0 and is now developed on its own.
 - **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
   no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,

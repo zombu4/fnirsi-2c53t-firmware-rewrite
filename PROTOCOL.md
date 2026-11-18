@@ -186,12 +186,12 @@ the physical keys are not part of the firmware; this table gives the function on
 |---|---|---|---|
 | 0x70 | FILE_LIST | first entry (u16), directory path (text, e.g. `2:/` or `3:/System file`) | next entry (u16, 0xFFFF = no more), then entries {size u32, attribute u8, name length u8, name} as many as fit |
 | 0x71 | FILE_READ | offset (u32), path (at most 95 characters) | file size (u32), then up to 500 bytes from the offset; the file stays open while the host reads it in order (same path, next offset) and is closed at its end or by any other command |
-| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path that is neither on `2:` nor exactly `3:/System file/` + 1 to 3 digits + `.jpg` |
+| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file (on `3:` it must already exist, else status 6); each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path that is neither on `2:` nor exactly `3:/System file/` + 1 to 3 digits + `.jpg` |
 | 0x73 | FILE_DELETE | path (at most 95 characters) | - (a file or an empty directory on `2:`; status 5 when it is still there afterwards, 6 for any other drive) |
 | 0x74 | DRIVE | on (u8) | - (shares the drive with the host: UI page 7 and the configuration with mass storage) |
 
 Paths: `2:/DIR/NAME.EXT`, long names allowed. Drive 3: holds the meter's own system files: FILE_LIST
-and FILE_READ may read all of it; FILE_WRITE may only replace or add the user-interface pictures
+and FILE_READ may read all of it; FILE_WRITE may only replace the user-interface pictures that are there,
 `3:/System file/NNN.jpg` (baseline JPEG; what the meter's decoder accepts is in `src/image_20.s`);
 nothing on 3: can be deleted.
 
@@ -227,7 +227,8 @@ The host confirms the result afterwards with INFO (new firmware version, last up
 | 0xF2 | FLASH_READ | address (u32), length (u16, 1..256), address + length at most 16 MB | bytes of the external SPI flash (drive 3: from 0, drive 2: from 0x200000); read-only |
 
 Fault record (MEM_READ 0x20037FB0, 48 bytes, little-endian words; `src/fault.s`): +0 magic 0xFA017EC0
-when valid, +4 exception number (3 hard fault, 4 memory management, 5 bus, 6 usage fault), +8 stacked
+when valid, +4 exception number (3: hard fault; memory management, bus and usage faults are not enabled
+separately (SHCSR is left at its reset value), so they arrive as hard faults with CFSR naming the cause), +8 stacked
 PC, +12 stacked LR, +16 stacked xPSR, +20 CFSR, +24 HFSR, +28 MMFAR, +32 BFAR, +36 stack pointer of the
 frame, +40 current task record, +44 faults since the record was first written. The meter restarts right
 after writing it; the record survives restarts, not power-off.

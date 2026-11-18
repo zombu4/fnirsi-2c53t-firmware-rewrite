@@ -86,6 +86,6 @@
 	.equ	REMOTE_CODE,	0x80		@ queue code that runs the posted job in the key or display task
 	.equ	LOCK_VARS,	V + V_END	@ 8 bytes: storage lock owner, count (src/storage.s)
 	.equ	JOB_STACK_TOP,	0x20037FB0	@ private stack of the jobs, down to LOCK_VARS + 8 (752 bytes;
-						@ deepest use measured 488 bytes, 2026-11-18, NOTES.md); above
-						@ it the fault record FAULT_ADDR (48 bytes, src/fault.s) and 8
-						@ bytes unused
+						@ deepest use measured 588 bytes, 2026-11-18, NOTES.md); above
+						@ it the fault record FAULT_ADDR (48 bytes, src/fault.s) up to
+						@ REQ_ADDR 0x20037FE0 (common/layout.inc), nothing unused
