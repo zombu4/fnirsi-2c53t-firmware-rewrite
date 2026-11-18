@@ -1788,6 +1788,141 @@ cmd_flash_read:
 	bl	answer_status
 	pop	{r4, pc}
 
+@ FLASH_ID (diagnostics): the external flash's JEDEC identification: command 0x9F, then three bytes
+@ (manufacturer, memory type, capacity), with the flash selected by PB12 as serial_device_read does
+@ (0x40010C14 = 0x1000 select, 0x40010C10 = 0x1000 deselect), under the storage lock; read-only.
+	.global	cmd_flash_id
+	.thumb_func
+cmd_flash_id:
+	push	{r4, r5, r6, lr}
+	bl	storage_lock
+	ldr	r4, =0x40010C00			@ port B
+	mov	r0, #0x1000
+	str	r0, [r4, #0x14]			@ select
+	nop
+	movs	r0, #0x9F
+	bl	serial_device_transfer_byte
+	ldr	r5, =ANSWER + 1
+	movs	r6, #3
+1:	movs	r0, #0xFF
+	bl	serial_device_transfer_byte
+	strb	r0, [r5], #1
+	subs	r6, #1
+	bne	1b
+	mov	r0, #0x1000
+	str	r0, [r4, #0x10]			@ deselect
+	nop
+	bl	storage_unlock
+	movs	r0, #0
+	movs	r1, #4				@ status + 3 bytes
+	bl	answer
+	pop	{r4, r5, r6, pc}
+
+@ METER_LOG (diagnostics): records the bytes the multimeter chip sends on USART2 (the receive
+@ interrupt fn_0802e7b4, src/meter_link_39.s, calls meter_log_byte) into a buffer of MLOG_SIZE
+@ bytes taken from the allocator. Listening only: nothing is sent to the chip. Request: op (u8)
+@ 1 = start (buffer taken if there is none, count 0), 0 = stop (buffer given back), 2 = read, with
+@ offset (u16): answer count (u16), then up to 256 recorded bytes from the offset. Recording stops
+@ by itself when the buffer is full. Status 3 for read while not recording, 5 when no buffer.
+	.equ	MLOG_SIZE,	2048
+	.global	cmd_meter_log
+	.thumb_func
+cmd_meter_log:
+	push	{r4, r5, r6, r7, lr}
+	ldr	r4, =V
+	cmp	r6, #1
+	blo	92f
+	ldrb	r0, [r5]
+	cmp	r0, #1
+	beq	1f
+	cmp	r0, #2
+	beq	2f
+	cmp	r0, #0
+	bne	92f
+	mrs	r7, primask			@ stop: the interrupt no longer sees the buffer
+	cpsid	i
+	ldr	r0, [r4, #V_MLBUF]
+	movs	r1, #0
+	str	r1, [r4, #V_MLBUF]
+	msr	primask, r7
+	cbz	r0, 8f
+	bl	free_units_of_32_bytes
+8:	movs	r0, #0
+	bl	answer_status
+	pop	{r4, r5, r6, r7, pc}
+1:	mrs	r7, primask			@ start
+	cpsid	i
+	movs	r0, #0
+	str	r0, [r4, #V_MLCNT]
+	msr	primask, r7
+	ldr	r0, [r4, #V_MLBUF]
+	cmp	r0, #0
+	bne	8b
+	mov	r0, #MLOG_SIZE
+	bl	alloc_units_of_32_bytes
+	cmp	r0, #0
+	beq	95f
+	str	r0, [r4, #V_MLBUF]		@ one word store: the interrupt sees 0 or the buffer
+	b	8b
+2:	cmp	r6, #3				@ read
+	blo	92f
+	ldrb	r1, [r5, #1]
+	ldrb	r2, [r5, #2]
+	orr	r1, r1, r2, lsl #8		@ r1 = offset
+	ldr	r0, [r4, #V_MLBUF]
+	cmp	r0, #0
+	beq	93f
+	ldr	r2, [r4, #V_MLCNT]		@ r2 = bytes recorded
+	ldr	r3, =ANSWER + 1
+	strb	r2, [r3, #0]
+	lsrs	r7, r2, #8
+	strb	r7, [r3, #1]
+	subs	r7, r2, r1			@ r7 = recorded bytes from the offset on
+	it	lt
+	movlt	r7, #0
+	cmp	r7, #256
+	it	hi
+	movhi	r7, #256
+	add	r0, r0, r1			@ r0 = source
+	adds	r3, #2				@ r3 = destination
+	movs	r2, #0
+3:	cmp	r2, r7
+	bhs	4f
+	ldrb	r1, [r0, r2]
+	strb	r1, [r3, r2]
+	adds	r2, #1
+	b	3b
+4:	movs	r0, #0
+	add	r1, r7, #3			@ status, count, bytes
+	bl	answer
+	pop	{r4, r5, r6, r7, pc}
+92:	movs	r0, #2
+	b	90f
+93:	movs	r0, #3
+	b	90f
+95:	movs	r0, #5
+90:	bl	answer_status
+	pop	{r4, r5, r6, r7, pc}
+
+@ meter_log_byte - r2 = a byte received from the multimeter chip (USART2 receive interrupt): stored
+@ when METER_LOG records and the buffer has room. Keeps every register; changes the flags (the
+@ caller sets them again with adds before it tests any).
+	.global	meter_log_byte
+	.thumb_func
+	.type	meter_log_byte, %function
+meter_log_byte:
+	push	{r0, r1, r3, lr}
+	ldr	r0, =V
+	ldr	r1, [r0, #V_MLBUF]
+	cbz	r1, 9f
+	ldr	r3, [r0, #V_MLCNT]
+	cmp	r3, #MLOG_SIZE
+	bhs	9f
+	strb	r2, [r1, r3]
+	adds	r3, #1
+	str	r3, [r0, #V_MLCNT]
+9:	pop	{r0, r1, r3, pc}
+
 @ ============================================================================
 @ Events (PROTOCOL.md 4.12): called by the usb task every tick
 @ ============================================================================
@@ -1854,8 +1989,8 @@ send_event:
 
 	.ltorg
 
-	.if	JOB_STACK_TOP - (LOCK_VARS + 8) < 752		@ deepest use measured: 488 bytes (NOTES.md)
-	.error	"job stack below 752 bytes"
+	.if	JOB_STACK_TOP - (LOCK_VARS + 8) < 744		@ deepest use measured: 588 bytes (NOTES.md)
+	.error	"job stack below 744 bytes"
 	.endif
 	.if	JOB_STACK_TOP > FAULT_ADDR
 	.error	"job stack overlaps the fault record"

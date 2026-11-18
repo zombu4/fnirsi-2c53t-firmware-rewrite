@@ -835,6 +835,10 @@ cmd_table:
 	.word	cmd_mem_read
 	.byte	0xF2, 0, 0, 0
 	.word	cmd_flash_read
+	.byte	0xF3, 0, 0, 0
+	.word	cmd_meter_log
+	.byte	0xF4, 0, 0, 0
+	.word	cmd_flash_id
 	.byte	0xFF, 0, 0, 0
 
 @ ----------------------------------------------------------------------------

@@ -22,10 +22,11 @@
 	.equ	MAX_PAYLOAD,	512
 	.equ	STATE_LEN,	44		@ STATE record (PROTOCOL.md 4.6)
 	.equ	PROTO_VERSION,	1
-	.equ	CAPS,		0x0007FFFF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
+	.equ	CAPS,		0x001FFFFF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
 						@ 6 DRIVE, 7 FW update, 8 BATTERY, 9 KEEP_AWAKE, 10 MEM_READ,
 						@ 11 DMM_*, 12 SCOPE_* settings, 13 SCOPE_WAVE, 14 SETTINGS_*,
-						@ 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ
+						@ 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ,
+						@ 19 METER_LOG, 20 FLASH_ID
 
 @ RAM: 0x20036F90..0x20037FDF (above the application's stack top 0x20036F90, below the bootloader
 @ words at 0x20037FE0); the top 48 bytes 0x20037FB0..0x20037FDF are the fault record (src/fault.s)
@@ -81,11 +82,13 @@
 	.equ	V_INMSC,	0x7F		@ 1 while msc_service runs the vendor mass-storage handler
 	.equ	V_ROBJ,		0x80		@ FILE_READ file kept open between consecutive reads (0 = none)
 	.equ	V_RPOS,		0x84		@ its position
-	.equ	V_END,		0x88
+	.equ	V_MLBUF,	0x88		@ METER_LOG buffer (0 = not recording; src/usb_remote.s)
+	.equ	V_MLCNT,	0x8C		@ bytes recorded in it
+	.equ	V_END,		0x90
 
 	.equ	REMOTE_CODE,	0x80		@ queue code that runs the posted job in the key or display task
 	.equ	LOCK_VARS,	V + V_END	@ 8 bytes: storage lock owner, count (src/storage.s)
-	.equ	JOB_STACK_TOP,	0x20037FB0	@ private stack of the jobs, down to LOCK_VARS + 8 (752 bytes;
+	.equ	JOB_STACK_TOP,	0x20037FB0	@ private stack of the jobs, down to LOCK_VARS + 8 (744 bytes;
 						@ deepest use measured 588 bytes, 2026-11-18, NOTES.md); above
 						@ it the fault record FAULT_ADDR (48 bytes, src/fault.s) up to
 						@ REQ_ADDR 0x20037FE0 (common/layout.inc), nothing unused

@@ -56,6 +56,7 @@ fn_0802e7b4:
 	movw	r12, #0x4e10
 	movt	r12, #0x2000
 	ldr.w	r2, [r4, #-0x8]
+	bl	meter_log_byte			@ this rewrite: METER_LOG records r2 (keeps every register)
 	ldrb.w	r0, [r12]
 	movw	r1, #0x4e11
 	movt	r1, #0x2000
