@@ -179,7 +179,8 @@ boot_install:
 	bl	log_hex
 	ldr	r0, =s_crlf
 	bl	log_str
-	bl	usb_power_read		@ the page 0 step must not lose power: external power required
+	bl	usb_power_read		@ for the report only (owner, 2026-11-17: no automatic power gate;
+					@ the owner keeps the meter on USB and charged for the install)
 	mov	r5, r0			@ r5 = port C input word of the first read
 	mov	r6, r1			@ r6 = 1 when all eight reads had bit 7 clear
 	ldr	r0, =s_portc
@@ -188,11 +189,7 @@ boot_install:
 	bl	log_hex
 	ldr	r0, =s_crlf
 	bl	log_str
-	cbnz	r6, 3f
-	ldr	r0, =s_no_usb
-	bl	log_str
-	b	.Li_finish
-3:	movs	r0, #SLOT_ID_F
+	movs	r0, #SLOT_ID_F
 	bl	install_slot
 	cmp	r0, #0
 	bne	.Li_finish
@@ -399,8 +396,9 @@ log_hex:
 @ (0x40021018 bit 4 set for the reads, restored as found); returns r0 = the first word read and
 @ r1 = 1 when bit 7 was clear in all eight reads, else 0.  Bit 7 clear is the state in which the
 @ application does not measure its battery and takes level 100 (FUN_08009c78 0x08009CB0..0x08009CCE),
-@ the same bit its battery icon code reads (FUN_08012844).  The installer takes it as "external
-@ power present"; the dry runs on the meter record the word with and without USB (BOOTINST.LOG).
+@ the same bit its battery icon code reads (FUN_08012844).  Report only: on the meter (2026-11-17)
+@ it read 0xEAAE (bit 7 set) with USB connected and the charging icon shown, so at this point of
+@ the start-up the bit does not show external power.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 usb_power_read:
@@ -1197,7 +1195,6 @@ s_battery:		.asciz	"converter readings (report only): 0x"
 s_battery_to:		.asciz	" .. 0x"
 s_crlf:			.asciz	"\r\n"
 s_portc:		.asciz	"port C input (0x40011008): 0x"
-s_no_usb:		.asciz	"bit 7 of port C not clear in all reads (no external power): connect USB, nothing written\r\n"
 s_starter:		.asciz	"page 0: starter: bootloader update\r\n"
 s_pending:		.asciz	"newest record is INSTALL or TRIAL: restart the meter first; nothing written\r\n"
 s_rolled_back:		.asciz	"running slot F after a roll-back; slot A already holds this image: nothing written\r\n"
