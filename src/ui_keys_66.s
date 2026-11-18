@@ -212,10 +212,18 @@ fn_0800bd60:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0]
+	.ifdef VENDOR_V120
 	orr.w r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0]
 	ldr r1, [r0, #0x20]
+	.ifdef VENDOR_V120
 	orr.w r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x20]
 	b.n .L0800c392
 .L0800bf28:

@@ -26,7 +26,7 @@ All multi-byte numbers are little-endian.
 | seq | 1 | request: chosen by the host; answer: the same value; stream / event: running counter |
 | type | 1 | `0x01` request, `0x02` answer, `0x03` stream, `0x04` event |
 | cmd | 1 | command number (section 4) |
-| payload | n | command data, at most 1024 bytes |
+| payload | n | command data, at most 512 bytes |
 | crc | 2 | CRC-16/CCITT-FALSE (poly 0x1021, init 0xFFFF) over `length` .. `payload` |
 
 - Every request gets exactly one answer with the same `seq` and `cmd`. The first payload byte of an
@@ -57,7 +57,7 @@ All multi-byte numbers are little-endian.
 
 | cmd | Name | Request | Answer data |
 |---|---|---|---|
-| 0x00 | INFO | - | protocol version (u8), capability bits (u32), firmware version text (16 bytes), chip UID (12 bytes), bootloader slot (u8: 0 F, 1 A, 2 B, 0xFF unknown), bootloader version (u32), application size (u32) |
+| 0x00 | INFO | - | protocol version (u8), capability bits (u32: bit 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ, 6 DRIVE, 7 firmware update, 8 BATTERY, 9 KEEP_AWAKE; other commands answer status 1 until their bit is set), firmware version text (16 bytes), chip UID (12 bytes), bootloader slot (u8: 0 F, 1 A, 2 B, 0xFF unknown), bootloader version (u32), application size (u32), result of the last staged update (u32: 0 none, 1 OK, 2 no file, 3 image does not match, 4 programmed image does not compare) |
 | 0x01 | PING | any bytes | the same bytes (throughput tests) |
 | 0x02 | RESET | - | answer, then the meter restarts |
 | 0x03 | BATTERY | - | battery level (u8, 5..100 as shown by the meter), charging flag (u8) |
@@ -147,7 +147,7 @@ documentation.)
 | 0x50 | SETTINGS_GET | - | backlight (u8), auto power-off (u8: 0 off, 1 15 min, 2 30 min, 3 60 min), colour theme (u8), other settings as implemented |
 | 0x51 | SETTINGS_SET | same layout | the settings now in effect (in RAM; not saved) |
 | 0x52 | SETTINGS_SAVE | - | - (writes the settings page; at most once per 10 s) |
-| 0x53 | CAL_READ | offset (u32) | total (u32), chunk of the settings / calibration page 0x08006000..0x080067FF |
+| 0x53 | CAL_READ | offset (u32) | total (u32), up to 256 bytes of the settings / calibration page 0x08006000..0x080067FF |
 
 ### 4.9 Screen
 

@@ -63,6 +63,7 @@
 	.type	boot_hook_then_file_open, %function
 boot_hook_then_file_open:
 	push	{r0, r1, r2, r3, r4, lr}
+	bl	usb_ctl_install		@ USB control channel (usb_ctl.s), before system_bring_up sets USB up
 	movw	r0, #0x102c
 	bl	alloc_units_of_32_bytes
 	movs	r4, r0			@ r4 = own file object

@@ -549,7 +549,9 @@ SECTIONS
   {
     KEEP(*(.text.boot_dump))
     KEEP(*(.text.boot_install))
-    KEEP(*(.rodata.boot_install))                                  /* starter, slot images, stock page 0 */
+    KEEP(*(.text.usb_ctl))                                         /* USB control channel */
+    KEEP(*(.rodata.boot_install))                                  /* starter and slot images */
+    app_image_end = .;
   } > FLASH
   /DISCARD/ : { *(.ARM.attributes) *(.comment) *(.ARM.exidx*) }
 }

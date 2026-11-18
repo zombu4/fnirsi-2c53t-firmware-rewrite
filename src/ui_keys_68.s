@@ -438,10 +438,18 @@ fn_0800e2f4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x20]
 	ldrb.w r0, [r4, #0xf68]
 .L0800e352:
@@ -587,10 +595,18 @@ fn_0800e3e4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x20]
 .L0800e4b4:
 	ldrb.w r0, [r4, #0xf68]
@@ -721,10 +737,18 @@ fn_0800e4f4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
+	.ifdef VENDOR_V120
 	orr r1, r1, #2
+	.else
+	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
+	.endif
 	str r1, [r0, #0x20]
 .L0800e5d2:
 	ldrb.w r0, [r4, #0xf68]
