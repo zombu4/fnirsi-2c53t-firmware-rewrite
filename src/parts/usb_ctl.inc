@@ -79,7 +79,9 @@
 	.equ	V_MSCIN,	0x7D		@ mass-storage IN complete event (1)
 	.equ	V_HOSTDRV,	0x7E		@ 1 while the host has the drive (no device writes to it)
 	.equ	V_INMSC,	0x7F		@ 1 while msc_service runs the vendor mass-storage handler
-	.equ	V_END,		0x80
+	.equ	V_ROBJ,		0x80		@ FILE_READ file kept open between consecutive reads (0 = none)
+	.equ	V_RPOS,		0x84		@ its position
+	.equ	V_END,		0x88
 
 	.equ	REMOTE_CODE,	0x80		@ queue code that runs the posted job in the key or display task
 	.equ	LOCK_VARS,	V + V_END	@ 8 bytes: storage lock owner, count (src/storage.s)

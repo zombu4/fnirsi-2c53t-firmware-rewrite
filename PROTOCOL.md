@@ -185,7 +185,7 @@ the physical keys are not part of the firmware; this table gives the function on
 | cmd | Name | Request | Answer data |
 |---|---|---|---|
 | 0x70 | FILE_LIST | first entry (u16), directory path (text, e.g. `2:/`) | next entry (u16, 0xFFFF = no more), then entries {size u32, attribute u8, name length u8, name} as many as fit |
-| 0x71 | FILE_READ | offset (u32), path | file size (u32), then up to 500 bytes from the offset |
+| 0x71 | FILE_READ | offset (u32), path (at most 95 characters) | file size (u32), then up to 500 bytes from the offset; the file stays open while the host reads it in order (same path, next offset) and is closed at its end or by any other command |
 | 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path not on `2:` |
 | 0x73 | FILE_DELETE | path (at most 95 characters) | - (a file or an empty directory; status 5 when it is still there afterwards) |
 | 0x74 | DRIVE | on (u8) | - (shares the drive with the host: UI page 7 and the configuration with mass storage) |

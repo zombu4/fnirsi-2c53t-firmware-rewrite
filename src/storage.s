@@ -264,6 +264,7 @@ storage_quiesce:
 	push	{r0, r1, r2, r3, r4, lr}
 	bl	storage_lock
 	bl	write_close
+	bl	read_close			@ usb_remote.s: FILE_READ file
 	bl	fw_close			@ usb_ctl.s: a staged image being transferred is closed
 	bl	sync_volumes
 	ldr	r0, =USB_CFG
@@ -355,6 +356,7 @@ storage_share:
 	push	{r4, lr}
 	bl	storage_lock
 	bl	write_close
+	bl	read_close			@ usb_remote.s: FILE_READ file
 	bl	fw_close			@ a staged image transfer ends: FW_END will refuse it
 	ldr	r0, =V
 	movs	r1, #0

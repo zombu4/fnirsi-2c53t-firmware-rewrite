@@ -1339,8 +1339,12 @@ cmd_file_list:
 99:	add	sp, #4
 	pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 
-@ FILE_READ: offset (u32), path. Answer: total (u32, the file size), then up to 500 bytes from the
-@ offset (none at or past the end).
+@ FILE_READ: offset (u32), path (at most 95 characters). Answer: total (u32, the file size), then up
+@ to 500 bytes from the offset (none at or past the end). The file stays open (V_ROBJ, its path kept
+@ behind the file object) while the host reads it in order: a request for the same path at the next
+@ offset continues without opening and seeking again. It is closed at the end of the file, by any
+@ other command (dispatch), when the drive is shared and before power-off / reset.
+	.equ	RPATH,		0x102C		@ path copy behind the file object
 	.global	cmd_file_read
 	.thumb_func
 cmd_file_read:
@@ -1352,17 +1356,41 @@ cmd_file_read:
 	cmp	r6, #5
 	blo	92f
 	ldr	r8, [r5, #0]			@ r8 = offset
-	add	r0, r5, #4
 	sub	r1, r6, #4
+	cmp	r1, #PATH_BUF_SIZE
+	bhs	92f
+	add	r0, r5, #4
 	bl	path_arg
 	cmp	r0, #0
 	beq	92f
 	mov	r6, r0				@ r6 = path
-	movw	r0, #0x102C
+	ldr	r4, =V				@ r4 = V
+	ldr	r7, [r4, #V_ROBJ]		@ r7 = file object
+	cbz	r7, 10f
+	movw	r0, #RPATH			@ open already: same file at this offset?
+	add	r0, r0, r7
+	mov	r1, r6
+	bl	str_equal
+	cbz	r0, 5f
+	ldr	r0, [r4, #V_RPOS]
+	cmp	r0, r8
+	bne	5f
+	bl	storage_lock
+	b	30f
+5:	bl	read_close
+10:	movw	r0, #RPATH + PATH_BUF_SIZE
 	bl	alloc_units_of_32_bytes
 	mov	r7, r0
 	cmp	r0, #0
 	beq	95f
+	movw	r0, #RPATH			@ keep the path
+	add	r0, r0, r7
+	movs	r1, #0
+11:	ldrb	r2, [r6, r1]
+	strb	r2, [r0, r1]
+	adds	r1, #1
+	cmp	r2, #0
+	bne	11b
 	bl	storage_lock
 	mov	r0, r7
 	mov	r1, r6
@@ -1370,18 +1398,25 @@ cmd_file_read:
 	bl	file_open
 	cmp	r0, #0
 	bne	93f
-	ldr	r4, [r7, #0x0C]			@ r4 = size
-	ldr	r0, =ANSWER
-	str	r4, [r0, #1]
-	movs	r5, #0				@ r5 = bytes read
-	cmp	r8, r4
-	bhs	2f
+	str	r7, [r4, #V_ROBJ]
+	cmp	r8, #0
+	beq	30f
+	ldr	r5, [r7, #0x0C]
+	cmp	r8, r5
+	bhs	30f
 	mov	r0, r7
 	mov	r1, r8
 	bl	file_seek
 	cmp	r0, #0
 	bne	94f
-	sub	r2, r4, r8
+30:	ldr	r5, [r7, #0x0C]			@ r5 = size
+	ldr	r0, =ANSWER
+	str	r5, [r0, #1]
+	movs	r0, #0
+	str	r0, [sp]
+	cmp	r8, r5
+	bhs	40f
+	sub	r2, r5, r8
 	cmp	r2, #FILE_CHUNK
 	it	hi
 	movhi	r2, #FILE_CHUNK
@@ -1391,19 +1426,22 @@ cmd_file_read:
 	bl	file_read
 	cmp	r0, #0
 	bne	94f
-	ldr	r5, [sp]
-2:	mov	r0, r7
-	bl	file_close
-	bl	storage_unlock
-	mov	r0, r7
-	bl	free_units_of_32_bytes
+40:	ldr	r0, [sp]
+	add	r8, r8, r0
+	str	r8, [r4, #V_RPOS]
+	cmp	r8, r5
+	blo	41f
+	bl	read_close			@ end of the file
+41:	bl	storage_unlock
+	ldr	r1, [sp]
+	adds	r1, #5
 	movs	r0, #0
-	add	r1, r5, #5
 	bl	answer
 	b	99f
-94:	mov	r0, r7				@ seek / read error
-	bl	file_close
-93:	bl	storage_unlock
+94:	bl	read_close			@ seek / read error
+	bl	storage_unlock
+	b	95f
+93:	bl	storage_unlock			@ open error
 	mov	r0, r7
 	bl	free_units_of_32_bytes
 95:	movs	r0, #5
@@ -1413,6 +1451,35 @@ cmd_file_read:
 90:	bl	answer_status
 99:	add	sp, #8
 	pop	{r4, r5, r6, r7, r8, pc}
+
+@ read_close - closes and frees the FILE_READ file (nothing when none). Any task context.
+	.global	read_close
+	.thumb_func
+read_close:
+	push	{r4, lr}
+	ldr	r4, =V
+	ldr	r0, [r4, #V_ROBJ]
+	cbz	r0, 1f
+	bl	file_close
+	ldr	r0, [r4, #V_ROBJ]
+	bl	free_units_of_32_bytes
+	movs	r0, #0
+	str	r0, [r4, #V_ROBJ]
+1:	pop	{r4, pc}
+
+@ str_equal - r0, r1 = zero-terminated texts; r0 = 1 when equal, else 0.
+	.thumb_func
+str_equal:
+1:	ldrb	r2, [r0], #1
+	ldrb	r3, [r1], #1
+	cmp	r2, r3
+	bne	2f
+	cmp	r2, #0
+	bne	1b
+	movs	r0, #1
+	bx	lr
+2:	movs	r0, #0
+	bx	lr
 
 @ FILE_WRITE: offset (u32), total (u32), path (zero-terminated), chunk. Offset 0 creates / truncates
 @ the file and keeps it open; each further chunk must continue at the bytes written so far; the file

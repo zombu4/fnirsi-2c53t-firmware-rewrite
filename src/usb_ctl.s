@@ -738,7 +738,12 @@ dispatch:
 	subs	r6, #3
 	add	r5, r0, #5
 	ldrb	r1, [r0, #4]
-	adr	r2, cmd_table
+	cmp	r1, #0x71			@ any command but FILE_READ ends a FILE_READ sequence
+	beq	0f
+	bl	read_close			@ usb_remote.s
+	ldr	r0, =FRAME
+	ldrb	r1, [r0, #4]
+0:	adr	r2, cmd_table
 1:	ldrb	r3, [r2], #4			@ table: {cmd byte, 3 pad, handler}... ended by 0xFF
 	cmp	r3, #0xFF
 	beq	2f
