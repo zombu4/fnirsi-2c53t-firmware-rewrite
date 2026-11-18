@@ -1237,11 +1237,13 @@ path_arg_read:
 9:	movs	r0, #0
 	bx	lr
 
-@ path_arg_write - FILE_WRITE's path check: r0 = text, r1 = its length. Returns r0 = the path when
-@ path_arg accepts it (drive 2:) or when it is exactly "3:/System file/" followed by 1 to 3 decimal
-@ digits and ".jpg" (the user-interface pictures the firmware draws, NNN.jpg; nothing else on
-@ drive 3: can be written, so the directory, 9999.bin and the volume itself stay as they are);
-@ else 0. Changes r0..r3, r12.
+@ path_arg_write - FILE_WRITE's and FILE_DELETE's path check: r0 = text, r1 = its length. Returns
+@ r0 = the path when path_arg accepts it (drive 2:) or when it is exactly "3:/System file/", a picture
+@ number 1..PIC_MAX in decimal without leading zero, and ".jpg" (the user-interface pictures, NNN.jpg;
+@ one name per number, so at most PIC_MAX files; nothing else on drive 3: can be written or deleted:
+@ the directory, the volume and 9999.bin, whose presence selects drive 2: for the USB drive in
+@ filesystem_startup_setup, stay as they are); else 0. Changes r0..r3, r12.
+	.equ	PIC_MAX,	167		@ highest picture number (V1.2.0's set: 1..167; start-up draws 162..167)
 	.thumb_func
 path_arg_write:
 	push	{r4, r5, r6, lr}
@@ -1256,17 +1258,25 @@ path_arg_write:
 	cmp	r2, r3
 	bne	9f
 	b	1b
-2:	mov	r12, #0				@ r12 = digits
+2:	ldrb	r3, [r4]
+	cmp	r3, #'0'			@ no leading zero (this also refuses 0)
+	beq	9f
+	movs	r6, #0				@ r6 = value
+	mov	r12, #0				@ r12 = digits
 3:	ldrb	r3, [r4]
 	sub	r2, r3, #'0'
 	cmp	r2, #9
 	bhi	4f
+	add	r6, r6, r6, lsl #2		@ value * 10 + digit
+	add	r6, r2, r6, lsl #1
 	adds	r4, #1
 	add	r12, r12, #1
 	b	3b
 4:	cmp	r12, #1
 	blo	9f
 	cmp	r12, #3
+	bhi	9f
+	cmp	r6, #PIC_MAX
 	bhi	9f
 	ldr	r1, =sysjpg_suffix		@ ".jpg" and the terminating zero
 5:	ldrb	r2, [r1], #1
@@ -1539,8 +1549,7 @@ str_equal:
 	bx	lr
 
 @ FILE_WRITE: offset (u32), total (u32), path (zero-terminated), chunk. Offset 0 creates / truncates
-@ the file and keeps it open (on drive 3: only a picture that is already there: status 6 otherwise,
-@ so the names with leading zeros and new files cannot fill the system drive); each further chunk must continue at the bytes written so far; the file
+@ the file and keeps it open (on drive 3: only the picture names of path_arg_write); each further chunk must continue at the bytes written so far; the file
 @ is closed when the total is reached (or by a new offset 0, or by FILE_DELETE).
 	.global	cmd_file_write
 	.thumb_func
@@ -1584,18 +1593,7 @@ cmd_file_write:
 	beq	95f
 	str	r0, [r4, #V_WOBJ]
 	bl	storage_lock
-	ldrb	r0, [r7]			@ drive 3: only pictures that exist are replaced, none added
-	cmp	r0, #'3'
-	bne	3f
 	ldr	r0, [r4, #V_WOBJ]
-	mov	r1, r7
-	movs	r2, #1				@ read, open existing: fails when the file is not there
-	bl	file_open
-	cmp	r0, #0
-	bne	97f
-	ldr	r0, [r4, #V_WOBJ]
-	bl	file_close
-3:	ldr	r0, [r4, #V_WOBJ]
 	mov	r1, r7
 	movs	r2, #10				@ write, create / truncate
 	bl	file_open
@@ -1642,8 +1640,6 @@ cmd_file_write:
 94:	bl	write_close
 95:	movs	r0, #5
 	b	90f
-97:	bl	storage_unlock			@ no such picture on 3:
-	bl	write_free
 96:	movs	r0, #6				@ path not allowed
 	b	90f
 91:	movs	r0, #3				@ no file open
@@ -1679,7 +1675,8 @@ write_free:
 	str	r0, [r4, #V_WOBJ]
 1:	pop	{r4, pc}
 
-@ FILE_DELETE: path (a file or an empty directory on drive 2:, at most 95 characters). Runs as a
+@ FILE_DELETE: path (a file or an empty directory on drive 2:, or a picture 3:/System file/NNN.jpg
+@ as path_arg_write allows; at most 95 characters). Runs as a
 @ display-task job: path_delete takes its path from the buffer 0x20008360, which the vendor's
 @ display-task code fills outside any file call, so only that task may use it. OK when afterwards
 @ neither file_open nor dir_open finds the path; status 5 otherwise (e.g. a directory that is not
@@ -1695,7 +1692,7 @@ cmd_file_delete:
 	bhs	92f
 	mov	r0, r5
 	mov	r1, r6
-	bl	path_arg			@ zero-terminates the path in the frame buffer
+	bl	path_arg_write			@ drive 2:, or 3:/System file/NNN.jpg; zero-terminates the path
 	cmp	r0, #0
 	beq	96f
 	ldr	r0, =job_file_delete
