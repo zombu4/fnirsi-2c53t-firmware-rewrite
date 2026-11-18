@@ -17,6 +17,9 @@ all: build/APP_2C53T.bin
 build/%.o: src/%.s $(INC) | build
 	$(AS) $(ASFLAGS) -o $@ $<
 
+# binary assets included by src/rodata.s (.incbin)
+build/rodata.o: $(wildcard assets/*.bin assets/fonts/*.bin assets/pictures/*.bin)
+
 # images embedded by src/boot_install.s (its object is rebuilt whenever a sub-make ran)
 IMAGES := starter/build/STARTER.bin \
 	bootloader/build/slot/BOOT_F.bin bootloader/build/slot/BOOT_A.bin bootloader/build/slot/BOOT_B.bin

@@ -10,7 +10,9 @@
 @ - the 24 font context words that point into the font data are the labels in src/rodata.s,
 @ - the glyph cache pair of each font context (+0x14 key, +0x18 index) is key 0 / index 0xFFFFFFFF
 @   (V1.2.0 held the last looked-up key and its index; key 0 is below every font's low bound 0x20,
-@   so the cache never hits before the first lookup, lookup_sorted_table_* in src/filesystem_02.s).
+@   so the cache never hits before the first lookup, lookup_sorted_table_* in src/filesystem_02.s),
+@ - the bits-per-pixel word of the 25 px font context (0x20001198) is 0x08010000 (4 bpp): its glyphs
+@   are the own 4 bpp DejaVu glyphs now (V1.2.0: 0x02010000, 1 bpp).
 @ RAM addresses stored in the image are plain numbers: no RAM address changes meaning.
 @ Offset guards (.if/.error) keep every item at its RAM address.
 	.syntax unified
@@ -253,7 +255,7 @@ ram_init:
 	.word	d_080a0468				@ 0x2000118C: record table
 	.word	d_080a1630				@ 0x20001190: range descriptor
 	.word	0					@ 0x20001194
-	.word	0x02010000				@ 0x20001198: 1 bit per pixel (V1.2.0 value, kept in this step)
+	.word	0x08010000				@ 0x20001198: 4 bits per pixel (V1.2.0: 0x02010000, 1 bpp)
 	.word	0x00000000				@ 0x2000119C: cached key (V1.2.0: 0xff1a)
 	.word	0xffffffff				@ 0x200011A0: cached index (V1.2.0: 0x238)
 

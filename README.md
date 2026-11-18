@@ -166,6 +166,8 @@ ignores "._" files by their content.
 | `src/` | application: vector table, functions by subsystem, fixed data, installer, flash dump |
 | `src/parts/` | continuation parts of very large functions |
 | `assets/` | binary data included by the sources |
+| `assets/fonts/` | application fonts: DejaVu Sans Condensed 2.37 rendered at 4 bpp (`LICENSE-DejaVu.txt`), own 7-segment font |
+| `assets/pictures/` | own boot logo, boot animation sprites, trigger icons, value panel and message box frames |
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, bootloader and installer |
@@ -185,6 +187,11 @@ with hardware or other products, and paid flashing services. Full terms: [LICENS
 The bootloader font is Terminus Font 4.49.1, Copyright (C) 2020 Dimitar Toshkov Zhekov, under the
 SIL Open Font License 1.1 (`bootloader/assets/OFL.txt`).
 
+The application's text fonts (`assets/fonts/`) are rendered from DejaVu Sans Condensed 2.37: Bitstream
+Vera Fonts Copyright (c) 2003 by Bitstream, Inc., Arev Fonts Copyright (c) 2006 by Tavmjong Bah,
+DejaVu changes in the public domain; license text in `assets/fonts/LICENSE-DejaVu.txt`.
+
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
 names are trademarks of their owners. Content derived from the vendor's firmware (the application
-port, the stock bootloader port and `assets/`) is not licensed by this project.
+port, the stock bootloader port and `assets/` except `assets/fonts/` and `assets/pictures/`) is not
+licensed by this project.
