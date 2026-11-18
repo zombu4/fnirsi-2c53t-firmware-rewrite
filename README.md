@@ -13,11 +13,26 @@ The project contains:
 
 ---
 
+## Screenshots
+
+Taken from the meter over USB (SCREENSHOT command), application V1.4.6 with our own pictures,
+fonts and texts; shown at twice the size.
+
+| | |
+|---|---|
+| ![Main menu](docs/screenshots/1_menu.png) | ![Multimeter](docs/screenshots/2_meter.png) |
+| ![Oscilloscope](docs/screenshots/3_scope.png) | ![Oscilloscope settings](docs/screenshots/4_scope_settings.png) |
+| ![Signal generator](docs/screenshots/5_generator.png) | ![System settings](docs/screenshots/6_settings.png) |
+
+All 160 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screenshots/ui_pictures.png).
+
+---
+
 ## Status
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.3.7**). It started as a byte-identical
+- Runs on the meter as assembly firmware (About shows **V1.4.6**). It started as a byte-identical
   port of the vendor application V1.2.0 and is now developed on its own.
 - **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
   no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,
@@ -176,6 +191,7 @@ application 1.4.0 or later each one can be written over USB with FILE_WRITE to
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, bootloader and installer |
 | `bootloader/assets/` | bootloader font: Terminus Font 12x24 (OFL 1.1, `OFL.txt`), converted to the glyph layout |
+| `docs/screenshots/` | screenshots of the meter's pages and a sheet of all user-interface pictures |
 | `swd/` | SWD loader and OpenOCD scripts for the first bootloader install |
 | `FLASHING_BOOTLOADER.md` | step-by-step bootloader flashing guide |
 | `link.ld`, `Makefile` | memory layout, build |
