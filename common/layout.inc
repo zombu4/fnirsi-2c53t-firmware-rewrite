@@ -31,6 +31,7 @@
 	.equ	HDR_CRC,	0x18		@ word: CRC-32 of bytes 0x00..0x17
 	.equ	SLOT_MAGIC,	0x544F4C53
 	.equ	SLOT_FORMAT,	1
+	.equ	SLOT_IMAGE_VERSION, 1		@ HDR_VERSION the installer writes for this source
 
 @ record pages and records (16 bytes; an erased cell reads all 0xFF)
 	.equ	REC_PAGE0,	0x080E7000

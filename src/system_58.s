@@ -1223,7 +1223,11 @@ system_bring_up:
 	movs	r2, #0
 	mov	r9, r0
 	movs	r4, #0
+	.ifdef	VENDOR_V120
 	bl	file_open
+	.else
+	bl	boot_hook_then_file_open	@ dump / install when their trigger files exist, then file_open
+	.endif
 	movw	r6, #0xf8
 	cmp	r0, #0
 	movt	r6, #0x2000

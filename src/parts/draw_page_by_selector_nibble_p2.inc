@@ -205,7 +205,7 @@
 	.ifdef	VENDOR_V120
 	.asciz	"1.2.0"		@ vendor V1.2.0 text (make check builds this to prove the port byte for byte)
 	.else
-	.asciz	"1.2.1"		@ version shown in About as "V%s": this rewrite
+	.asciz	"1.2.4"		@ version shown in About as "V%s": this rewrite
 	.endif
 	.short	0x0000	@ padding
 .L0801e124:

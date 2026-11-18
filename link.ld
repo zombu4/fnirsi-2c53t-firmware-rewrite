@@ -1,12 +1,14 @@
 /* link.ld - memory layout of the FNIRSI 2C53T application.
- * The bootloader occupies 0x08000000..0x08005FFF and the calibration / settings page 0x08006000..0x08006FFF;
- * this image starts at 0x08007000 and never covers them.  RAM addresses are absolute in the code
+ * Below 0x08007000 are the bootloader and the settings / calibration page at 0x08006000; this image
+ * starts at 0x08007000 and never covers them.  RAM addresses are absolute in the code
  * (0x20000000..0x20036F8F: initial values unpacked at reset, the rest zeroed; stack top 0x20036F90).
- * Layout: vector table, then every function in its original order (one section per function), then the
- * fixed data at 0x08046254.  The ASSERTs keep the layout identical to the original V1.2.0 image. */
+ * Layout: vector table, then the original functions in their original order, then the fixed data at
+ * 0x08046254 (the ASSERTs keep this part identical to V1.2.0), then code added by this rewrite.
+ * FLASH ends at APP_END 0x080E7000: above it are the record pages and the bootloader slots of the
+ * two-part bootloader (common/layout.inc); the flash is 1024 KB (word 0x00000400 at 0x1FFFF7E0, SYSINFO). */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x08007000, LENGTH = 0x080BE680 - 0x08007000
+  FLASH (rx) : ORIGIN = 0x08007000, LENGTH = 0x080E7000 - 0x08007000   /* APP_END, common/layout.inc */
 }
 ENTRY(Reset_Handler)
 SECTIONS
@@ -542,6 +544,12 @@ SECTIONS
   } > FLASH
   ASSERT(. == 0x08046254, "code does not end at 0x08046254")
   .rodata 0x08046254 : { KEEP(*(.rodata.fixed)) } > FLASH
-  ASSERT(. == 0x080BE680, "image does not end at 0x080BE680")
+  ASSERT(. == 0x080BE680, "fixed data does not end at 0x080BE680")
+  .text_added 0x080BE680 :                                         /* code added by this rewrite */
+  {
+    KEEP(*(.text.boot_dump))
+    KEEP(*(.text.boot_install))
+    KEEP(*(.rodata.boot_install))                                  /* starter, slot images, stock page 0 */
+  } > FLASH
   /DISCARD/ : { *(.ARM.attributes) *(.comment) *(.ARM.exidx*) }
 }
