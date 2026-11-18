@@ -150,14 +150,6 @@ drive, read the volume with `dd`, add the file with `mcopy` (mtools, `MTOOLS_SKI
 the macOS entries, and write back only the changed 2048-byte sectors with `dd`. The new bootloader
 ignores "._" files by their content.
 
-## Continuous build and releases
-
-- Every push to `main` builds the application, the bootloader images and the SWD loader; the files
-  are attached to the run.
-- A tag `v<version>` matching the About text (e.g. `v1.2.4`) also publishes a release with
-  `APP_2C53T_V<version>_<yymmdd>.bin`, `STARTER.bin`, `BOOT_F/A/B.bin`, `swd_loader.bin` and
-  `SHA256SUMS`.
-
 ---
 
 ## Repository layout
