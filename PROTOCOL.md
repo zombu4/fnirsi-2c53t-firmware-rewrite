@@ -79,8 +79,8 @@ through the menu's own handler, then the scope page is redrawn completely.
 
 Capability bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ, 6 DRIVE, 7 firmware
 update, 8 BATTERY, 9 KEEP_AWAKE, 10 MEM_READ, 11 DMM_*, 12 SCOPE_* settings, 13 SCOPE_WAVE,
-14 SETTINGS_*, 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ, 19 METER_LOG, 20 FLASH_ID.
-Firmware 1.3.0: 0x7FFFF; 1.4.8: 0x1FFFFF.
+14 SETTINGS_*, 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ, 19 METER_LOG, 20 FLASH_ID, 21 METER_SEND.
+Firmware 1.3.0: 0x7FFFF; 1.4.8: 0x1FFFFF; 1.4.10: 0x3FFFFF.
 
 ### 4.2 State and keys
 
@@ -230,6 +230,7 @@ The host confirms the result afterwards with INFO (new firmware version, last up
 | 0xF2 | FLASH_READ | address (u32), length (u16, 1..256), address + length at most 16 MB | bytes of the external SPI flash (drive 3: from 0, drive 2: from 0x200000); read-only |
 | 0xF3 | METER_LOG | op (u8): 1 start, 0 stop, 2 read + offset (u16) | read: count (u16), then up to 256 recorded bytes from the offset. Records the bytes the multimeter chip sends to the application (USART2, 9600 baud) into a 2048-byte buffer from the allocator, until it is full or stopped; nothing is sent to the chip; status 3 for read while not recording, 5 when no buffer is free |
 | 0xF4 | FLASH_ID | - | JEDEC identification of the external SPI flash (command 0x9F): manufacturer, memory type, capacity (3 bytes); read-only |
+| 0xF5 | METER_SEND | m1 (u8), m0 (u8) | - ; the multimeter chip (SDIC SD7502) gets the frame AA 55 m1 m0 00 00 00 00 00 (m1+m0), through the same queue and task as the meter's own key handlers; only on the meter page (status 3 otherwise), 4 when the queue is full |
 
 Fault record (MEM_READ 0x20037FB0, 48 bytes, little-endian words; `src/fault.s`): +0 magic 0xFA017EC0
 when valid, +4 exception number (3: hard fault; memory management, bus and usage faults are not enabled

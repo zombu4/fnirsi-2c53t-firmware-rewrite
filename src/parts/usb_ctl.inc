@@ -22,11 +22,11 @@
 	.equ	MAX_PAYLOAD,	512
 	.equ	STATE_LEN,	44		@ STATE record (PROTOCOL.md 4.6)
 	.equ	PROTO_VERSION,	1
-	.equ	CAPS,		0x001FFFFF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
+	.equ	CAPS,		0x003FFFFF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
 						@ 6 DRIVE, 7 FW update, 8 BATTERY, 9 KEEP_AWAKE, 10 MEM_READ,
 						@ 11 DMM_*, 12 SCOPE_* settings, 13 SCOPE_WAVE, 14 SETTINGS_*,
 						@ 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ,
-						@ 19 METER_LOG, 20 FLASH_ID
+						@ 19 METER_LOG, 20 FLASH_ID, 21 METER_SEND
 
 @ RAM: 0x20036F90..0x20037FDF (above the application's stack top 0x20036F90, below the bootloader
 @ words at 0x20037FE0); the top 48 bytes 0x20037FB0..0x20037FDF are the fault record (src/fault.s)

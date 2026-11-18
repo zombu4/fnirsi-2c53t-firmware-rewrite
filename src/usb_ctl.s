@@ -839,6 +839,8 @@ cmd_table:
 	.word	cmd_meter_log
 	.byte	0xF4, 0, 0, 0
 	.word	cmd_flash_id
+	.byte	0xF5, 0, 0, 0
+	.word	cmd_meter_send
 	.byte	0xFF, 0, 0, 0
 
 @ ----------------------------------------------------------------------------

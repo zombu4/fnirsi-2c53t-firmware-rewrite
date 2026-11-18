@@ -1901,6 +1901,48 @@ cmd_meter_log:
 90:	bl	answer_status
 	pop	{r4, r5, r6, r7, pc}
 
+@ METER_SEND (diagnostics): m1 (u8), m0 (u8). Posts the halfword m1 << 8 | m0 to the queue of the
+@ dvom_TX task (handle word 0x20002D74), which sends the multimeter chip the frame
+@ AA 55 m1 m0 00 00 00 00 00 (m1 + m0) exactly as for the vendor's own key handlers
+@ (fn_0803e3f4, src/meter_link_39.s). Only on the meter page (page byte 1: the chip's link is on);
+@ status 3 otherwise or when the queue does not exist, 4 when the queue is full (timeout 0).
+	.equ	DVOM_TX_QUEUE,	0x20002D74
+	.global	cmd_meter_send
+	.thumb_func
+cmd_meter_send:
+	push	{r4, lr}
+	sub	sp, #8
+	cmp	r6, #2
+	bne	92f
+	ldr	r0, =UI_PAGE
+	ldrb	r0, [r0]
+	and	r0, r0, #0x7F
+	cmp	r0, #1
+	bne	93f
+	ldr	r0, =DVOM_TX_QUEUE
+	ldr	r0, [r0]
+	cmp	r0, #0
+	beq	93f
+	ldrb	r1, [r5, #0]			@ m1
+	ldrb	r2, [r5, #1]			@ m0
+	orr	r1, r2, r1, lsl #8
+	strh	r1, [sp, #0]
+	mov	r1, sp
+	movs	r2, #0
+	bl	queue_send_timeout
+	cmp	r0, #0
+	beq	94f
+	movs	r0, #0
+	b	90f
+92:	movs	r0, #2
+	b	90f
+93:	movs	r0, #3
+	b	90f
+94:	movs	r0, #4
+90:	bl	answer_status
+	add	sp, #8
+	pop	{r4, pc}
+
 @ meter_log_byte - r2 = a byte received from the multimeter chip (USART2 receive interrupt): stored
 @ when METER_LOG records and the buffer has room. Keeps every register; changes the flags (the
 @ caller sets them again with adds before it tests any).
