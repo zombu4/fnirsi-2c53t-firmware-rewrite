@@ -47,11 +47,6 @@
 	.equ	STOCK_REST_CRC,	0x64266A45	@ CRC-32 of 0x08000800..0x08005873 of the stock bootloader
 	.equ	STOCK_END,	0x08005874	@ end of the stock bootloader image (0x5874 bytes)
 	.equ	LOG_SIZE,	1024		@ report buffer, first word = write pointer
-	.equ	BATTERY_MIN_RAW, 2128		@ lowest battery reading accepted for a first install: the
-						@ application's level 30 (v > 3.74), see battery_read
-	.equ	BATTERY_MAX_RAW, 2560		@ highest accepted: v = 4.5 in the application's units, above
-						@ its level-100 limit 4.06 (a reading above is not a battery)
-	.equ	BATTERY_SPREAD,	32		@ largest accepted difference of the four readings
 
 	.section .text.boot_install,"ax",%progbits
 	.p2align 2
@@ -171,8 +166,8 @@ boot_install:
 	b	.Li_finish
 1:	ldr	r0, =s_stock
 	bl	log_str
-	bl	battery_read		@ the page 0 step must not lose power: battery first
-	mov	r5, r0			@ r5 = lowest of four readings
+	bl	battery_read		@ for the report only: at this point of the start-up the readings
+	mov	r5, r0			@ are not a battery value (2026-11-17: 0x9C9..0xA32 on battery)
 	mov	r6, r1			@ r6 = highest
 	ldr	r0, =s_battery
 	bl	log_str
@@ -184,18 +179,17 @@ boot_install:
 	bl	log_hex
 	ldr	r0, =s_crlf
 	bl	log_str
-	cmp	r5, #0x10000		@ 0x10000: the converter did not finish
-	bhs	2f
-	movw	r0, #BATTERY_MIN_RAW	@ lowest at least the application's level 30
-	cmp	r5, r0
-	blo	2f
-	movw	r0, #BATTERY_MAX_RAW	@ highest not above a plausible battery
-	cmp	r6, r0
-	bhi	2f
-	subs	r0, r6, r5		@ the four readings agree
-	cmp	r0, #BATTERY_SPREAD
-	bls	3f
-2:	ldr	r0, =s_battery_low
+	bl	usb_power_read		@ the page 0 step must not lose power: external power required
+	mov	r5, r0			@ r5 = port C input word of the first read
+	mov	r6, r1			@ r6 = 1 when all eight reads had bit 7 clear
+	ldr	r0, =s_portc
+	bl	log_str
+	mov	r0, r5
+	bl	log_hex
+	ldr	r0, =s_crlf
+	bl	log_str
+	cbnz	r6, 3f
+	ldr	r0, =s_no_usb
 	bl	log_str
 	b	.Li_finish
 3:	movs	r0, #SLOT_ID_F
@@ -401,6 +395,37 @@ log_hex:
 	pop	{r4, r5, r6, pc}
 
 @ ----------------------------------------------------------------------------
+@ usb_power_read - reads port C's input register 0x40011008 eight times with the port clock on
+@ (0x40021018 bit 4 set for the reads, restored as found); returns r0 = the first word read and
+@ r1 = 1 when bit 7 was clear in all eight reads, else 0.  Bit 7 clear is the state in which the
+@ application does not measure its battery and takes level 100 (FUN_08009c78 0x08009CB0..0x08009CCE),
+@ the same bit its battery icon code reads (FUN_08012844).  The installer takes it as "external
+@ power present"; the dry runs on the meter record the word with and without USB (BOOTINST.LOG).
+@ ----------------------------------------------------------------------------
+	.thumb_func
+usb_power_read:
+	push	{r4, r5, r6, lr}
+	ldr	r4, =0x40021018
+	ldr	r5, [r4]		@ r5 = clock word as found
+	orr	r0, r5, #0x10
+	str	r0, [r4]
+	ldr	r0, [r4]		@ read back and wait: the port is clocked before it is read
+	dsb
+	ldr	r2, =0x40011008
+	ldr	r6, [r2]		@ r6 = first word
+	movs	r1, #1
+	movs	r3, #8
+1:	ldr	r0, [r2]
+	tst	r0, #0x80
+	it	ne
+	movne	r1, #0
+	subs	r3, #1
+	bne	1b
+	str	r5, [r4]		@ clock word as found
+	mov	r0, r6
+	pop	{r4, r5, r6, pc}
+
+@ ----------------------------------------------------------------------------
 @ battery_read - four readings of the converter the application uses for its battery level, each
 @ taken the way the application takes it; returns r0 = the lowest and r1 = the highest reading, or
 @ r0 = r1 = 0x10000 when the converter does not finish.  At this point of the start-up the application has not set the converter up yet
@@ -414,8 +439,10 @@ log_hex:
 @ its value from before back (converter registers saved after their clock is on; the status
 @ register 0x40012400 is cleared to its reset value 0).
 @ The application turns the reading into its battery level with v = reading * 0.0017578125 and
-@ the limits 4.06 .. 3.68 (FUN_08009c78): level 30 needs v > 3.74, i.e. a reading of 2128 or more
-@ (BATTERY_MIN_RAW); its "battery low" dialog comes at level 5 (v <= 3.68).
+@ the limits 4.06 .. 3.68 (FUN_08009c78).  The installer only reports these readings: on the meter
+@ (2026-11-17) they were 0xA09..0xA31 on USB and 0x9C9..0xA32 on battery, i.e. v 4.40..4.59 with a
+@ spread of up to 105, so at this point of the start-up they are not a battery value; the power
+@ condition is usb_power_read.
 @ Registers: r4 0x40021018, r5 converter base 0x40012400, r6 / r7 saved clock words, r8 / r9 lowest
 @ / highest reading, r3 readings left.
 @ Frame: saved 0x40012404, 0x40012408, 0x40012410, 0x4001242C, 0x40012434.
@@ -1166,10 +1193,11 @@ s_flash_size:		.asciz	"flash size is not 1024 KB: nothing written\r\n"
 s_page0_unknown:	.asciz	"page 0 holds neither the stock bootloader nor the starter: nothing written\r\n"
 s_stock_differs:	.asciz	"stock bootloader 0x08000800..0x08005873 has another CRC-32: nothing written\r\n"
 s_stock:		.asciz	"page 0: stock bootloader: first install\r\n"
-s_battery:		.asciz	"battery readings: 0x"
+s_battery:		.asciz	"converter readings (report only): 0x"
 s_battery_to:		.asciz	" .. 0x"
 s_crlf:			.asciz	"\r\n"
-s_battery_low:		.asciz	"battery readings not all in 0x00000850..0x00000A00 within 0x20 of each other (or none): charge, nothing written\r\n"
+s_portc:		.asciz	"port C input (0x40011008): 0x"
+s_no_usb:		.asciz	"bit 7 of port C not clear in all reads (no external power): connect USB, nothing written\r\n"
 s_starter:		.asciz	"page 0: starter: bootloader update\r\n"
 s_pending:		.asciz	"newest record is INSTALL or TRIAL: restart the meter first; nothing written\r\n"
 s_rolled_back:		.asciz	"running slot F after a roll-back; slot A already holds this image: nothing written\r\n"
