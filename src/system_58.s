@@ -393,12 +393,8 @@ system_bring_up:
 	strb.w	r6, [sp, #0x47]
 	str	r4, [sp, #0x40]
 	bl	set_nibble_fields_from_bit_mask
-	.ifdef	VENDOR_V120
-	str	r4, [r7]			@ 0x40011014 = 0x200: PC9 (power hold) low
-	.else
 	str	r4, [r5, #0x10]			@ 0x40011010 = 0x200: PC9 (power hold) high from the start, so
 						@ the meter stays on after a reset by this firmware (update)
-	.endif
 	ldr.w	r0, [r9]
 	add	r4, sp, #0x40
 	orr	r0, r0, #4
@@ -1159,11 +1155,7 @@ system_bring_up:
 	uxtb	r2, r0
 	mov	r0, r4
 	mov	r1, r6
-	.ifdef	VENDOR_V120
-	bl	format_to_buffer_080073b4
-	.else
 	bl	charge_screen_or_skip		@ boot_install.s: no charging screen after a software reset
-	.endif
 	movw	r2, #0x1000
 	movt	r2, #0x4001
 	ldr	r0, [r2, #8]
@@ -1215,11 +1207,9 @@ system_bring_up:
 	beq.n	.L0802b3e4
 	b.n	.L0802b354
 .L0802b40e:
-	.ifndef	VENDOR_V120
 	.global	charge_loop_exit
 	.thumb_func
 charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
-	.endif
 	mov.w	r0, #0x200
 	str	r0, [r2, #0x10]
 	movw	r0, #0x6b80
@@ -1237,11 +1227,7 @@ charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
 	movs	r2, #0
 	mov	r9, r0
 	movs	r4, #0
-	.ifdef	VENDOR_V120
-	bl	file_open
-	.else
 	bl	boot_hook_then_file_open	@ dump / install when their trigger files exist, then file_open
-	.endif
 	movw	r6, #0xf8
 	cmp	r0, #0
 	movt	r6, #0x2000

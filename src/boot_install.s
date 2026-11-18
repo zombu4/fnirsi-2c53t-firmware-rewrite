@@ -31,14 +31,12 @@
 @ (p0_code); the "8KTA" page, the settings / calibration page 0x08006000 and the application are not
 @ touched.  The independent watchdog (key register 0x40003000, the application starts it) is fed
 @ before every page erase and every 128 programmed words.
-@ Not assembled for the vendor-text build (make check, VENDOR_V120).
 
 	.syntax unified
 	.arch armv7e-m
 	.fpu fpv4-sp-d16
 	.thumb
 
-	.ifndef	VENDOR_V120
 
 	.include "common/layout.inc"
 
@@ -1327,4 +1325,3 @@ img_b_end:
 	.error	"slot B image: length must be a multiple of 4 and fit the slot"
 	.endif
 
-	.endif

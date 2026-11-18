@@ -1281,10 +1281,10 @@ fat_set_entry:
 @ window with 0803616c and clears byte [4].
 @ ----------------------------------------------------------------------------
 	.section .text.fat_sync_volume,"ax",%progbits
-	.global fat_sync_volume
+	.global fat_sync_volume_unlocked
 	.thumb_func
-	.type fat_sync_volume, %function
-fat_sync_volume:
+	.type fat_sync_volume_unlocked, %function
+fat_sync_volume_unlocked:
 	push {r4, r5, r6, lr}
 	mov r4, r0
 	ldrb r0, [r0, #0x3]

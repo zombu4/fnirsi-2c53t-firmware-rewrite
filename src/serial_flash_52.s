@@ -159,10 +159,10 @@ serial_device_command_90_clock_two_bytes:
 @ serial_device_transfer_byte.
 @ ----------------------------------------------------------------------------
 	.section .text.serial_device_interface_init,"ax",%progbits
-	.global serial_device_interface_init
+	.global serial_device_interface_init_unlocked
 	.thumb_func
-	.type serial_device_interface_init, %function
-serial_device_interface_init:
+	.type serial_device_interface_init_unlocked, %function
+serial_device_interface_init_unlocked:
 	push.w	{r4, r5, r6, r7, r8, r9, lr}
 	sub	sp, #0x14
 	movs	r0, #0xe
@@ -254,10 +254,10 @@ serial_device_interface_init:
 @ (0x40010c10 = 0x1000).
 @ ----------------------------------------------------------------------------
 	.section .text.serial_device_read,"ax",%progbits
-	.global serial_device_read
+	.global serial_device_read_unlocked
 	.thumb_func
-	.type serial_device_read, %function
-serial_device_read:
+	.type serial_device_read_unlocked, %function
+serial_device_read_unlocked:
 	push	{r7, lr}
 	sub	sp, #0x10
 	str	r0, [sp, #0xc]
@@ -430,10 +430,10 @@ serial_device_wait_status_bit0_clear:
 @ of the 0x1000-byte block).
 @ ----------------------------------------------------------------------------
 	.section .text.serial_device_write_merge,"ax",%progbits
-	.global serial_device_write_merge
+	.global serial_device_write_merge_unlocked
 	.thumb_func
-	.type serial_device_write_merge, %function
-serial_device_write_merge:
+	.type serial_device_write_merge_unlocked, %function
+serial_device_write_merge_unlocked:
 	push	{r7, lr}
 	sub	sp, #0x20
 	str	r0, [sp, #0x1c]

@@ -27,10 +27,10 @@
 @   too small; failures 1 and 2 are stored in obj byte 0x11.
 @ ----------------------------------------------------------------------------
 	.section .text.file_seek,"ax",%progbits
-	.global file_seek
+	.global file_seek_unlocked
 	.thumb_func
-	.type file_seek, %function
-file_seek:
+	.type file_seek_unlocked, %function
+file_seek_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0x4
 	cbz r0, .L08034216
@@ -422,10 +422,10 @@ file_seek:
 @   counters base+0x14 and the flag base[4] |= 1.
 @ ----------------------------------------------------------------------------
 	.section .text.dir_create,"ax",%progbits
-	.global dir_create
+	.global dir_create_unlocked
 	.thumb_func
-	.type dir_create, %function
-dir_create:
+	.type dir_create_unlocked, %function
+dir_create_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, lr}
 	sub sp, #0x48
 	str r0, [sp, #0x44]
@@ -881,10 +881,10 @@ drive_mount:
 @ Returns 0 on success; on any error clears obj[0] and returns the error.
 @ ----------------------------------------------------------------------------
 	.section .text.file_open,"ax",%progbits
-	.global file_open
+	.global file_open_unlocked
 	.thumb_func
-	.type file_open, %function
-file_open:
+	.type file_open_unlocked, %function
+file_open_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0x3c
 	str r1, [sp, #0x38]
@@ -1254,10 +1254,10 @@ file_open:
 @ Returns 0 on success, error 4 mapped to 5; clears obj[0] on failure.
 @ ----------------------------------------------------------------------------
 	.section .text.dir_open,"ax",%progbits
-	.global dir_open
+	.global dir_open_unlocked
 	.thumb_func
-	.type dir_open, %function
-dir_open:
+	.type dir_open_unlocked, %function
+dir_open_unlocked:
 	push {r4, r5, r6, lr}
 	sub sp, #0x8
 	str r1, [sp, #0x4]
@@ -1335,10 +1335,10 @@ dir_open:
 @ Returns 0 on success, 1 on read failure, 2 on bad chain (error stored at obj+0x11).
 @ ----------------------------------------------------------------------------
 	.section .text.file_read,"ax",%progbits
-	.global file_read
+	.global file_read_unlocked
 	.thumb_func
-	.type file_read, %function
-file_read:
+	.type file_read_unlocked, %function
+file_read_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0xc
 	mov r4, r0
@@ -1631,10 +1631,10 @@ file_read:
 @ Returns 0, 1 or 2.
 @ ----------------------------------------------------------------------------
 	.section .text.dir_read_entry,"ax",%progbits
-	.global dir_read_entry
+	.global dir_read_entry_unlocked
 	.thumb_func
-	.type dir_read_entry, %function
-dir_read_entry:
+	.type dir_read_entry_unlocked, %function
+dir_read_entry_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, lr}
 	sub sp, #0x4
 	cbz r0, .L08034f5c

@@ -20,7 +20,8 @@
 @   Then sends code 7 to queue [0x20002d6c] (queue_send_timeout) when
 @   [0x20001060]-1<5 or [0x20001060]==9; limits [0x2000105f] to [0x20000004] and
 @   stores it there; below 6: sets bit7 of [0x20001060] and sends 0x22 if it was
-@   clear, sends 0x23, calls save_settings_to_flash(0x55) (never returns) when
+@   clear, sends 0x23, calls save_settings_to_flash(0x55) (never returns; this firmware:
+@   power_off_request, see .L08009f8a) when
 @   [0x2000105e]>14, else continues at the common tail; at 6 or more sets
 @   [0x2000105e]=4.
 @ Common tail (also reached when [0x20002d68]!=0 or bit7 clear): when bit7 of
@@ -347,8 +348,8 @@ fn_08009c78:
 	bne.n .L08009f46
 	b.n .L08009f5a
 .L08009f8a:
-	movs r0, #0x55
-	bl save_settings_to_flash
+	bl	power_off_request	@ storage.s: power off through the key task (key 1), not here
+	b.n .L08009f46			@ return: this is a timer callback, it may not wait for the flash
 .L08009f90:
 	.word 0xcccccccd, 0x3f4ccccc	@ 0.00087890625 (double)
 .L08009f98:
@@ -559,6 +560,8 @@ fn_08009fe8:
 @ are odd Thumb addresses 0x08009fe1, 0x0800cb51, ...; indirect call ldr.w/blx).
 @ After every received code: if byte 0x2000105a != 0 it is written to 0x40015434;
 @ then 0 is stored to 0x20001064.
+@ This firmware: the indirect call is key_task_dispatch (usb_remote.s), which runs USB remote jobs
+@ for code 0x80 and calls the same table entry for every other code (same size: bl, nop.w, nop).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_08040008,"ax",%progbits
 	.global fn_08040008
@@ -614,9 +617,9 @@ fn_08040008:
 	orrs r0, r1
 	bne.n .L08040038
 	ldrb.w r0, [sp, #7]
-	add.w r0, r8, r0, lsl #2
-	ldr.w r0, [r0, #-4]
-	blx r0
+	bl	key_task_dispatch	@ usb_remote.s: USB remote jobs, key events, then the same handler
+	nop.w
+	nop
 	b.n .L08040038
 
 @ ----------------------------------------------------------------------------
@@ -1285,7 +1288,8 @@ fn_080400b8:
 @ 0x20000eaa and 0x20001068 again and returns; 2 -> if (ushort)(s+1) < 0x709 it
 @ returns; 1 -> if (ushort)(s+1) < 0x385 it clears both again and returns; any
 @ other value clears both and returns. When the threshold of the selected mode
-@ is reached it calls the no-return function save_settings_to_flash(0x55).
+@ is reached it calls the no-return function save_settings_to_flash(0x55) (this firmware:
+@ power_off_request, which posts key 1 so the key task powers off, and returns).
 @ Purpose: counts calls in 0x20001064 against the limits 0x385, 0x709, 0xe11 and
 @ ends in save_settings_to_flash(0x55) when the limit selected by 0x2000105d is
 @ reached; what the call means is not determined from the code.
@@ -1333,9 +1337,9 @@ fn_080406c8:
 	it ls
 	popls {r7, pc}
 .L0804072c:
-	movs r0, #0x55
-	bl save_settings_to_flash
-	.short 0x0000	@ padding, never reached
+	bl	power_off_request	@ storage.s: power off through the key task (key 1), not here
+	pop {r7, pc}			@ return: this is a timer callback, it may not wait for the flash
+	.short 0x0000	@ padding, never reached (the next function keeps its address)
 
 @ ----------------------------------------------------------------------------
 @ fn_08040734 - programs one of four field groups in a register block.

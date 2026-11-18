@@ -46,7 +46,11 @@
 @  w74 = 0x20000448 | 0x20000449<<8 | (u16 0x20000446)<<16
 @  w75 = 0x2000044a | 0x2000044b<<8 | (u16 0x20000446)<<16
 @   (0x08029a16..0x08029a4a)
-@ Only 0x130 of the 0x200 buffer bytes are written by this function.
+@ Only 0x130 of the 0x200 buffer bytes are written by this function (vendor: the rest is whatever
+@ the heap held, programmed into 0x08006130..0x080061FF at every save). This firmware:
+@ settings_buffer_alloc fills the buffer with the page's first 0x200 bytes first, so only the packed
+@ values change, and settings_pack_done skips the whole flash part (erase and program of the page
+@ that also holds the calibration) when the packed buffer equals the page.
 @ Flash part: disables interrupts (cpsid i, never re-enabled here), writes the
 @ keys 0x45670123 and 0xcdef89ab to 0x40022004 and to 0x40022044, copies 0x800
 @ bytes from 0x08006000 to RAM 0x200022c8; when all 256 halfwords of the first
@@ -69,10 +73,10 @@
 @ 0x40011014 and calls reset_system (0x0803b070).
 @ ----------------------------------------------------------------------------
 	.section .text.save_settings_to_flash,"ax",%progbits
-	.global save_settings_to_flash
+	.global save_settings_to_flash_body
 	.thumb_func
-	.type save_settings_to_flash, %function
-save_settings_to_flash:
+	.type save_settings_to_flash_body, %function
+save_settings_to_flash_body:
 	sub	sp, #0x38
 	movw	r1, #0x5c40
 	movt	r1, #0x4000
@@ -93,7 +97,7 @@ save_settings_to_flash:
 	movt	r7, #0x2000
 	mov.w	r0, #0x200
 	strh.w	r1, [r7, #0xf6c]
-	bl	alloc_units_of_32_bytes
+	bl	settings_buffer_alloc		@ storage.s: the buffer starts as the page's first 0x200 bytes
 	cmp	r0, #0x0
 	beq.w	.L08029d0c
 	mov	r10, r0
@@ -548,8 +552,8 @@ save_settings_to_flash:
 	ldrb.w	r3, [r7, #0x353]
 	add	r1, r2
 	orr.w	r1, r1, r3, lsl #0x8
-	str.w	r1, [r10, #0x12c]
-	mrs	r1, primask
+	bl	settings_pack_done		@ storage.s: last packed word; Z when the page holds it all
+	beq.w	.L08029d0c			@ nothing changed: no erase, no program (r4 set by the call)
 	cpsid	i
 	movw	r1, #0x123
 	movw	r2, #0x89ab
@@ -914,15 +918,12 @@ save_settings_to_flash:
 	movs	r1, #0x0
 	strb	r1, [r0]
 .L08029d2e:
-	movw	r0, #0x1014
-	movt	r0, #0x4001
-	mov.w	r1, #0x200
-	str	r1, [r0]			@ PC9 (power hold) low: power off
-	.ifdef	VENDOR_V120
-	bl	reset_system
-	.else
-	bl	power_off_wait			@ wait for the power to go (boot_install.s), no reset
-	.endif
+	bl	settings_saved			@ usb_remote.s: restart after SETTINGS_SAVE, else PC9 low and
+						@ power_off_wait (boot_install.s); not reached:
+	nop.w					@ the next function keeps its address (same 18 bytes)
+	nop.w
+	nop.w
+	nop
 
 @ ----------------------------------------------------------------------------
 @ fn_08029d40 - no parameters, no return value.
@@ -1064,10 +1065,10 @@ fn_08033f7c:
 @ base+3 (dirty flag) and calls fat_sync_volume (0x0803d934)(base), which
 @ writes the dirty window back.
 @ ----------------------------------------------------------------------------
-	.global fn_08033fbc
+	.global fn_08033fbc_unlocked
 	.thumb_func
-	.type fn_08033fbc, %function
-fn_08033fbc:
+	.type fn_08033fbc_unlocked, %function
+fn_08033fbc_unlocked:
 	push	{r4, lr}
 	sub	sp, #0x38
 	movw	r0, #:lower16:d_080bc18a+1

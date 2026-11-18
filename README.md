@@ -17,11 +17,20 @@ The project contains:
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.2.9**).
-- Functionally identical to the vendor application V1.2.0: `make check` builds the same source with
-  the vendor version text and verifies it is **byte-identical** to the vendor image.
-- Additions in this build: a start-up hook for the bootloader installer and the flash dump
-  (`src/boot_install.s`, `src/boot_dump.s`).
+- Runs on the meter as assembly firmware (About shows **V1.3.3**). It started as a byte-identical
+  port of the vendor application V1.2.0 and is now developed on its own.
+- **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
+  no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,
+  settings), screenshots, files, events and firmware updates without touching the meter.
+  Protocol: **[PROTOCOL.md](PROTOCOL.md)**.
+- **Storage fix** (`src/storage.s`): one lock for the external flash and the file system, the USB
+  drive handled outside the interrupt, the drive flushed before it is shared and re-read after, and
+  the flash idle before every power-off and reset (the vendor firmware could corrupt the drive when
+  the host wrote to it, e.g. a Mac, or when the meter was switched off or restarted on USB).
+- No charging screen after a software restart; the power hold stays on until the meter is switched
+  off.
+- Start-up hooks for the bootloader installer and the flash dump (`src/boot_install.s`,
+  `src/boot_dump.s`).
 
 ### Bootloaders
 
@@ -35,8 +44,7 @@ How to install the two-part bootloader: **[FLASHING_BOOTLOADER.md](FLASHING_BOOT
 ### Next steps
 
 - Smaller and faster code
-- Debug output and device control over USB
-- Self-update over USB
+- English-only texts and own fonts and pictures in place of the vendor data
 - Moving the fixed data: some pointers into it (texts, tables, `assets/rodata.bin`) are still plain
   numbers, which is correct only while it stays at 0x08046254
 
@@ -119,7 +127,6 @@ newer.
 
 ```sh
 make                       # build/APP_2C53T.bin (also builds starter/ and bootloader/)
-make check                 # byte proof against the vendor application V1.2.0
 make -C bootloader vendor-data DUMP=BOOTDUMP.BIN && make -C bootloader check
                            # byte proof of the stock bootloader port (data from your own dump)
 make -C swd                # SWD loader for the first bootloader install
@@ -142,8 +149,8 @@ ignores "._" files by their content.
 
 ## Continuous build and releases
 
-- Every push to `main` builds the application, the bootloader images and the SWD loader and runs the
-  application's byte proof; the files are attached to the run.
+- Every push to `main` builds the application, the bootloader images and the SWD loader; the files
+  are attached to the run.
 - A tag `v<version>` matching the About text (e.g. `v1.2.4`) also publishes a release with
   `APP_2C53T_V<version>_<yymmdd>.bin`, `STARTER.bin`, `BOOT_F/A/B.bin`, `swd_loader.bin` and
   `SHA256SUMS`.

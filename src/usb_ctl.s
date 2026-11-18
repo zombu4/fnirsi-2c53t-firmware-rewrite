@@ -24,70 +24,10 @@
 	.fpu fpv4-sp-d16
 	.thumb
 
-	.ifndef	VENDOR_V120
 
 	.include "common/layout.inc"
 
-	.equ	USB_DEV,	0x20002B24
-	.equ	USB_CB_TABLE,	0x20000030
-	.equ	USB_DESC_TABLE,	0x20000058
-	.equ	EP0_STAGE,	0x20002D44
-	.equ	IN_REC0,	0x20002B30
-	.equ	OUT_REC0,	0x20002C30
-	.equ	OUT_REC3,	0x20002C90
-	.equ	USB_EPR3,	0x40005C0C
-	.equ	USB_EPR0,	0x40005C00
-	.equ	USB_CNTR,	0x40005C40
-	.equ	USB_CFG,	0x40005C60	@ bit 1: D+ pull-up off (PUO)
-
-	.equ	UI_PAGE,	0x20001060
-	.equ	KEY_QUEUE,	0x20002D70
-	.equ	DISPLAY_QUEUE,	0x20002D6C
-	.equ	AUTO_OFF_COUNT,	0x20001064
-	.equ	TICKS,		0x200062D4
-
-	.equ	MAX_PAYLOAD,	512
-	.equ	PROTO_VERSION,	1
-	.equ	CAPS,		0x000007FF	@ bits: 0 STATE, 1 STREAM, 2 PAGE, 3 KEY, 4 GEN_SET, 5 CAL_READ,
-						@ 6 DRIVE, 7 FW update, 8 BATTERY, 9 KEEP_AWAKE, 10 MEM_READ
-
-@ RAM: 0x20036F90..0x20037DFF (above the application's stack top 0x20036F90, below the bootloader
-@ words at 0x20037FE0)
-	.equ	CTL,		0x20036F90
-	.equ	RX_RING,	CTL + 0x000	@ 1024 bytes
-	.equ	TX_RING,	CTL + 0x400	@ 1024 bytes
-	.equ	FRAME,		CTL + 0x800	@ 528 bytes: request frame being assembled (from length on)
-	.equ	PKT_OUT,	CTL + 0xA10	@ 64 bytes: EP3 OUT packet
-	.equ	PKT_IN,		CTL + 0xA50	@ 64 bytes: EP3 IN packet
-	.equ	ANSWER,		CTL + 0xA90	@ 528 bytes: answer payload being built
-	.equ	V,		CTL + 0xCA0	@ variables:
-	.equ	V_RXH,		0x00		@ rx head (interrupt)
-	.equ	V_RXT,		0x04		@ rx tail (task)
-	.equ	V_TXH,		0x08		@ tx head (task)
-	.equ	V_TXT,		0x0C		@ tx tail (interrupt)
-	.equ	V_INBUSY,	0x10		@ EP3 IN packet in flight
-	.equ	V_ZLP,		0x11		@ last packet was 64 bytes: a zero-length packet must follow
-	.equ	V_CONF,		0x12		@ configured
-	.equ	V_DTR,		0x13
-	.equ	V_SHARED,	0x14		@ configuration with the drive
-	.equ	V_AWAKE,	0x15
-	.equ	V_FWOK,		0x16		@ staged image complete and verified
-	.equ	V_PSTATE,	0x17		@ frame parser: 0 wait sync, 1 length low, 2 length high, 3 body
-	.equ	V_FLEN,		0x18		@ halfword: frame length (seq .. payload)
-	.equ	V_FPOS,		0x1A		@ halfword: bytes of the frame body collected (incl. CRC)
-	.equ	V_LINE,		0x1C		@ 8 bytes line coding
-	.equ	V_HAND,		0x24		@ 16 bytes copy of the bootloader's hand-over block
-	.equ	V_STREAM,	0x34		@ stream period (ms)
-	.equ	V_SNEXT,	0x38		@ tick of the next stream frame
-	.equ	V_FWOBJ,	0x3C		@ file object of the staged image (0 = none)
-	.equ	V_FWTOT,	0x40
-	.equ	V_FWCRC,	0x44		@ expected CRC-32
-	.equ	V_FWPOS,	0x48		@ bytes written
-	.equ	V_FWRUN,	0x4C		@ running CRC register
-	.equ	V_TASK,		0x50		@ task handle
-	.equ	V_SSEQ,		0x54		@ stream / event counter
-	.equ	V_CFGIF,	0x55		@ CDC communication interface number of the active configuration
-	.equ	V_END,		0x58
+	.include "src/parts/usb_ctl.inc"
 
 	.section .text.usb_ctl,"ax",%progbits
 	.p2align 2
@@ -192,6 +132,8 @@ cdc_set_config:
 	push	{r4, r5, r6, lr}
 	mov	r4, r0
 	ldr	r5, =V
+	movs	r0, #0				@ drive events of an earlier session are void
+	strh	r0, [r5, #V_MSCOUT]
 	ldrb	r0, [r5, #V_SHARED]
 	cbz	r0, 1f
 	mov	r0, r4
@@ -237,6 +179,7 @@ cdc_deconfig:
 	movs	r0, #0
 	strb	r0, [r5, #V_CONF]
 	strb	r0, [r5, #V_DTR]
+	strh	r0, [r5, #V_MSCOUT]		@ and V_MSCIN: no drive events without configuration
 	mov	r0, r4
 	movs	r1, #0x82
 	bl	fn_08040874
@@ -346,6 +289,8 @@ cdc_class_request:
 	b	9f
 8:	ldrb	r0, [r6, #V_SHARED]
 	cbz	r0, 9f
+	movs	r0, #0				@ mass-storage reset / clear feature: pending events are void
+	strh	r0, [r6, #V_MSCOUT]
 	mov	r0, r4
 	mov	r1, r5
 	bl	msc_control_request_handler
@@ -362,13 +307,19 @@ cdc_ep0_out_done:
 @ ----------------------------------------------------------------------------
 @ cdc_out_done - slot 6 (r0 = device, r1 = endpoint index). Index 3: copy the packet (count at the
 @ record's +0x10) into the rx ring (bytes that do not fit are dropped; the host waits for answers, so
-@ the ring holds a full request) and arm the endpoint again. Other indices: original MSC handler.
+@ the ring holds a full request) and arm the endpoint again. Other indices (mass storage): only
+@ recorded in V_MSCOUT; the endpoint stays NAK until msc_service (src/storage.s) runs the vendor
+@ handler in the usb task, so the flash is never written from the interrupt.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 cdc_out_done:
 	cmp	r1, #3
 	beq	1f
-	b	handle_command_block_or_write_data
+	ldr	r2, =V				@ mass storage: recorded, run by the usb task (msc_service)
+	adds	r1, #1
+	strb	r1, [r2, #V_MSCOUT]
+	movs	r0, #0
+	bx	lr
 1:	push	{r4, r5, r6, lr}
 	ldr	r4, =V
 	ldr	r0, =OUT_REC3
@@ -399,15 +350,19 @@ cdc_out_done:
 	movs	r0, #0
 	pop	{r4, r5, r6, pc}
 
-@ cdc_in_done - slot 5 (r0 = device, r1 = index). Index 3: packet sent, pump the next. Index 1:
-@ original MSC handler. Index 2 (notifications, never sent): nothing.
+@ cdc_in_done - slot 5 (r0 = device, r1 = index). Index 3: packet sent, pump the next. Index 1 (mass
+@ storage transfer complete): recorded in V_MSCIN for msc_service. Index 2 (notifications, never
+@ sent): nothing.
 	.thumb_func
 cdc_in_done:
 	cmp	r1, #3
 	beq	1f
 	cmp	r1, #1
 	bne	2f
-	b	send_status_block_after_data
+	ldr	r2, =V				@ mass storage: recorded, run by the usb task (msc_service)
+	strb	r1, [r2, #V_MSCIN]
+	movs	r0, #0
+	bx	lr
 1:	ldr	r1, =V
 	movs	r2, #0
 	strb	r2, [r1, #V_INBUSY]
@@ -491,7 +446,12 @@ usb_ctl_task:
 	cmp	r1, r2
 	beq	2f
 	strb	r1, [r4, #V_SHARED]
+	cbz	r1, 21f
+	bl	storage_share			@ file closed, volumes written back before the host gets it
 	bl	usb_reenumerate
+	b	2f
+21:	bl	usb_reenumerate
+	bl	storage_unshare			@ the volume the host had is mounted again from the flash
 2:	ldrb	r0, [r4, #V_DTR]
 	ldrb	r1, [r4, #V_AWAKE]
 	orrs	r0, r0, r1
@@ -499,8 +459,10 @@ usb_ctl_task:
 	ldr	r0, =AUTO_OFF_COUNT
 	movs	r1, #0
 	strh	r1, [r0]
-3:	bl	parse_rx
+3:	bl	msc_service			@ mass-storage events (src/storage.s)
+	bl	parse_rx
 	bl	stream_tick
+	bl	events_tick			@ usb_remote.s
 	b	1b
 
 @ usb_power_up / usb_reenumerate - pull-up off 20 ms with the device powered, then on; the CDC
@@ -640,6 +602,7 @@ crc16:
 @ stream counter otherwise. Writes the frame into the tx ring, waiting (1 tick at a time) while the
 @ ring has no room. Task context.
 @ ----------------------------------------------------------------------------
+	.global	send_frame
 	.thumb_func
 send_frame:
 	push	{r4, r5, r6, r7, r8, r9, r10, lr}
@@ -749,6 +712,7 @@ tx_write:
 
 @ answer - r0 = status, r1 = data length in ANSWER + 1 (ANSWER[0] is overwritten by the status). Sends
 @ the answer frame for the request in FRAME.
+	.global	answer
 	.thumb_func
 answer:
 	push	{r4, lr}
@@ -810,10 +774,48 @@ cmd_table:
 	.word	cmd_page
 	.byte	0x13, 0, 0, 0
 	.word	cmd_key
+	.byte	0x20, 0, 0, 0
+	.word	cmd_dmm_function
+	.byte	0x21, 0, 0, 0
+	.word	cmd_dmm_hold
+	.byte	0x22, 0, 0, 0
+	.word	cmd_dmm_relative
+	.byte	0x30, 0, 0, 0
+	.word	cmd_scope_timebase
+	.byte	0x31, 0, 0, 0
+	.word	cmd_scope_channel
+	.byte	0x32, 0, 0, 0
+	.word	cmd_scope_trigger
+	.byte	0x33, 0, 0, 0
+	.word	cmd_scope_tables
+	.byte	0x34, 0, 0, 0
+	.word	cmd_scope_run
+	.byte	0x35, 0, 0, 0
+	.word	cmd_scope_autoset
+	.byte	0x36, 0, 0, 0
+	.word	cmd_scope_wave
+	.byte	0x37, 0, 0, 0
+	.word	cmd_scope_autocorrect
 	.byte	0x40, 0, 0, 0
 	.word	cmd_gen_set
+	.byte	0x50, 0, 0, 0
+	.word	cmd_settings_get
+	.byte	0x51, 0, 0, 0
+	.word	cmd_settings_set
+	.byte	0x52, 0, 0, 0
+	.word	cmd_settings_save
 	.byte	0x53, 0, 0, 0
 	.word	cmd_cal_read
+	.byte	0x60, 0, 0, 0
+	.word	cmd_screenshot
+	.byte	0x70, 0, 0, 0
+	.word	cmd_file_list
+	.byte	0x71, 0, 0, 0
+	.word	cmd_file_read
+	.byte	0x72, 0, 0, 0
+	.word	cmd_file_write
+	.byte	0x73, 0, 0, 0
+	.word	cmd_file_delete
 	.byte	0x74, 0, 0, 0
 	.word	cmd_drive
 	.byte	0x80, 0, 0, 0
@@ -826,6 +828,8 @@ cmd_table:
 	.word	cmd_fw_install
 	.byte	0xF0, 0, 0, 0
 	.word	cmd_mem_read
+	.byte	0xF2, 0, 0, 0
+	.word	cmd_flash_read
 	.byte	0xFF, 0, 0, 0
 
 @ ----------------------------------------------------------------------------
@@ -925,6 +929,7 @@ cmd_reset:
 	movs	r1, #1
 	bl	answer
 	bl	drain_and_disconnect
+	bl	storage_quiesce			@ flash idle and written back before the reset
 	ldr	r0, =0xE000ED0C
 	ldr	r1, =0x05FA0004
 	str	r1, [r0]
@@ -933,6 +938,7 @@ cmd_reset:
 
 @ drain_and_disconnect - waits until the tx ring is empty and no packet is in flight (at most 100
 @ ticks), then takes the D+ pull-up off for 20 ms.
+	.global	drain_and_disconnect
 	.thumb_func
 drain_and_disconnect:
 	push	{r4, r5, r6, lr}
@@ -992,16 +998,22 @@ cmd_keep_awake:
 	pop	{r4, pc}
 
 @ ----------------------------------------------------------------------------
-@ build_state - writes the STATE record (PROTOCOL.md 4.6, 38 bytes) to r0; returns its length.
-@ Fields the firmware does not establish yet are 0 (PROTOCOL.md section 5): dmm.range, scope channels,
-@ trigger. dmm.function from the meter index 0x20001025 (0..7), sub-function 0x2000102E (1 DC, 2 AC)
-@ and 0x20001031 (temperature unit).
+@ build_state - writes the STATE record (PROTOCOL.md 4.6, STATE_LEN bytes) to r0; returns its length.
+@ dmm.range (byte 11) is reserved (0): the meter chip's range code is not established. dmm.function
+@ from the meter index 0x20001025 (0..7), sub-function 0x2000102E and 0x20001031 (temperature unit).
+@ Page: UI page byte 0x20001060 without bit 7; bit 7 (set by the battery handler fn_08009c78 below
+@ level 6) is flag bit 6. Flag bit 5: external power (port C input 0x40011008 bit 7 low: the battery
+@ handler then skips the measurement and shows 100). Scope: per channel enable (0x2000010C bit n),
+@ V/div step 0x200000FA + n, offset 0x200000FC + n; trigger source 0x2000010E, edge 0x20000110, level
+@ 0x20000114, mode 0x2000010F; per channel coupling 0x200000F8 + n, probe 0x200000FE + n, FFT
+@ 0x20000102 + n (usb_remote.s header).
 @ ----------------------------------------------------------------------------
+	.global	build_state
 	.thumb_func
 build_state:
 	push	{r4, r5, r6, lr}
 	mov	r4, r0
-	movs	r1, #38
+	movs	r1, #STATE_LEN
 1:	subs	r1, #1
 	movs	r2, #0
 	strb	r2, [r4, r1]
@@ -1009,13 +1021,27 @@ build_state:
 	bne	1b
 	ldr	r0, =UI_PAGE
 	ldrb	r0, [r0]
-	strb	r0, [r4, #0]
+	and	r2, r0, #0x7F
+	strb	r2, [r4, #0]
 	movs	r1, #0				@ flags
-	ldr	r0, =0x20001035			@ hold
+	tst	r0, #0x80			@ low battery
+	it	ne
+	orrne	r1, r1, #0x40
+	ldr	r0, =0x40011008			@ port C input bit 7 low: external power
+	ldr	r0, [r0]
+	tst	r0, #0x80
+	it	eq
+	orreq	r1, r1, #0x20
+	ldr	r0, =0x20001034			@ hold (key 15; page 1 draws "HOLD" from it)
 	ldrb	r0, [r0]
 	cmp	r0, #0
 	it	ne
 	orrne	r1, r1, #1
+	ldr	r0, =0x20001035			@ relative (key 7; reading = value - reference)
+	ldrb	r0, [r0]
+	cmp	r0, #0
+	it	ne
+	orrne	r1, r1, #2
 	ldr	r0, =0x20000126			@ scope running
 	ldrb	r0, [r0]
 	cmp	r0, #0
@@ -1027,10 +1053,14 @@ build_state:
 	it	ne
 	orrne	r1, r1, #8
 	ldr	r0, =V
-	ldrb	r0, [r0, #V_SHARED]
-	cmp	r0, #0
+	ldrb	r2, [r0, #V_SHARED]
+	cmp	r2, #0
 	it	ne
 	orrne	r1, r1, #16
+	ldrb	r2, [r0, #V_DTR]		@ the host's DTR as the meter has it
+	cmp	r2, #0
+	it	ne
+	orrne	r1, r1, #0x80
 	strh	r1, [r4, #1]
 	ldr	r0, =0x2000105F			@ battery
 	ldrb	r0, [r0]
@@ -1050,6 +1080,41 @@ build_state:
 	ldr	r0, =0x20000125			@ timebase index
 	ldrb	r0, [r0]
 	strb	r0, [r4, #12]
+	ldr	r5, =0x200000F8			@ scope variables base
+	ldrb	r0, [r5, #0x14]			@ 0x2000010C enable bits
+	and	r1, r0, #1
+	strb	r1, [r4, #13]
+	lsrs	r0, r0, #1
+	and	r1, r0, #1
+	strb	r1, [r4, #17]
+	ldrb	r0, [r5, #2]			@ V/div steps
+	strb	r0, [r4, #14]
+	ldrb	r0, [r5, #3]
+	strb	r0, [r4, #18]
+	ldrsb	r0, [r5, #4]			@ offsets (s8 -> s16)
+	strh	r0, [r4, #15]
+	ldrsb	r0, [r5, #5]
+	strh	r0, [r4, #19]
+	ldrb	r0, [r5, #0x16]			@ trigger source 0x2000010E
+	strb	r0, [r4, #21]
+	ldrb	r0, [r5, #0x18]			@ edge 0x20000110
+	strb	r0, [r4, #22]
+	ldrh	r0, [r5, #0x1C]			@ level 0x20000114
+	strh	r0, [r4, #23]
+	ldrb	r0, [r5, #0x17]			@ mode 0x2000010F
+	strb	r0, [r4, #25]
+	ldrb	r0, [r5, #0]			@ coupling, probe, FFT per channel at 38
+	strb	r0, [r4, #38]
+	ldrb	r0, [r5, #6]
+	strb	r0, [r4, #39]
+	ldrb	r0, [r5, #10]
+	strb	r0, [r4, #40]
+	ldrb	r0, [r5, #1]
+	strb	r0, [r4, #41]
+	ldrb	r0, [r5, #7]
+	strb	r0, [r4, #42]
+	ldrb	r0, [r5, #11]
+	strb	r0, [r4, #43]
 	ldr	r0, =0x20000F50			@ generator {on, waveform, frequency, duty, amplitude} at 26
 	ldrb	r1, [r0, #0]
 	strb	r1, [r4, #26]
@@ -1064,7 +1129,7 @@ build_state:
 	ldr	r0, =TICKS			@ time (ms) at 34
 	ldr	r0, [r0]
 	str	r0, [r4, #34]
-	movs	r0, #38
+	movs	r0, #STATE_LEN
 	pop	{r4, r5, r6, pc}
 
 	.p2align 2
@@ -1073,6 +1138,7 @@ unit_by_function:				@ PROTOCOL.md dmm.unit per dmm.function 0..12
 	.p2align 1
 
 @ dmm_function_code - returns the PROTOCOL.md function code from 0x20001025 / 0x2000102E / 0x20001031.
+	.global	dmm_function_code
 	.thumb_func
 dmm_function_code:
 	ldr	r0, =0x20001025
@@ -1161,7 +1227,7 @@ cmd_stream:
 	.thumb_func
 stream_tick:
 	push	{r4, r5, r6, lr}
-	sub	sp, #40
+	sub	sp, #STATE_LEN + 4
 	ldr	r4, =V
 	ldr	r5, [r4, #V_STREAM]
 	cbz	r5, 9f
@@ -1181,11 +1247,12 @@ stream_tick:
 	movs	r1, #0x10
 	mov	r2, sp
 	bl	send_frame
-9:	add	sp, #40
+9:	add	sp, #STATE_LEN + 4
 	pop	{r4, r5, r6, pc}
 
 @ post_key - r0 = key code; into the key queue (the key task runs it as if the key was pressed).
 @ Returns 1 when queued.
+	.global	post_key
 	.thumb_func
 post_key:
 	push	{r0, lr}
@@ -1392,15 +1459,18 @@ cmd_drive:
 	pop	{r4, pc}
 
 @ ----------------------------------------------------------------------------
-@ Firmware update (PROTOCOL.md 4.11). The file system is used with the scheduler suspended (the vendor
-@ file code has no lock): fs_lock / fs_unlock around each call.
+@ Firmware update (PROTOCOL.md 4.11). The file system calls take the storage lock (src/storage.s)
+@ themselves; sched_suspend / sched_resume (scheduler suspended) are for short consistent copies of
+@ RAM that other tasks change, never around flash or file calls (a lock wait cannot sleep then).
 @ ----------------------------------------------------------------------------
+	.global	sched_suspend
 	.thumb_func
-fs_lock:
+sched_suspend:
 	b	increment_word_200061e4
 
+	.global	sched_resume
 	.thumb_func
-fs_unlock:
+sched_resume:
 	push	{r4, lr}
 	bl	fn_08042c10			@ resume all; 0 = a switch is owed
 	cbnz	r0, 1f
@@ -1440,7 +1510,7 @@ cmd_fw_begin:
 	bl	alloc_units_of_32_bytes
 	cbz	r0, 6f
 	str	r0, [r4, #V_FWOBJ]
-	bl	fs_lock
+	bl	storage_lock
 	ldr	r0, =s_update_dir
 	bl	dir_create			@ result ignored: the directory may exist
 	ldr	r0, [r4, #V_FWOBJ]
@@ -1448,7 +1518,7 @@ cmd_fw_begin:
 	movs	r2, #10				@ write, create / truncate
 	bl	file_open
 	mov	r5, r0
-	bl	fs_unlock
+	bl	storage_unlock
 	cbnz	r5, 5f
 	movs	r0, #0
 	movs	r1, #1
@@ -1469,16 +1539,17 @@ cmd_fw_begin:
 	pop	{r4, r5, r6, pc}
 
 @ fw_close - closes and frees an open staged file (nothing when none). fw_free - frees the object only.
+	.global	fw_close
 	.thumb_func
 fw_close:
 	push	{r4, lr}
 	ldr	r4, =V
 	ldr	r0, [r4, #V_FWOBJ]
 	cbz	r0, 1f
-	bl	fs_lock
+	bl	storage_lock
 	ldr	r0, [r4, #V_FWOBJ]
 	bl	file_close
-	bl	fs_unlock
+	bl	storage_unlock
 	bl	fw_free
 1:	pop	{r4, pc}
 
@@ -1513,14 +1584,14 @@ cmd_fw_data:
 	cmp	r0, r2
 	bhi	8f
 	add	r8, r5, #4			@ r8 = chunk
-	bl	fs_lock
+	bl	storage_lock
 	ldr	r0, [r4, #V_FWOBJ]
 	mov	r1, r8
 	mov	r2, r7
 	mov	r3, sp
 	bl	file_write
 	mov	r6, r0
-	bl	fs_unlock
+	bl	storage_unlock
 	cbnz	r6, 6f
 	ldr	r0, [sp]
 	cmp	r0, r7
@@ -1604,6 +1675,7 @@ cmd_fw_install:
 	movs	r1, #1
 	bl	answer
 	bl	drain_and_disconnect
+	bl	storage_quiesce			@ flash idle and written back before the reset
 	ldr	r0, =REQ_ADDR
 	ldr	r1, =REQ_MAGIC
 	str	r1, [r0, #0]
@@ -1764,4 +1836,3 @@ s_update_file:		.asciz	"2:/UPDATE/APP.BIN"
 	.error	"usb_ctl RAM overlaps the bootloader words"
 	.endif
 
-	.endif

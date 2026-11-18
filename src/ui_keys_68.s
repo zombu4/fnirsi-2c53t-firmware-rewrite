@@ -438,18 +438,10 @@ fn_0800e2f4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x20]
 	ldrb.w r0, [r4, #0xf68]
 .L0800e352:
@@ -595,18 +587,10 @@ fn_0800e3e4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x20]
 .L0800e4b4:
 	ldrb.w r0, [r4, #0xf68]
@@ -737,18 +721,10 @@ fn_0800e4f4:
 	movw r0, #0x5c40
 	movt r0, #0x4000
 	ldr r1, [r0, #0x0]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x0]
 	ldr r1, [r0, #0x20]
-	.ifdef VENDOR_V120
-	orr r1, r1, #2
-	.else
 	nop.w				@ USB stays powered (usb_ctl.s re-enumerates instead)
-	.endif
 	str r1, [r0, #0x20]
 .L0800e5d2:
 	ldrb.w r0, [r4, #0xf68]
@@ -1205,6 +1181,8 @@ send_state_message_sequence:
 @ (wait forever) and dispatches the byte when it returns 1, repeating
 @ otherwise.
 @ Purpose: task body that runs the handler selected by each queued byte.
+@ This firmware: the table call is display_task_dispatch (usb_remote.s), which runs USB remote jobs
+@ for code 0x80 and calls the same table entry for every other code (same size: bl, nop).
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0803da50,"ax",%progbits
 	.p2align 2
@@ -1225,8 +1203,8 @@ fn_0803da50:
 	b.n .L0803da82
 .L0803da78:
 	ldrb.w r0, [sp, #0x7]
-	ldr.w r0, [r6, r0, lsl #2]
-	blx r0
+	bl	display_task_dispatch	@ usb_remote.s: USB remote jobs, then the same table entry
+	nop
 .L0803da82:
 	ldr r0, [r5, #0x0]
 	mov r1, r4

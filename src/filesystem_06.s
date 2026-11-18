@@ -1403,10 +1403,10 @@ dir_set_offset:
 @ Last step: if the checks on *p pass again it stores 0 into word p[0].
 @ ----------------------------------------------------------------------------
 	.section .text.file_close,"ax",%progbits
-	.global file_close
+	.global file_close_unlocked
 	.thumb_func
-	.type file_close, %function
-file_close:
+	.type file_close_unlocked, %function
+file_close_unlocked:
 	push.w {r4, r5, r6, r7, r8, lr}
 	cmp r0, #0x0
 	beq.w .L080341aa
@@ -1597,10 +1597,10 @@ file_close:
 @   r0+4 equals ushort at base+6 and base[1]-1 < 3; otherwise does nothing.
 @ ----------------------------------------------------------------------------
 	.section .text.object_release,"ax",%progbits
-	.global object_release
+	.global object_release_unlocked
 	.thumb_func
-	.type object_release, %function
-object_release:
+	.type object_release_unlocked, %function
+object_release_unlocked:
 	cbz r0, .L080341e6
 	ldr r1, [r0, #0x0]
 	cbz r1, .L080341e6

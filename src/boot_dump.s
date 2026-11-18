@@ -13,14 +13,12 @@
 @                    register bank at +0x40 and the block at +0x80 that the stock bootloader reads)
 @ Only reads the internal flash; nothing in the internal flash is written.  Any failure of a dump
 @ file is ignored.
-@ Not assembled for the vendor-text build (make check, VENDOR_V120).
 
 	.syntax unified
 	.arch armv7e-m
 	.fpu fpv4-sp-d16
 	.thumb
 
-	.ifndef	VENDOR_V120
 
 	.section .text.boot_dump,"ax",%progbits
 	.p2align 2
@@ -100,4 +98,3 @@ boot_dump:
 .Lpath_regs:
 	.asciz	"2:/FLASHREG.BIN"
 
-	.endif

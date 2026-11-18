@@ -202,13 +202,9 @@
 .L0801e118:
 	.asciz	"V%s"
 .L0801e11c:
-	.ifdef	VENDOR_V120
-	.asciz	"1.2.0"		@ vendor V1.2.0 text (make check builds this to prove the port byte for byte)
-	.else
 	.global	firmware_version_text	@ also reported by the USB control channel (usb_ctl.s INFO)
 firmware_version_text:
-	.asciz	"1.2.9"		@ version shown in About as "V%s": this rewrite
-	.endif
+	.asciz	"1.3.3"		@ version shown in About as "V%s": this rewrite
 	.short	0x0000	@ padding
 .L0801e124:
 	.asciz	"3:/System file/142.jpg"

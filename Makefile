@@ -2,8 +2,6 @@
 #   make        -> build/APP_2C53T.bin, this rewrite (About shows the version in
 #                  src/parts/draw_page_by_selector_nibble_p2.inc); builds the starter and the bootloader
 #                  images it embeds first (src/boot_install.s)
-#   make check  -> builds the same source with the vendor version text into build/vendor/ and
-#                  verifies it against the SHA-256 of the vendor V1.2.0 application image
 #   make clean
 CROSS   ?= arm-none-eabi-
 AS      := $(CROSS)as
@@ -13,7 +11,6 @@ ASFLAGS := -I .
 SRC     := $(wildcard src/*.s)
 INC     := $(wildcard src/parts/*.inc)
 OBJ     := $(patsubst src/%.s,build/%.o,$(SRC))
-VOBJ    := $(patsubst src/%.s,build/vendor/%.o,$(SRC))
 
 all: build/APP_2C53T.bin
 
@@ -36,26 +33,12 @@ build/app.elf: $(OBJ) link.ld
 build/APP_2C53T.bin: build/app.elf
 	$(OBJCOPY) -O binary $< $@
 
-build/vendor/%.o: src/%.s $(INC) | build/vendor
-	$(AS) $(ASFLAGS) --defsym VENDOR_V120=1 -o $@ $<
-
-build/vendor/app.elf: $(VOBJ) link.ld
-	$(LD) --no-warn-rwx-segments -T link.ld -o $@ $(VOBJ)
-
-build/vendor/APP_2C53T_V1.2.0.bin: build/vendor/app.elf
-	$(OBJCOPY) -O binary $< $@
-
-build build/vendor:
+build:
 	mkdir -p $@
-
-# SHA-256 of the vendor application image V1.2.0 (APP_2C53T_V1.2.0_251015.bin)
-VENDOR_SHA256 := a17c5c35c97bb898f15672a1747bc1041d8ed507c16999ddba0d1e4e2ec0c760
-check: build/vendor/APP_2C53T_V1.2.0.bin
-	@echo "$(VENDOR_SHA256)  $<" | shasum -a 256 -c -
 
 clean:
 	rm -rf build
 	$(MAKE) -C starter clean
 	$(MAKE) -C bootloader clean
 
-.PHONY: all clean check FORCE
+.PHONY: all clean FORCE

@@ -29,10 +29,10 @@
 @ jumps to fat_sync_volume. Finishes with fat_sync_volume(base) (0803d934).
 @ ----------------------------------------------------------------------------
 	.section .text.path_delete,"ax",%progbits
-	.global path_delete
+	.global path_delete_unlocked
 	.thumb_func
-	.type path_delete, %function
-path_delete:
+	.type path_delete_unlocked, %function
+path_delete_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0x7c
 	movw r0, #0x8360
@@ -475,10 +475,10 @@ path_delete:
 @ sets flag bit 0x40. Purpose: writes bytes to an open file.
 @ ----------------------------------------------------------------------------
 	.section .text.file_write,"ax",%progbits
-	.global file_write
+	.global file_write_unlocked
 	.thumb_func
-	.type file_write, %function
-file_write:
+	.type file_write_unlocked, %function
+file_write_unlocked:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0x4
 	mov r4, r0
@@ -774,10 +774,10 @@ file_write:
 @ buffers with free_units_of_32_bytes (0803acbc).
 @ ----------------------------------------------------------------------------
 	.section .text.filesystem_startup_setup,"ax",%progbits
-	.global filesystem_startup_setup
+	.global filesystem_startup_setup_unlocked
 	.thumb_func
-	.type filesystem_startup_setup, %function
-filesystem_startup_setup:
+	.type filesystem_startup_setup_unlocked, %function
+filesystem_startup_setup_unlocked:
 	push {r7, lr}
 	sub sp, #0x10
 	mov.w r0, #0x1000
