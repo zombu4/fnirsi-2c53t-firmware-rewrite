@@ -1,11 +1,16 @@
-# Build the stock FNIRSI 2C53T bootloader from source (GNU Arm Embedded toolchain: arm-none-eabi-as / ld / objcopy).
-#   make         -> build/BOOT.bin, the bootloader part only: 0x08000000..0x08005873 (0x5874 bytes)
-#   make padded  -> build/BOOT_padded.bin, the same bytes padded with 0xFF to 0x08005FFF (0x6000 bytes)
-#   make check   -> compares both with the stock bootloader dump (SHA-256 below)
+# Build the FNIRSI 2C53T bootloader from source (GNU Arm Embedded toolchain: arm-none-eabi-as / ld / objcopy).
+#   make         -> build/slot/BOOT_F.bin, BOOT_A.bin, BOOT_B.bin (same as make slot)
 #   make slot    -> build/slot/BOOT_F.bin, BOOT_A.bin, BOOT_B.bin: the slot build (assembled with
 #                   --defsym SLOT=1: slot_11.s and every .ifdef SLOT change), one image per slot, each
 #                   linked for slot base + 0x200 (link_slot.ld); the slot header is written by the
 #                   installer, not here
+#   make vendor-data DUMP=<BOOTDUMP.BIN>
+#                -> assets/vendor/rodata.bin: the fixed-data bytes 0x080049A4..0x08005873 of a meter's
+#                   own bootloader dump (font, packed RAM image); not part of this repository
+#   make stock   -> build/BOOT.bin, the stock bootloader rebuilt from source with that vendor data
+#                   (assembled with --defsym VENDOR_DATA=1): 0x08000000..0x08005873 (0x5874 bytes)
+#   make check   -> make stock, then BOOT.bin and BOOT_padded.bin compared with the stock bootloader
+#                   dump (SHA-256 below): the byte proof of the port
 #   make clean
 # The settings / calibration page 0x08006000.. is NOT part of this source and is never built or linked
 # (link.ld ends FLASH at 0x08006000).  Padding rule: the dump bytes 0x5874..0x5FFF are all 0xFF (checked
@@ -19,10 +24,23 @@ SRC     := $(wildcard src/*.s)
 INC     := $(wildcard src/parts/*.inc)
 OBJ     := $(patsubst src/%.s,build/%.o,$(SRC))
 
-all: build/BOOT.bin
+all: slot
 
-build/%.o: src/%.s $(INC) | build
-	$(AS) $(ASFLAGS) -o $@ $<
+stock: build/BOOT.bin
+
+VENDOR_DATA_FILE := assets/vendor/rodata.bin
+$(VENDOR_DATA_FILE):
+	@echo "missing $@: run make vendor-data DUMP=<BOOTDUMP.BIN of a meter> first"; exit 1
+
+vendor-data:
+	@test -n "$(DUMP)" || { echo "usage: make vendor-data DUMP=<BOOTDUMP.BIN>"; exit 1; }
+	@test `wc -c < "$(DUMP)"` -eq 28672 || { echo "$(DUMP) is not a 0x7000-byte BOOTDUMP.BIN"; exit 1; }
+	mkdir -p assets/vendor
+	dd if="$(DUMP)" of=$(VENDOR_DATA_FILE) bs=1 skip=$$((0x49A4)) count=$$((0xED0)) 2>/dev/null
+	@echo "assets/vendor/rodata.bin: 3792 bytes from $(DUMP)"
+
+build/%.o: src/%.s $(INC) $(VENDOR_DATA_FILE) | build
+	$(AS) $(ASFLAGS) --defsym VENDOR_DATA=1 -o $@ $<
 
 build/boot.elf: $(OBJ) link.ld
 	$(LD) --no-warn-rwx-segments -T link.ld -Map build/boot.map -o $@ $(OBJ)
@@ -34,7 +52,7 @@ slot: build/slot/BOOT_F.bin build/slot/BOOT_A.bin build/slot/BOOT_B.bin
 
 SLOT_OBJ := $(patsubst src/%.s,build/slot/%.o,$(SRC))
 
-build/slot/%.o: src/%.s $(INC) ../common/layout.inc ../common/records.inc | build/slot
+build/slot/%.o: src/%.s $(INC) assets/font_12x24.bin ../common/layout.inc ../common/records.inc | build/slot
 	$(AS) $(ASFLAGS) -I .. --defsym SLOT=1 -o $@ $<
 
 build/slot/boot_%.elf: $(SLOT_OBJ) link_slot.ld
@@ -76,6 +94,6 @@ check: build/BOOT.bin build/BOOT_padded.bin
 clean:
 	rm -rf build
 
-.PHONY: all padded slot clean check
+.PHONY: all stock padded slot clean check vendor-data
 
 .PRECIOUS: build/slot/boot_%.elf build/slot/%.o

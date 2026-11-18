@@ -13,7 +13,7 @@
 @ and then jumps to file_open with the original arguments, so the start-up continues as before.
 @
 @ boot_install, by the content of flash page 0 (0x08000000..0x080007FF):
-@ - the stock page 0 (equal to the dump, embedded below) and the rest of the stock bootloader
+@ - the stock page 0 (CRC-32 0xDC300D0F) and the rest of the stock bootloader
 @   0x08000800..0x08005873 with CRC-32 0x64266A45 (dumps/BOOTDUMP_2026-11-17.bin): first install.
 @   Slot F and slot A get the embedded images (each erased, image programmed and compared, header
 @   programmed last), the record pages get one record INSTALL A, and only then page 0 is replaced by
@@ -44,6 +44,7 @@
 
 	.equ	IWDG_KR,	0x40003000	@ independent watchdog key register (0xAAAA = reload)
 	.equ	FLASH_SIZE_KB,	0x1FFFF7E0	@ flash size in KB (halfword; 0x0400 on the owner's meter)
+	.equ	STOCK_PAGE0_CRC, 0xDC300D0F	@ CRC-32 of page 0 0x08000000..0x080007FF of the stock bootloader
 	.equ	STOCK_REST_CRC,	0x64266A45	@ CRC-32 of 0x08000800..0x08005873 of the stock bootloader
 	.equ	STOCK_END,	0x08005874	@ end of the stock bootloader image (0x5874 bytes)
 	.equ	LOG_SIZE,	1024		@ report buffer, first word = write pointer
@@ -141,11 +142,12 @@ boot_install:
 	ldr	r0, =s_flash_size
 	bl	log_str
 	b	.Li_finish
-1:	ldr	r0, =0x08000000
-	ldr	r1, =img_stock_page0
-	mov	r2, #0x800
-	bl	mem_equal
-	cbnz	r0, .Li_stock
+1:	ldr	r0, =0x08000000		@ stock page 0: recognised by its CRC-32
+	mov	r1, #0x800
+	bl	crc32
+	ldr	r1, =STOCK_PAGE0_CRC
+	cmp	r0, r1
+	beq	.Li_stock
 	bl	page0_is_starter
 	cmp	r0, #0
 	bne	.Li_update
@@ -914,7 +916,7 @@ records_fresh:
 	pop	{r4, pc}
 
 @ ----------------------------------------------------------------------------
-@ page0_install - copies p0_code, the starter and the stock page 0 into one heap block (RAM) and
+@ page0_install - copies p0_code, the starter and the meter's page 0 into one heap block (RAM) and
 @ runs p0_code there.  Returns its result 0..3 or 5, or 4 when there is no memory (page 0 not touched).
 @ ----------------------------------------------------------------------------
 	.thumb_func
@@ -933,9 +935,9 @@ page0_install:
 	ldr	r1, =img_starter
 	ldr	r2, =STARTER_LEN
 	bl	copy_words
-	add	r6, r5, #0x800		@ r6 = stock page 0 copy
-	mov	r0, r6
-	ldr	r1, =img_stock_page0
+	add	r6, r5, #0x800		@ r6 = copy of the meter's own page 0 (the stock page, checked by
+	mov	r0, r6			@ its CRC-32 before), the page written back on a failure
+	ldr	r1, =0x08000000
 	mov	r2, #0x800
 	bl	copy_words
 	dsb
@@ -1219,9 +1221,8 @@ s_rolled_back_ab:	.asciz	"holds this image, which was tried and rolled back: not
 s_p0_nomem:		.asciz	"page 0: no memory for the RAM routine: not touched\r\n"
 
 @ ----------------------------------------------------------------------------
-@ Embedded images (make builds them first): the starter, the slot builds of the bootloader for F, A
-@ and B, and the stock page 0 (the first 2 KB of the stock bootloader, rebuilt from source and equal
-@ to the meter's dump: bootloader make check).
+@ Embedded images (make builds them first): the starter and the slot builds of the bootloader for F,
+@ A and B.
 @ ----------------------------------------------------------------------------
 	.section .rodata.boot_install,"a",%progbits
 	.p2align 2
@@ -1240,10 +1241,6 @@ img_a_end:
 img_b:
 	.incbin	"bootloader/build/slot/BOOT_B.bin"
 img_b_end:
-	.p2align 2
-img_stock_page0:
-	.incbin	"bootloader/build/BOOT.bin", 0, 0x800
-img_stock_page0_end:
 
 	.equ	STARTER_LEN,	img_starter_end - img_starter
 	.equ	STARTER_WORDS,	STARTER_LEN / 4
@@ -1264,9 +1261,6 @@ img_stock_page0_end:
 	.endif
 	.if	(img_b_end - img_b) & 3 || (img_b_end - img_b) > (SLOT_SIZE - SLOT_IMAGE_OFS)
 	.error	"slot B image: length must be a multiple of 4 and fit the slot"
-	.endif
-	.if	(img_stock_page0_end - img_stock_page0) != 0x800
-	.error	"stock page 0: must be 2048 bytes"
 	.endif
 
 	.endif

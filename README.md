@@ -27,7 +27,7 @@ The project contains:
 
 | Part | Build | State |
 |---|---|---|
-| Stock bootloader port | `make -C bootloader check` | byte-identical to a dump of the meter's bootloader |
+| Stock bootloader port | `make -C bootloader vendor-data DUMP=…` then `make -C bootloader check` | byte-identical to a dump of the meter's bootloader (needs that meter's dump) |
 | Two-part bootloader | `make -C bootloader slot`, `starter/` | installed and running on a meter |
 
 How to install the two-part bootloader: **[FLASHING_BOOTLOADER.md](FLASHING_BOOTLOADER.md)**.
@@ -120,7 +120,8 @@ newer.
 ```sh
 make                       # build/APP_2C53T.bin (also builds starter/ and bootloader/)
 make check                 # byte proof against the vendor application V1.2.0
-make -C bootloader check   # byte proof of the stock bootloader port
+make -C bootloader vendor-data DUMP=BOOTDUMP.BIN && make -C bootloader check
+                           # byte proof of the stock bootloader port (data from your own dump)
 make -C swd                # SWD loader for the first bootloader install
 ```
 
@@ -141,8 +142,8 @@ ignores "._" files by their content.
 
 ## Continuous build and releases
 
-- Every push to `main` builds the application, the bootloader images and the SWD loader and runs both
-  byte proofs; the files are attached to the run.
+- Every push to `main` builds the application, the bootloader images and the SWD loader and runs the
+  application's byte proof; the files are attached to the run.
 - A tag `v<version>` matching the About text (e.g. `v1.2.4`) also publishes a release with
   `APP_2C53T_V<version>_<yymmdd>.bin`, `STARTER.bin`, `BOOT_F/A/B.bin`, `swd_loader.bin` and
   `SHA256SUMS`.
@@ -159,6 +160,7 @@ ignores "._" files by their content.
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, bootloader and installer |
+| `bootloader/assets/` | bootloader font: Terminus Font 12x24 (OFL 1.1, `OFL.txt`), converted to the glyph layout |
 | `swd/` | SWD loader and OpenOCD scripts for the first bootloader install |
 | `FLASHING_BOOTLOADER.md` | step-by-step bootloader flashing guide |
 | `link.ld`, `Makefile` | memory layout, build |
@@ -170,6 +172,9 @@ Free for **personal, home, hobby and enthusiast** use that is not commercial: us
 share free of charge, with the license kept. **Not permitted without written authorization** from the
 author: use by companies or for commercial purposes, selling or reselling, bundling or pre-installing
 with hardware or other products, and paid flashing services. Full terms: [LICENSE](LICENSE).
+
+The bootloader font is Terminus Font 4.49.1, Copyright (C) 2020 Dimitar Toshkov Zhekov, under the
+SIL Open Font License 1.1 (`bootloader/assets/OFL.txt`).
 
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
 names are trademarks of their owners. Content derived from the vendor's firmware (the application

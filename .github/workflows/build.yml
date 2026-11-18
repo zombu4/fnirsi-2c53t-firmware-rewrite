@@ -1,9 +1,9 @@
 # Build and check the firmware on every push and pull request; publish a release for a version tag.
 #
 #   push / pull request: build the application (with the starter and the bootloader images it
-#     embeds), the SWD loader, and run both byte proofs:
+#     embeds), the SWD loader, and run the byte proof of the application port:
 #       make check              vendor-text build == vendor V1.2.0 application (SHA-256)
-#       make -C bootloader check  stock bootloader port == the meter's bootloader dump (SHA-256)
+#     (the bootloader port's byte proof needs data from a meter's own dump: not in CI)
 #     The built files are attached to the run (Actions -> the run -> Artifacts).
 #   tag v* (e.g. v1.2.4): the same, then a GitHub release with the application named in the vendor
 #     pattern APP_2C53T_V<version>_<yymmdd>.bin (version = the About text in the source), the slot
@@ -36,10 +36,8 @@ jobs:
           make
           make -C swd
 
-      - name: Byte proofs
-        run: |
-          make check
-          make -C bootloader check
+      - name: Byte proof
+        run: make check
 
       - name: Collect
         id: collect

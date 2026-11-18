@@ -21,13 +21,11 @@ build/%.o: src/%.s $(INC) | build
 	$(AS) $(ASFLAGS) -o $@ $<
 
 # images embedded by src/boot_install.s (its object is rebuilt whenever a sub-make ran)
-IMAGES := starter/build/STARTER.bin bootloader/build/BOOT.bin \
+IMAGES := starter/build/STARTER.bin \
 	bootloader/build/slot/BOOT_F.bin bootloader/build/slot/BOOT_A.bin bootloader/build/slot/BOOT_B.bin
 build/boot_install.o: $(IMAGES) common/layout.inc common/records.inc
 starter/build/STARTER.bin: FORCE
 	$(MAKE) -C starter
-bootloader/build/BOOT.bin: FORCE
-	$(MAKE) -C bootloader check
 bootloader/build/slot/BOOT_F.bin bootloader/build/slot/BOOT_A.bin bootloader/build/slot/BOOT_B.bin: FORCE
 	$(MAKE) -C bootloader slot
 FORCE:

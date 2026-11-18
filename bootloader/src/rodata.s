@@ -1,8 +1,9 @@
 @ rodata.s - the fixed data of the stock bootloader, flash 0x080049A4..0x08005873 (0xED0 bytes)
 @ Contents in address order: the first bytes of the virtual-disk boot-sector block, the font of the
 @ bootloader text, the clock shift table, the scatter-load region table and the packed RAM image.
-@ Long items without an address word are taken from assets/rodata.bin (the dump bytes of this region,
-@ offset = address - 0x080049A4).  The labels d_<address> are the ones the code references (some of
+@ The font is this project's (assets/font_12x24.bin). The vendor-data build (VENDOR_DATA) takes the
+@ font and the packed RAM image from assets/vendor/rodata.bin instead: the dump bytes of this region
+@ (offset = address - 0x080049A4), extracted locally with make vendor-data DUMP=<BOOTDUMP.BIN>.  The labels d_<address> are the ones the code references (some of
 @ them as label+1, the address of the item that follows).
 	.syntax unified
 	.arch armv7e-m
@@ -46,15 +47,25 @@ d_080049d6:
 
 @ ----------------------------------------------------------------------------
 @ 0x080049D7..0x08005732 (3420 bytes): packed bitmap font of the bootloader text, 95 rows of 36
-@ bytes for the character codes 0x20..0x7E (24-pixel glyphs, 3 bytes per column, MSB first), read
-@ by draw_glyph at row address 0x080049D7 + (code - 0x20) * 0x24.  The first 3419 bytes come from
-@ assets/rodata.bin offset 0x33; the last byte 0x08005732 carries the label d_08005732 (the code
-@ references d_08005732+1, the table that follows).
+@ bytes for the character codes 0x20..0x7E (24-pixel glyphs, 12 columns of 3 bytes, MSB first =
+@ top pixel), read by draw_glyph at row address 0x080049D7 + (code - 0x20) * 0x24.  The last byte
+@ carries the label d_08005732 (the code references d_08005732+1, the table that follows).
+@ This project's font: assets/font_12x24.bin, Terminus Font 4.49.1 (12x24, ter-u24n), Copyright (C)
+@ 2020 Dimitar Toshkov Zhekov, SIL Open Font License 1.1 (assets/OFL.txt), converted to this layout.
+@ The vendor-data build (VENDOR_DATA, byte proof against a dump only) uses the meter's own font
+@ from assets/vendor/rodata.bin (make vendor-data DUMP=...; not part of this repository).
 @ ----------------------------------------------------------------------------
-	.incbin	"assets/rodata.bin", 0x33, 3419
+.ifdef VENDOR_DATA
+	.incbin	"assets/vendor/rodata.bin", 0x33, 3419
 	.global d_08005732
 d_08005732:
 	.byte	0x00
+.else
+	.incbin	"assets/font_12x24.bin", 0, 3419
+	.global d_08005732
+d_08005732:
+	.incbin	"assets/font_12x24.bin", 3419, 1
+.endif
 
 @ ----------------------------------------------------------------------------
 @ 0x08005733..0x08005743 (17 bytes): clock shift table, indexed by bits 7..4 of [0x40021004]
@@ -148,7 +159,8 @@ ram_image_end:
 @ "AT32 ", "MSDOS5.0", "FAT16", "Ready", "TXT" and the data fn_08001e24 copies from RAM 0x2000002C
 @ and 0x2000006A).
 @ ----------------------------------------------------------------------------
+@ Only the vendor-data build (VENDOR_DATA) has it, from the meter's own dump.
 	.global packed_ram_image
 packed_ram_image:
-	.incbin	"assets/rodata.bin", 0xdc0, 272
+	.incbin	"assets/vendor/rodata.bin", 0xdc0, 272
 .endif
