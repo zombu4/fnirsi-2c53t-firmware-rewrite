@@ -77,9 +77,9 @@ draw_arc_gauge:
 	movw	r8, #0x8360
 	mov	r3, r1
 	movt	r8, #0x2000
-	movw	r1, #:lower16:d_080bc340
+	movw	r1, #:lower16:t_080bc340
 	mov	r2, r0
-	movt	r1, #:upper16:d_080bc340
+	movt	r1, #:upper16:t_080bc340
 	mov	r0, r8
 	bl	format_to_buffer_080073b4
 	ldrb.w	r0, [r8, #0]
@@ -468,9 +468,9 @@ draw_arc_gauge:
 	add	r0, sp, #0x30
 	add	r1, sp, #0x28
 	bl	polar_degrees_to_xy_center_160_225
-	movw	r1, #:lower16:d_080bc040
+	movw	r1, #:lower16:t_080bc040
 	mov	r0, r8
-	movt	r1, #:upper16:d_080bc040
+	movt	r1, #:upper16:t_080bc040
 	mov	r2, r6
 	bl	format_to_buffer_080073b4
 	vldr	d9, [sp, #0x30]
@@ -528,10 +528,10 @@ draw_arc_gauge:
 	add	r0, sp, #0x30
 	add	r1, sp, #0x28
 	bl	polar_degrees_to_xy_center_160_225
-	movw	r1, #:lower16:d_080bc040
+	movw	r1, #:lower16:t_080bc040
 	lsls	r2, r7, #1
 	mov	r0, r8
-	movt	r1, #:upper16:d_080bc040
+	movt	r1, #:upper16:t_080bc040
 	bl	format_to_buffer_080073b4
 	vldr	d9, [sp, #0x30]
 	subs	r0, r7, #5
@@ -685,21 +685,21 @@ draw_arc_gauge:
 	.asciz	"%d Hz"
 	.short	0x0000			@ padding
 .L080163c0:
-	.word	0x080bbc60		@ "AUTO" text address
-	.word	0x080bbc48
-	.word	0x080bb414
-	.word	0x080bbc44
-	.word	0x080bbc76
-	.word	0x080bb97f
-	.word	0x080bb9ea
-	.word	0x080bb9ee
-	.word	0x080bbc2e
+	.word	t_080bbc60		@ "AUTO"
+	.word	t_080bbc48		@ ".OL"
+	.word	t_080bb414		@ " "
+	.word	t_080bbc44		@ "CAL"
+	.word	t_080bbc76		@ "PAS"
+	.word	t_080bb97f		@ "Er1"
+	.word	t_080bb9ea		@ "Er2"
+	.word	t_080bb9ee		@ "Er3"
+	.word	t_080bbc2e		@ "ErC"
 .L080163e4:
-	.word	0x080bc32c		@ "%.0f" format
-	.word	0x080bc331
-	.word	0x080bc336
-	.word	0x080bc33b
-	.word	0x080bc340		@ "%.4f" format
+	.word	t_080bc32c		@ "%.0f"
+	.word	t_080bc331		@ "%.1f"
+	.word	t_080bc336		@ "%.2f"
+	.word	t_080bc33b		@ "%.3f"
+	.word	t_080bc340		@ "%.4f"
 
 @ ----------------------------------------------------------------------------
 @ draw_seven_icon_row - draws a row of seven icons in which the icon whose
@@ -722,9 +722,9 @@ draw_seven_icon_row:
 	movt	r5, #0x2000
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #1
 	bne.n	.L0801642a
 	mov	r0, r4
@@ -745,9 +745,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #2
 	bne.n	.L08016464
 	mov	r0, r4
@@ -768,9 +768,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #3
 	bne.n	.L0801649e
 	mov	r0, r4
@@ -791,9 +791,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #4
 	bne.n	.L080164d8
 	mov	r0, r4
@@ -814,9 +814,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #5
 	bne.n	.L08016512
 	mov	r0, r4
@@ -837,9 +837,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #6
 	bne.n	.L0801654c
 	mov	r0, r4
@@ -860,9 +860,9 @@ draw_seven_icon_row:
 	bl	decode_image_file_with_offset
 	ldrb.w	r0, [r5, #0xf2d]
 	movw	r4, #0x8360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	movt	r4, #0x2000
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	cmp	r0, #7
 	bne.n	.L0801658e
 	mov	r0, r4

@@ -537,9 +537,9 @@
 	b.n .L0802c134
 .L0802c04a:
 	movw r5, #0x5034
-	movw r0, #:lower16:d_080bc66a+1
+	movw r0, #:lower16:t_080bc66b
 	movt r5, #0x4001
-	movt r0, #:upper16:d_080bc66a+1
+	movt r0, #:upper16:t_080bc66b
 	movs r1, #0x0
 	movs r2, #0x0
 	str r4, [r5]

@@ -736,9 +736,9 @@
 	ldr.w	r7, [r0, r3, lsl #2]
 	mov	r3, r1
 	movt	r5, #0x2000
-	movw	r1, #:lower16:d_080bcc10+1
+	movw	r1, #:lower16:t_080bcc11
 	mov	r0, r5
-	movt	r1, #:upper16:d_080bcc10+1
+	movt	r1, #:upper16:t_080bcc11
 	str	r7, [sp]
 	bl	format_to_buffer_080073b4
 	movw	r0, #0x10e4

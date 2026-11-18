@@ -794,8 +794,8 @@ filesystem_startup_setup_unlocked:
 	str r0, [sp, #0x0]
 	movw r0, #0x2da8
 	movt r0, #0x2000
-	movw r1, #:lower16:d_080bba1e+1
-	movt r1, #:upper16:d_080bba1e+1
+	movw r1, #:lower16:t_080bba1f
+	movt r1, #:upper16:t_080bba1f
 	bl drive_mount
 	ldr r1, [sp, #0x8]
 	strb r0, [r1, #0x0]
@@ -805,36 +805,36 @@ filesystem_startup_setup_unlocked:
 	bne.n .L08035818
 	b.n .L08035806
 .L08035806:
-	movw r0, #:lower16:d_080bba1e+1
-	movt r0, #:upper16:d_080bba1e+1
+	movw r0, #:lower16:t_080bba1f
+	movt r0, #:upper16:t_080bba1f
 	bl drive_unmount
 	ldr r1, [sp, #0x8]
 	strb r0, [r1, #0x0]
 	b.n .L08035818
 .L08035818:
 	ldr r0, [sp, #0x4]
-	movw r1, #:lower16:d_080bb926+1
-	movt r1, #:upper16:d_080bb926+1
+	movw r1, #:lower16:t_080bb927
+	movt r1, #:upper16:t_080bb927
 	bl dir_open
 	cbnz r0, .L08035854
 	b.n .L0803582a
 .L0803582a:
-	movw r0, #:lower16:d_080bbc58
-	movt r0, #:upper16:d_080bbc58
+	movw r0, #:lower16:t_080bbc58
+	movt r0, #:upper16:t_080bbc58
 	bl dir_create
-	movw r0, #:lower16:d_080bc1b4
-	movt r0, #:upper16:d_080bc1b4
+	movw r0, #:lower16:t_080bc1b4
+	movt r0, #:upper16:t_080bc1b4
 	bl dir_create
-	movw r0, #:lower16:d_080bc18a+1
-	movt r0, #:upper16:d_080bc18a+1
+	movw r0, #:lower16:t_080bc18b
+	movt r0, #:upper16:t_080bc18b
 	bl dir_create
 	bl fn_08033fbc
 	b.n .L08035854
 .L08035854:
 	movw r0, #0x3ddc
 	movt r0, #0x2000
-	movw r1, #:lower16:d_080bba22
-	movt r1, #:upper16:d_080bba22
+	movw r1, #:lower16:t_080bba22
+	movt r1, #:upper16:t_080bba22
 	bl drive_mount
 	ldr r1, [sp, #0x8]
 	strb r0, [r1, #0x0]
@@ -844,28 +844,28 @@ filesystem_startup_setup_unlocked:
 	bne.n .L08035888
 	b.n .L08035876
 .L08035876:
-	movw r0, #:lower16:d_080bba22
-	movt r0, #:upper16:d_080bba22
+	movw r0, #:lower16:t_080bba22
+	movt r0, #:upper16:t_080bba22
 	bl drive_unmount
 	ldr r1, [sp, #0x8]
 	strb r0, [r1, #0x0]
 	b.n .L08035888
 .L08035888:
 	ldr r0, [sp, #0x4]
-	movw r1, #:lower16:d_080bb92a+1
-	movt r1, #:upper16:d_080bb92a+1
+	movw r1, #:lower16:t_080bb92b
+	movt r1, #:upper16:t_080bb92b
 	bl dir_open
 	cbnz r0, .L080358a8
 	b.n .L0803589a
 .L0803589a:
-	movw r0, #:lower16:d_080bc1a4+1
-	movt r0, #:upper16:d_080bc1a4+1
+	movw r0, #:lower16:t_080bc1a5
+	movt r0, #:upper16:t_080bc1a5
 	bl dir_create
 	b.n .L080358a8
 .L080358a8:
 	ldr r0, [sp, #0x0]
-	movw r1, #:lower16:d_080bc840+1
-	movt r1, #:upper16:d_080bc840+1
+	movw r1, #:lower16:t_080bc841
+	movt r1, #:upper16:t_080bc841
 	movs r2, #0x0
 	bl file_open
 	ldr r1, [sp, #0x8]

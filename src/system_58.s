@@ -1108,11 +1108,11 @@ system_bring_up:
 	orr	r0, r0, #1
 	str	r0, [r7, #0x14]
 	ldr	r0, [r7]
-	movw	r6, #:lower16:d_080bc680+1
+	movw	r6, #:lower16:t_080bc681
 	bic	r0, r0, #0x70
 	str	r0, [r7]
 	ldr	r0, [r7, #4]
-	movt	r6, #:upper16:d_080bc680+1
+	movt	r6, #:upper16:t_080bc681
 	bic	r0, r0, #0x100
 	str	r0, [r7, #4]
 	ldr	r0, [r7, #4]
@@ -1223,8 +1223,8 @@ charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
 	mov	r11, r0
 	movw	r0, #0x102c
 	bl	alloc_units_of_32_bytes
-	movw	r1, #:lower16:d_080bc66a+1
-	movt	r1, #:upper16:d_080bc66a+1
+	movw	r1, #:lower16:t_080bc66b
+	movt	r1, #:upper16:t_080bc66b
 	movs	r2, #0
 	mov	r9, r0
 	movs	r4, #0

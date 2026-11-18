@@ -1,9 +1,10 @@
-@ rodata.s - fixed data 0x08046254..0x080BE67F: format tables, number constants, function pointer
-@ tables, text in every language, fonts and glyph bitmaps, pictures, the scatter-load region table
-@ (0x080BE314) and the packed initial RAM image (0x080BE480, unpacked to 0x20000000 at reset).
+@ rodata.s - fixed data (V1.2.0 0x08046254..0x080BE67F): format tables, number constants, function
+@ pointer tables, the text pointer tables, fonts and glyph bitmaps, pictures, the scatter-load region
+@ table (0x080BE314) and the packed initial RAM image (0x080BE480, unpacked to 0x20000000 at reset).
 @ The bytes come from assets/rodata.bin; words that hold code addresses are written as symbols, and so
-@ are the data addresses (font key array pointers, scatter-load table), except the text pointer
-@ tables 0x0804bf28..0x0804c9fb, which still hold their text addresses as vendor bytes.
+@ are the data addresses (font key array pointers, scatter-load table). The text pointer tables
+@ (0x0804bf28..0x0804c9fb) are typed as .word lists of the English strings of src/text.s; the
+@ vendor text area (0x080bb416..0x080be05b, every language) is not part of the image any more.
 @ Where code reaches several objects from one label with fixed offsets, a .if/.error guard keeps
 @ those offsets.
 @ Labels d_<address> are the addresses the code refers to.
@@ -13,6 +14,7 @@
 	.fpu fpv4-sp-d16
 	.thumb
 	.section .rodata.fixed,"a",%progbits
+	.p2align 2                                         @ section alignment 4 (emits nothing here): the word and halfword tables keep their alignment
 	.global rodata_start
 rodata_start:
 @ d_08046254: upper case digit text '0123456789ABCDEF@0X', target of the distance word of format_hex_u64 (src/format_10.s .L080075b0)
@@ -390,57 +392,88 @@ d_0804be74:
 	.word fn_08011e84                                  @ 0x0804bf20 = 0x08011e85
 .Lsw_0804bf24:
 	.word fn_0801215c                                  @ 0x0804bf24 = 0x0801215d
+@ ----------------------------------------------------------------------------
+@ Text pointer tables. Each word is the address of a string of src/text.s (or 0, or the
+@ address of another table). V1.2.0 held one string per language in each row / block; here
+@ every language slot names the English string, in the same layout (same word count, order
+@ and row / block structure), so the readers are unchanged.
+@ ----------------------------------------------------------------------------
+@ d_0804bf28: measurement labels, 24 words: English 12 then (V1.2.0: Chinese) 12; the code
+@ takes one half or the other by the language byte (draw_waveform_display_p6.inc); both are
+@ English now
 	.global d_0804bf28
 d_0804bf28:
-	.incbin "assets/rodata.bin", 0x5cd4, 96
+	.word t_080bbaa0, t_080bba4c, t_080bb9f8, t_080bba05   @ Freq: Peri: Duty+: Duty-:
+	.word t_080bb9f2, t_080bb9ff, t_080bbab7, t_080bba6b   @ Wid+: Wid-: Vmax: Vmin:
+	.word t_080bba95, t_080bba9b, t_080bbaa6, t_080bba47   @ Vp-p: Amp: Vrms: Avg:
+	.word t_080bbaa0, t_080bba4c, t_080bb9f8, t_080bba05   @ second half: the same 12
+	.word t_080bb9f2, t_080bb9ff, t_080bbab7, t_080bba6b
+	.word t_080bba95, t_080bba9b, t_080bbaa6, t_080bba47
+@ d_0804bf88: 16-byte row table of unit texts, 3 rows of 4 words (row 0 frequency, row 1
+@ time, row 2 voltage), read by ldr.w r7,[r0,r3,lsl #2] at 0x0801bd7e in draw_waveform_display
+@ (r0 = 0x0804bf88 + 16*byte, movw/movt at 0x0801bd6a/0x0801bd72, lsl #4 at 0x0801bd76)
 	.global d_0804bf88
 d_0804bf88:
-	.incbin "assets/rodata.bin", 0x5d34, 12
-@ UNREF_0804bf94: 20 bytes = 5 words 0x00000000, 0x080bbcc5, 0x080bbcf2, 0x080bbca4, 0x080bbcf3 (text 'nS', 'uS', 'mS', 'S'): the last word of row 0 and the whole row 1 of the 16-byte row table at 0x0804bf88 (row 0 words 0x080bcee6 'Hz', 0x080bcee1 'KHz', 0x080bcee5 'MHz', 0) | the table is read by ldr.w r7,[r0,r3,lsl #2] at 0x0801bd7e in draw_waveform_display
+	.word t_080bcee6, t_080bcee1, t_080bcee5               @ Hz KHz MHz
+@ UNREF_0804bf94: the last word of row 0 (0) and row 1 (nS uS mS S)
 	.global UNREF_0804bf94
 UNREF_0804bf94:
-	.incbin "assets/rodata.bin", 0x5d40, 20
-@ DATA_0804bfa8: 16 bytes = 4 words 0x080bbd2d, 0x080bbd2e, 0, 0 (text 'mV', 'V') = row 2 of the 16-byte row table at 0x0804bf88 | ldr.w r7,[r0,r3,lsl #0x2] at 0x0801bd7e in draw_waveform_display (r0 = 0x0804bf88 + 16*byte, movw/movt at 0x0801bd6a/0x0801bd72, lsl #4 at 0x0801bd76) | draw_waveform_display: draw_waveform_display
+	.word 0x00000000
+	.word t_080bbcc5, t_080bbcf2, t_080bbca4, t_080bbcf3   @ nS uS mS S
+@ DATA_0804bfa8: row 2 (mV V 0 0)
 	.global DATA_0804bfa8
 DATA_0804bfa8:
-	.incbin "assets/rodata.bin", 0x5d54, 16
+	.word t_080bbd2d, t_080bbd2e, 0x00000000, 0x00000000   @ mV V
 @ DATA_0804bfb8: 8 bytes = 4 halfwords 0x0190, 0x0320, 0x07d0, 0x0000 (400, 800, 2000, 0) | ldrh.w with index*2 (lsl #0x1) at 0x08026daa, 0x08026e7c, 0x08026fe4, 0x08026cb2 and 0x0801c1ee after movt #0x804 at 0x08026e76, 0x08026cac and 0x0801c1ea | compute_channel_measurements (compute_channel_measurements): scans per channel the 301 bytes at 0x2000044e + ch*0x12d for min and max, forms the midpoint min + (max-min)/2 and counts the samples of the first high run and low run; draw_waveform_display: draw_waveform_display
 	.global DATA_0804bfb8
 DATA_0804bfb8:
 	.global d_0804bfb8
 d_0804bfb8:
 	.incbin "assets/rodata.bin", 0x5d64, 8
+@ d_0804bfc0: lower-case time units (draw_waveform_display_p7.inc)
 	.global d_0804bfc0
 d_0804bfc0:
-	.incbin "assets/rodata.bin", 0x5d6c, 16
+	.word t_080bcd62, t_080bcda8, t_080bcd4a, t_080bcda9   @ ns us ms s
+@ Status message rows, 8 words each (one per language byte 1..8, read as
+@ [row + 4*byte - 4]); every word names the English text
 	.global d_0804bfd0
 d_0804bfd0:
-	.incbin "assets/rodata.bin", 0x5d7c, 32
+	.word t_080bb68e, t_080bb68e, t_080bb68e, t_080bb68e   @ Saving...
+	.word t_080bb68e, t_080bb68e, t_080bb68e, t_080bb68e
 	.global d_0804bff0
 d_0804bff0:
-	.incbin "assets/rodata.bin", 0x5d9c, 32
+	.word t_080bc05b, t_080bc05b, t_080bc05b, t_080bc05b   @ Saved
+	.word t_080bc05b, t_080bc05b, t_080bc05b, t_080bc05b
 	.global d_0804c010
 d_0804c010:
-	.incbin "assets/rodata.bin", 0x5dbc, 32
+	.word t_080bc04f, t_080bc04f, t_080bc04f, t_080bc04f   @ Save failed
+	.word t_080bc04f, t_080bc04f, t_080bc04f, t_080bc04f
 	.global d_0804c030
 d_0804c030:
-	.incbin "assets/rodata.bin", 0x5ddc, 32
+	.word t_080bb712, t_080bb712, t_080bb712, t_080bb712   @ Await Trigger...
+	.word t_080bb712, t_080bb712, t_080bb712, t_080bb712
 	.global d_0804c050
 d_0804c050:
-	.incbin "assets/rodata.bin", 0x5dfc, 32
+	.word t_080bb779, t_080bb779, t_080bb779, t_080bb779   @ Awaiting Auto Measurement...
+	.word t_080bb779, t_080bb779, t_080bb779, t_080bb779
 	.global d_0804c070
 d_0804c070:
-	.incbin "assets/rodata.bin", 0x5e1c, 32
+	.word t_080bb6c7, t_080bb6c7, t_080bb6c7, t_080bb6c7   @ Awaiting auto-correction...
+	.word t_080bb6c7, t_080bb6c7, t_080bb6c7, t_080bb6c7
+@ d_0804c090: read by ldr.w r0,[r0,#-4] at 0x0801c9a0 with r0 = 0x0804c090 + 4*idx
+@ (movw/movt at 0x0801c994/0x0801c998, add.w at 0x0801c99c); idx = the byte at 0x20001058
 	.global d_0804c090
 d_0804c090:
-	.incbin "assets/rodata.bin", 0x5e3c, 24
-@ UNREF_0804c0a8: 4 bytes cd c3 0b 08 = word 0x080bc3cd, an address whose text is 'Grenzüberschreitung' | READ: ldr.w r0,[r0,#-4] at 0x0801c9a0 with r0 = 0x0804c090 + 4*idx (movw/movt at 0x0801c994/0x0801c998, add.w at 0x0801c99c); idx = the byte at 0x20001058 (ldrb with offset 3936 from 0x200000f8); no compare limits idx between its load and the ldr, so the code allows 0..255; draw_language_list (0x0801f324) tests the byte for 1 and 2; this word is idx = 7 of the 8-word row 0x0804c090..0x0804c0af
+	.word t_080bcde0, t_080bcde0, t_080bcde0, t_080bcde0   @ Exceeded Limit
+	.word t_080bcde0, t_080bcde0
+@ UNREF_0804c0a8: words 7 and 8 of the row d_0804c090
 	.global UNREF_0804c0a8
 UNREF_0804c0a8:
-	.incbin "assets/rodata.bin", 0x5e54, 8
+	.word t_080bcde0, t_080bcde0
 	.global d_0804c0b0
 d_0804c0b0:
-	.incbin "assets/rodata.bin", 0x5e5c, 32
+	.word t_080bc87a, t_080bc87a, t_080bc87a, t_080bc87a   @ Waiting for automatic amplitude calibration
+	.word t_080bc87a, t_080bc87a, t_080bc87a, t_080bc87a
 	.global d_0804c0d0
 d_0804c0d0:
 .Lsw_0804c0d0:
@@ -544,240 +577,386 @@ d_0804c180:
 	.global UNREF_0804c186
 UNREF_0804c186:
 	.incbin "assets/rodata.bin", 0x5f32, 2
+@ Status message rows 9..12 (8 words each, [row + 4*byte - 4], byte = 0x20001058)
 	.global d_0804c188
 d_0804c188:
-	.incbin "assets/rodata.bin", 0x5f34, 32
+	.word t_080bb682, t_080bb682, t_080bb682, t_080bb682   @ Deleting...
+	.word t_080bb682, t_080bb682, t_080bb682, t_080bb682
 	.global d_0804c1a8
 d_0804c1a8:
-	.incbin "assets/rodata.bin", 0x5f54, 32
+	.word t_080bcb6e, t_080bcb6e, t_080bcb6e, t_080bcb6e   @ Image Viewer
+	.word t_080bcb6e, t_080bcb6e, t_080bcb6e, t_080bcb6e
+@ d_0804c1c8: read by ldr.w r0,[r0,#-4] at 0x08011572 and 0x0801e484 with r0 = 0x0804c1c8 + 4*idx
+@ (add.w at 0x0801156e and 0x0801e480), idx = the byte at 0x20001058
 	.global d_0804c1c8
 d_0804c1c8:
-	.incbin "assets/rodata.bin", 0x5f74, 16
-@ UNREF_0804c1d8: 12 bytes = 3 words: 0x080bbe0b->'Batería baja, carga', 0x080bbdf4->'Bateria baixa, carrega', 0x080bc76f->'Batterie niedrig, laden' | READ: ldr.w r0,[r0,#-4] at 0x08011572 and 0x0801e484 with r0 = 0x0804c1c8 + 4*idx (add.w at 0x0801156e and 0x0801e480, base from movw/movt ending at 0x0801156a and 0x0801e47c); idx = the byte at 0x20001058 (ldrb with offset 3936 from 0x200000f8); no compare limits idx between its load and the ldr, so the code allows 0..255; draw_language_list (0x0801f324) tests the byte for 1 and 2; these words are idx = 5, 6, 7 of the 8-word row 0x0804c1c8..0x0804c1e7
+	.word t_080bceb4, t_080bceb4, t_080bceb4, t_080bceb4   @ Battery low, charge now
+@ UNREF_0804c1d8: words 5..8 of the row d_0804c1c8
 	.global UNREF_0804c1d8
 UNREF_0804c1d8:
-	.incbin "assets/rodata.bin", 0x5f84, 16
+	.word t_080bceb4, t_080bceb4, t_080bceb4, t_080bceb4
 	.global d_0804c1e8
 d_0804c1e8:
-	.incbin "assets/rodata.bin", 0x5f94, 32
-@ DATA_0804c208: 8 bytes = 2 words 0x0804c338, 0x0804c358, addresses of two blocks 32 bytes apart that hold 0x080b.... words (elements 0 and 1 of the four-element table at 0x0804c208) | ldr.w r1,[r2,r1,lsl #0x2] at 0x0801d244 | draw_page_by_selector_nibble: draws one of seven pages (switch on byte 0x20001062 & 0xf, values 7..15 return at once)
+	.word t_080bc8ae, t_080bc8ae, t_080bc8ae, t_080bc8ae   @ Auto shutdown soon
+	.word t_080bc8ae, t_080bc8ae, t_080bc8ae, t_080bc8ae
+@ DATA_0804c208: four-element table of row addresses (rows .L0804c338, .L0804c358, .L0804c378,
+@ d_0804c398), read by ldr.w r1,[r2,r1,lsl #2] at 0x0801d244 in draw_page_by_selector_nibble
+@ (r2 = 0x0804c208 from movw/movt at 0x0801d230/0x0801d23c, r1 = the low 7 bits of r6 after
+@ and.w r1,r6,#127 / cmp r1,#3 / bhi at 0x0801d226..0x0801d22c, so 0..3)
 	.global DATA_0804c208
 DATA_0804c208:
 	.global d_0804c208
 d_0804c208:
-	.incbin "assets/rodata.bin", 0x5fb4, 8
-@ DATA_0804c210: 4 bytes 78 c3 04 08 = word 0x0804c378, the address of a block that holds 0x080b.... words, element 2 of the four-element table at 0x0804c208 | ldr.w r1,[r2,r1,lsl #0x2] at 0x0801d244 with r2 = 0x0804c208 (movw/movt at 0x0801d230/0x0801d23c) and r1 = signed 7-bit value from sbfx at 0x0801d238 reaches it with r1 = 2; ldr.w r0,[r0,#-0x8] at 0x0801d322 reaches it with byte [0x20001058] = 0 (r0 = 0x0804c218 + 8*byte) | draw_page_by_selector_nibble: draws one of seven pages (switch on byte 0x20001062 & 0xf, values 7..15 return at once)
+	.word .L0804c338, .L0804c358
+@ DATA_0804c210: elements 2 and 3 of the table DATA_0804c208
 	.global DATA_0804c210
 DATA_0804c210:
-	.incbin "assets/rodata.bin", 0x5fbc, 8
+	.word .L0804c378, d_0804c398
+@ d_0804c218: About page labels, 8 language blocks of 2 words (block = language byte - 1)
 	.global d_0804c218
 d_0804c218:
-	.incbin "assets/rodata.bin", 0x5fc4, 64
+	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52   @ "Version:", " Model:"
+	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
+	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
+	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
+@ d_0804c258: system settings menu items, 8 language blocks of 7 words, read by
+@ ldr.w r0,[r0,#-28] at 0x0801cdac with r0 = 0x0804c258 + 28*idx + 4*r5 (movw/movt at
+@ 0x0801cd98/0x0801cda0, rsb r0,r0,r0,lsl #3 at 0x0801cd9c), idx = the byte at 0x20001058
+@ (ldrb.w r0,[r4,#3936] at 0x0801cd94). Items: Language, Sound and light, Startup on Boot,
+@ Auto Shutdown, USB Sharing, About, Factory Reset. The labels UNREF_* below are pieces of it.
 	.global d_0804c258
 d_0804c258:
-	.incbin "assets/rodata.bin", 0x6004, 44
-@ UNREF_0804c284: 4 bytes = 1 word: 0x080bc35e->'USB Sharing' | READ: ldr.w r0,[r0,#-28] at 0x0801cdac with r0 = 0x0804c258 + 28*idx + 4*r5 (movw/movt at 0x0801cd98/0x0801cda0, rsb r0,r0,r0,lsl #3 at 0x0801cd9c, add.w at 0x0801cda4 and 0x0801cda8), i.e. address = 0x0804c258 + 28*(idx-1) + 4*r5 with idx = the byte at 0x20001058 (ldrb.w r0,[r4,#3936] at 0x0801cd94) and r5 not bounded by a compare in 0x0801cd7c..0x0801cdac; the table has 7 words per idx value; this word is idx = 2, r5 = 4 (44 = 28 + 16)
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 1
+	.word t_080bc35e, t_080bce87, t_080bcdab
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 2 (items 0..3)
 	.global UNREF_0804c284
 UNREF_0804c284:
-	.incbin "assets/rodata.bin", 0x6030, 68
-@ UNREF_0804c2c8: 4 bytes = 1 word: 0x080bbeca->'Idioma' | READ: ldr.w r0,[r0,#-28] at 0x0801cdac with r0 = 0x0804c258 + 28*idx + 4*r5 (movw/movt at 0x0801cd98/0x0801cda0, rsb r0,r0,r0,lsl #3 at 0x0801cd9c, add.w at 0x0801cda4 and 0x0801cda8), i.e. address = 0x0804c258 + 28*(idx-1) + 4*r5 with idx = the byte at 0x20001058 (ldrb.w r0,[r4,#3936] at 0x0801cd94) and r5 not bounded by a compare in 0x0801cd7c..0x0801cdac; the table has 7 words per idx value; this word is idx = 5, r5 = 0 (112 = 28*4)
+	.word t_080bc35e, t_080bce87, t_080bcdab               @ block 2 (items 4..6)
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 3
+	.word t_080bc35e, t_080bce87, t_080bcdab
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 4
+	.word t_080bc35e, t_080bce87, t_080bcdab
 	.global UNREF_0804c2c8
 UNREF_0804c2c8:
-	.incbin "assets/rodata.bin", 0x6074, 28
-@ UNREF_0804c2e4: 12 bytes = 3 words: 0x080bbf5b->'Língua', 0x080bcf03->'Som e luz', 0x080bbd4f->'Inicialização Automática' | READ: ldr.w r0,[r0,#-28] at 0x0801cdac with r0 = 0x0804c258 + 28*idx + 4*r5 (movw/movt at 0x0801cd98/0x0801cda0, rsb r0,r0,r0,lsl #3 at 0x0801cd9c, add.w at 0x0801cda4 and 0x0801cda8), i.e. address = 0x0804c258 + 28*(idx-1) + 4*r5 with idx = the byte at 0x20001058 (ldrb.w r0,[r4,#3936] at 0x0801cd94) and r5 not bounded by a compare in 0x0801cd7c..0x0801cdac; the table has 7 words per idx value; these words are idx = 6, r5 = 0, 1, 2 (140 = 28*5)
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 5
+	.word t_080bc35e, t_080bce87, t_080bcdab
 	.global UNREF_0804c2e4
 UNREF_0804c2e4:
-	.incbin "assets/rodata.bin", 0x6090, 100
-@ UNREF_0804c348: 8 bytes = 2 words: 0x080bbd6b->'Nada', 0x080bbd6b->'Nada' | READ: ldr.w r1,[r2,r1,lsl #2] at 0x0801d244 with r2 = 0x0804c208 (movw at 0x0801d230, movt at 0x0801d23c) and r1 = the low 7 bits of r6 after and.w r1,r6,#127 / cmp r1,#3 / bhi at 0x0801d226..0x0801d22c, so r1 = 0..3 selects one of the four row addresses 0x0804c338, 0x0804c358, 0x0804c378, 0x0804c398 stored at 0x0804c208..0x0804c214; then ldr.w r3,[r1,#-4] at 0x0801d252 with r1 = row + 4*idx (add.w at 0x0801d24e, idx = ldrb.w r3,[r3,#3936] at 0x0801d248); for r1 = 0 (row 0x0804c338) this region is idx = 5 and 6 (offset 0x10)
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 6
+	.word t_080bc35e, t_080bce87, t_080bcdab
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 7
+	.word t_080bc35e, t_080bce87, t_080bcdab
+	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 8
+	.word t_080bc35e, t_080bce87, t_080bcdab
+@ Page title rows (8 words each, [row + 4*byte - 4]); .L0804c338 .. d_0804c398 are also named
+@ by the row table DATA_0804c208, .L0804c358 .. .L0804c378 by d_0804c924
+.L0804c338:
+	.word t_080bc220, t_080bc220, t_080bc220, t_080bc220   @ None
 	.global UNREF_0804c348
 UNREF_0804c348:
-	.incbin "assets/rodata.bin", 0x60f4, 76
-@ DATA_0804c394: 4 bytes 48 d0 0b 08 = word 0x080bd048, an address whose text is '오실로스코프' | ldr.w r0,[r0,#-0x4] at 0x08010748 in fn_080106e8; ldr.w r0,[r0,#-0x4] at 0x0801576c in fn_08015740 (string table indexed by [0x20001058]) | fn_080106e8: draws 88.jpg at (0x34,0) and a string from the table indexed by [0x20001058] at the top of the screen; fn_08015740: draws 88.jpg and the string pointer at the table plus 0x20001058*4 | purpose not determined from the code
+	.word t_080bc220, t_080bc220, t_080bc220, t_080bc220
+.L0804c358:
+	.word t_080bcb54, t_080bcb54, t_080bcb54, t_080bcb54   @ Multimeter
+	.word t_080bcb54, t_080bcb54, t_080bcb54, t_080bcb54
+.L0804c378:
+	.word t_080bc225, t_080bc225, t_080bc225, t_080bc225   @ Oscilloscope
+	.word t_080bc225, t_080bc225, t_080bc225
+@ DATA_0804c394: word 8 of the row .L0804c378; ldr.w r0,[r0,#-0x4] at 0x08010748 in
+@ fn_080106e8 and at 0x0801576c in fn_08015740 (base d_0804c398, so language byte 0 would read it)
 	.global DATA_0804c394
 DATA_0804c394:
-	.incbin "assets/rodata.bin", 0x6140, 4
+	.word t_080bc225
+@ d_0804c398: read by ldr.w r0,[r0,#-4] at 0x08010748 and 0x0801576c with r0 = 0x0804c398 + 4*idx
 	.global d_0804c398
 d_0804c398:
-	.incbin "assets/rodata.bin", 0x6144, 16
-@ UNREF_0804c3a8: 12 bytes = 3 words: 0x080bcc43->'Generador de señales', 0x080bcd1f->'Gerador de sinais', 0x080bcbbc->'Signalgenerator' | READ: ldr.w r0,[r0,#-4] at 0x08010748 and 0x0801576c with r0 = 0x0804c398 + 4*idx (add.w at 0x08010744 and 0x08015768, base from movw/movt ending at 0x08010740 and 0x08015764); idx = the byte at 0x20001058 (ldrb with offset 3936 from 0x200000f8); no compare limits idx between its load and the ldr, so the code allows 0..255; draw_language_list (0x0801f324) tests the byte for 1 and 2; these words are idx = 5, 6, 7 of the 8-word row 0x0804c398..0x0804c3b7
+	.word t_080bcbab, t_080bcbab, t_080bcbab, t_080bcbab   @ Signal Generator
 	.global UNREF_0804c3a8
 UNREF_0804c3a8:
-	.incbin "assets/rodata.bin", 0x6154, 12
-@ DATA_0804c3b4: 36 bytes = 9 words 0x080bd9d8->'신호 발생기', 0x080bd982->'系统设置', 0x080bccfe->'System Settings', 0x080bd171->'Настройки системы', 0x080bd650->'システム設定', 0x080bbea1->'Configuración del sistema', 0x080bbe86->'Configurações do Sistema', 0x080bc7e7->'Systemeinstellungen', 0x080bd506->'시스템 설정' | ldr.w r0,[r0,#-0x4] at 0x0801cd28 in fn_0801ccfc; ldr.w r0,[r0,#-0x4] at 0x08010fc8 in fn_08010f68 | fn_08010f68: draws 71.jpg at (0,0) and a string from the table indexed by [0x20001058]; fn_0801ccfc: draws 71.jpg and a string from the table indexed by 0x20001058 | purpose not determined from the code
+	.word t_080bcbab, t_080bcbab, t_080bcbab
+@ DATA_0804c3b4: word 8 of the row d_0804c398; ldr.w r0,[r0,#-0x4] at 0x0801cd28 in fn_0801ccfc
+@ and at 0x08010fc8 in fn_08010f68 (base d_0804c3b8)
 	.global DATA_0804c3b4
 DATA_0804c3b4:
-	.incbin "assets/rodata.bin", 0x6160, 4
+	.word t_080bcbab
 	.global d_0804c3b8
 d_0804c3b8:
-	.incbin "assets/rodata.bin", 0x6164, 32
-@ DATA_0804c3d8: 4 bytes: word 0x080bdfb2, an address whose text is '最大值' | ldr.w r0,[r8,r0,lsl #0x2] at 0x0801caf8 | draw_value_panel: draws the lower value panel (labels from tables 0804c3d8/0804c3dc/0804c3e0)
+	.word t_080bccfe, t_080bccfe, t_080bccfe, t_080bccfe   @ System Settings
+	.word t_080bccfe, t_080bccfe, t_080bccfe, t_080bccfe
+@ DATA_0804c3d8: value panel labels, two sets of 3 words (V1.2.0: Chinese, then English), chosen
+@ by the language byte in draw_value_panel; ldr.w r0,[r8,r0,lsl #0x2] at 0x0801caf8
 	.global DATA_0804c3d8
 DATA_0804c3d8:
 	.global d_0804c3d8
 d_0804c3d8:
-	.incbin "assets/rodata.bin", 0x6184, 4
-@ DATA_0804c3dc: 4 bytes: word 0x080bdf9e, an address whose text is '平均值' | ldr r0,[r0,#0x4] at 0x0801cbb8 | draw_value_panel: draws the lower value panel (labels from tables 0804c3d8/0804c3dc/0804c3e0)
+	.word t_080bbd30                                       @ MAX
+@ DATA_0804c3dc: ldr r0,[r0,#0x4] at 0x0801cbb8
 	.global DATA_0804c3dc
 DATA_0804c3dc:
-	.incbin "assets/rodata.bin", 0x6188, 4
-@ DATA_0804c3e0: 4 bytes: word 0x080bdfa8, an address whose text is '最小值' | ldr r0,[r0,#0x8] at 0x0801cc64 | draw_value_panel: draws the lower value panel (labels from tables 0804c3d8/0804c3dc/0804c3e0)
+	.word t_080bbc4c                                       @ MEAN
+@ DATA_0804c3e0: ldr r0,[r0,#0x8] at 0x0801cc64; then the second set
 	.global DATA_0804c3e0
 DATA_0804c3e0:
-	.incbin "assets/rodata.bin", 0x618c, 16
+	.word t_080bbc51                                       @ MIN
+	.word t_080bbd30, t_080bbc4c, t_080bbc51               @ MAX MEAN MIN
+@ d_0804c3f0: number formats with 0..4 decimals
 	.global d_0804c3f0
 d_0804c3f0:
-	.incbin "assets/rodata.bin", 0x619c, 20
-@ DATA_0804c404: 8 bytes = 2 words 0x080bbd2d, 0x080bbd2e, text 'mV', 'V' | ldr.w r0,[r1,r0,lsl #0x2] at 0x0801636e in draw_arc_gauge and ldr.w r6,[r0,r3,lsl #0x2] at 0x0801cb64, 0x0801cc18, 0x0801ccc0 in draw_value_panel | draw_arc_gauge: when byte 0x20001030 ([r5+0xf38], r5 = 0x200000f8) is not 0xff, draws the word at 0x0804c404 + 4*that byte as text at (0x102,0x70,0x34,0x1c) with font block 0x200011a4 and colour 0x055f (0x0801635e..0x0801638a); draw_value_panel: draws the lower value panel
+	.word t_080bcc03, t_080bcc0a, t_080bcc11, t_080bcc18, t_080bcc1f
+@ DATA_0804c404: unit texts by unit byte; ldr.w r0,[r1,r0,lsl #0x2] at 0x0801636e in
+@ draw_arc_gauge (byte 0x20001030) and ldr.w r6,[r0,r3,lsl #0x2] at 0x0801cb64, 0x0801cc18,
+@ 0x0801ccc0 in draw_value_panel
 	.global DATA_0804c404
 DATA_0804c404:
 	.global d_0804c404
 d_0804c404:
-	.incbin "assets/rodata.bin", 0x61b0, 56
+	.word t_080bbd2d, t_080bbd2e, t_080bd8cb, t_080bd8ca   @ mV V Ω kΩ
+	.word t_080bd8c6, t_080bbc3e, t_080bbc41, t_080bbc3b   @ MΩ nF uF mF
+	.word t_080bbc42, t_080bd03d, t_080bbc02, t_080bbbff   @ F ℃ uA mA
+	.word t_080bbc03, t_080bd0d6                           @ A ℉
+@ d_0804c43c: multimeter function names, 8 language blocks of 12 words, read by
+@ ldr.w r0,[r0,#-48] at 0x08010b00 and 0x08015c40 with r0 = 0x0804c43c + 48*idx + 4*col
+@ (idx = the byte at 0x20001058). Items: Automatic, DC Voltage, AC Voltage, Continuity, Diode,
+@ Resistance, Capacitance, Temperature, Small DC current, Small AC current, Large DC current,
+@ Large AC current.
 	.global d_0804c43c
 d_0804c43c:
-	.incbin "assets/rodata.bin", 0x61e8, 184
-@ UNREF_0804c4f4: 116 bytes = 29 words 0x080bcfb9->'大きい直流電流', 0x080bcf8d->'大きい交流電流', 0x080bc912->'Automático', 0x080bbf63->'Voltaje de Corriente Con..', 0x080bbed1->'Voltaje de Corriente Alt..', 0x080bc043->'Continuidad', 0x080bc982->'Diodo', 0x080bbe2d->'Resistencia', 0x080bbe20->'Capacitancia', 0x080bbf34->'Temperatura', ... (29 words in total) | READ: ldr.w r0,[r0,#-48] at 0x08010b00 and 0x08015c40 with r0 = 0x0804c43c + 48*idx + 4*col (movw/movt at 0x08010ae8/0x08010af4 and 0x08015c28/0x08015c34, add.w r0,r0,r0,lsl #1 at 0x08010af0 / add.w r0,r2,r0,lsl #4 at 0x08010af8, add.w r0,r0,r1,lsl #2 at 0x08010afc, and the same shape at 0x08015c30..0x08015c3c), i.e. address = 0x0804c43c + 48*(idx-1) + 4*col with idx = the byte at 0x20001058 (ldrb.w at 0x08010ae4 / 0x08015c24) and col = ldrb.w [r5,#3886] at 0x08010aec (0x08015c2c), neither compared against a limit; the table has 12 words per idx value; the 29 words are idx = 4 col 10, 11 (0x0804c4f4, 0x0804c4f8), idx = 5 col 0..11 (0x0804c4fc..0x0804c528), idx = 6 col 0..11 (0x0804c52c..0x0804c558) and idx = 7 col 0..2 (0x0804c55c..0x0804c564)
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 1
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 2
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 3
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 4 (items 0..9)
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29
 	.global UNREF_0804c4f4
 UNREF_0804c4f4:
-	.incbin "assets/rodata.bin", 0x62a0, 136
-@ UNREF_0804c57c: 4 bytes = 1 word: 0x080bc715->'Kleiner Gleichstrom' | READ: ldr.w r0,[r0,#-48] at 0x08010b00 and 0x08015c40 with r0 = 0x0804c43c + 48*idx + 4*col (movw/movt at 0x08010ae8/0x08010af4 and 0x08015c28/0x08015c34, add.w r0,r0,r0,lsl #1 at 0x08010af0 / add.w r0,r2,r0,lsl #4 at 0x08010af8, add.w r0,r0,r1,lsl #2 at 0x08010afc, and the same shape at 0x08015c30..0x08015c3c), i.e. address = 0x0804c43c + 48*(idx-1) + 4*col with idx = the byte at 0x20001058 (ldrb.w at 0x08010ae4 / 0x08015c24) and col = ldrb.w [r5,#3886] at 0x08010aec (0x08015c2c), neither compared against a limit; the table has 12 words per idx value; this word is idx = 7, col = 8 (0x0804c55c + 32)
+	.word t_080bce3a, t_080bce18                           @ block 4 (items 10, 11)
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 5
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 6
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 7 (items 0..7)
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
 	.global UNREF_0804c57c
 UNREF_0804c57c:
-	.incbin "assets/rodata.bin", 0x6328, 64
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18   @ block 7 (items 8..11)
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 8
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
+@ d_0804c5bc: signal generator value names, 8 language blocks of 3 words, read by
+@ ldr.w r0,[r0,#-12] at 0x08015a5e with r0 = 0x0804c5bc + 12*idx + 4*r8
 	.global d_0804c5bc
 d_0804c5bc:
-	.incbin "assets/rodata.bin", 0x6368, 48
-@ UNREF_0804c5ec: 16 bytes = 4 words: 0x080bbe46->'Frecuencia', 0x080bca28->'Ciclo de trabajo', 0x080bc085->'Amplitud', 0x080bbe7a->'Frequência' | READ: ldr.w r0,[r0,#-12] at 0x08015a5e with r0 = 0x0804c5bc + 12*idx + 4*r8 (movw at 0x08015a3c, movt at 0x08015a44, add.w r0,r1,r1,lsl #1 at 0x08015a38 with r1 = ldrb.w [r5,#3936] at 0x08015a16 (idx), add.w r0,r1,r0,lsl #2 at 0x08015a4e, add.w r0,r0,r8,lsl #2 at 0x08015a56), i.e. address = 0x0804c5bc + 12*(idx-1) + 4*r8; r8 is compared only for equality (cmp r8,r0 at 0x08015a32), so no compare limits it; the table has 3 words per idx value; these words are idx = 5, r8 = 0, 1, 2 (0x0804c5ec..0x0804c5f4) and idx = 6, r8 = 0 (0x0804c5f8)
+	.word t_080bcecc, t_080bc179, t_080bc117               @ Frequency, Duty Cycle, Amplitude
+	.word t_080bcecc, t_080bc179, t_080bc117
+	.word t_080bcecc, t_080bc179, t_080bc117
+	.word t_080bcecc, t_080bc179, t_080bc117
 	.global UNREF_0804c5ec
 UNREF_0804c5ec:
-	.incbin "assets/rodata.bin", 0x6398, 48
+	.word t_080bcecc, t_080bc179, t_080bc117
+	.word t_080bcecc, t_080bc179, t_080bc117
+	.word t_080bcecc, t_080bc179, t_080bc117
+	.word t_080bcecc, t_080bc179, t_080bc117
+@ d_0804c61c: waveform names, 8 language blocks of 13 words, read by ldr.w r0,[r0,#-52] at
+@ 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (smlabb at 0x080157dc). Items: Sine Wave,
+@ Square Wave, Sawtooth wave, Half-wave, Full Wave, Step Wave, Reverse Step Wave, Index Up,
+@ Index Decrease, Direct current, Multi-audio, Sink Pulse, Lorentz waves.
 	.global d_0804c61c
 d_0804c61c:
-	.incbin "assets/rodata.bin", 0x63c8, 100
-@ UNREF_0804c680: 4 bytes = 1 word: 0x080bccc0->'Lorentz waves' | READ: ldr.w r0,[r0,#-52] at 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (ldrb.w r0,[r4,#3936] at 0x080157d0 = idx, movw/movt r9 at 0x080157d4/0x080157d8, smlabb r0,r0,r1,r9 with r1 = 52 at 0x080157dc/0x080157de, add.w r0,r0,r7,lsl #2 at 0x080157e2), i.e. address = 0x0804c61c + 52*(idx-1) + 4*r7, r7 not bounded by a compare in 0x080157b4..0x080157e6; the table has 13 words per idx value; this word is idx = 2, r7 = 12 (100 = 52 + 48)
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 1
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
+	.word t_080bccc0
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 2 (items 0..11)
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
 	.global UNREF_0804c680
 UNREF_0804c680:
-	.incbin "assets/rodata.bin", 0x642c, 108
-@ UNREF_0804c6ec: 84 bytes = 21 words 0x080bc6e2->'Onda sinusoidal', 0x080bbdc3->'Onda cuadrada', 0x080bc29f->'Onda diente', 0x080bbddf->'Media onda', 0x080bbf4d->'Onda completa', 0x080bca5f->'Onda de Paso', 0x080bca6c->'Onda de Retroceso', 0x080bbd34->'Índice arriba', 0x080bc6f2->'descenso exponencial', 0x080bbfb5->'Corriente continua', ... (21 words in total) | READ: ldr.w r0,[r0,#-52] at 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (ldrb.w r0,[r4,#3936] at 0x080157d0 = idx, movw/movt r9 at 0x080157d4/0x080157d8, smlabb r0,r0,r1,r9 with r1 = 52 at 0x080157dc/0x080157de, add.w r0,r0,r7,lsl #2 at 0x080157e2), i.e. address = 0x0804c61c + 52*(idx-1) + 4*r7, r7 not bounded by a compare in 0x080157b4..0x080157e6; the table has 13 words per idx value; the 21 words are idx = 5 r7 = 0..12 (0x0804c6ec..0x0804c71c) and idx = 6 r7 = 0..7 (0x0804c720..0x0804c73c)
+	.word t_080bccc0                                       @ block 2 (item 12)
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 3
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
+	.word t_080bccc0
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 4
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
+	.word t_080bccc0
 	.global UNREF_0804c6ec
 UNREF_0804c6ec:
-	.incbin "assets/rodata.bin", 0x6498, 96
-@ UNREF_0804c74c: 4 bytes = 1 word: 0x080bc6c9->'Pulso Sink' | READ: ldr.w r0,[r0,#-52] at 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (ldrb.w r0,[r4,#3936] at 0x080157d0 = idx, movw/movt r9 at 0x080157d4/0x080157d8, smlabb r0,r0,r1,r9 with r1 = 52 at 0x080157dc/0x080157de, add.w r0,r0,r7,lsl #2 at 0x080157e2), i.e. address = 0x0804c61c + 52*(idx-1) + 4*r7, r7 not bounded by a compare in 0x080157b4..0x080157e6; the table has 13 words per idx value; this word is idx = 6, r7 = 11 (304 = 52*5 + 44)
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 5
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
+	.word t_080bccc0
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 6 (items 0..10)
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5
 	.global UNREF_0804c74c
 UNREF_0804c74c:
-	.incbin "assets/rodata.bin", 0x64f8, 40
-@ UNREF_0804c774: 12 bytes = 3 words: 0x080bc345->'Indexrückgang', 0x080bc731->'Gleichstrom', 0x080bc354->'Mehrklang' | READ: ldr.w r0,[r0,#-52] at 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (ldrb.w r0,[r4,#3936] at 0x080157d0 = idx, movw/movt r9 at 0x080157d4/0x080157d8, smlabb r0,r0,r1,r9 with r1 = 52 at 0x080157dc/0x080157de, add.w r0,r0,r7,lsl #2 at 0x080157e2), i.e. address = 0x0804c61c + 52*(idx-1) + 4*r7, r7 not bounded by a compare in 0x080157b4..0x080157e6; the table has 13 words per idx value; these words are idx = 7, r7 = 8, 9, 10 (344 = 52*6 + 32)
+	.word t_080bc253, t_080bccc0                           @ block 6 (items 11, 12)
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 7 (items 0..7)
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
 	.global UNREF_0804c774
 UNREF_0804c774:
-	.incbin "assets/rodata.bin", 0x6520, 72
-@ DATA_0804c7bc: 8 bytes = 2 words 0x080bb979->'X1', 0x080bb92f->'X10' | ldr.w r0,[r1,r0,lsl #0x2] at 0x0801e92a in draw_bottom_strip; ldr.w r0,[r1,r0,lsl #0x2] at 0x0801ea7a in draw_bottom_strip; 1 further references listed | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf); draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253   @ block 7 (items 8..12)
+	.word t_080bccc0
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 8
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
+	.word t_080bccc0
+@ DATA_0804c7bc: probe ratio texts; ldr.w r0,[r1,r0,lsl #0x2] at 0x0801e92a and 0x0801ea7a in
+@ draw_bottom_strip, and in draw_panels_by_selector_20001062
 	.global DATA_0804c7bc
 DATA_0804c7bc:
 	.global d_0804c7bc
 d_0804c7bc:
-	.incbin "assets/rodata.bin", 0x6568, 8
-@ DATA_0804c7c4: 8 bytes = 2 words 0x080bbc28->'AC', 0x080bbc2b->'DC' | ldr.w r5,[r1,r0,lsl #0x2] at 0x0801e8d4 in draw_bottom_strip; ldr.w r5,[r1,r0,lsl #0x2] at 0x0801ea24 in draw_bottom_strip; 3 further references listed | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf); draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bb979, t_080bb92f                           @ X1 X10
+@ DATA_0804c7c4: coupling texts; ldr.w r5,[r1,r0,lsl #0x2] at 0x0801e8d4 and 0x0801ea24 in
+@ draw_bottom_strip, and in draw_panels_by_selector_20001062
 	.global DATA_0804c7c4
 DATA_0804c7c4:
 	.global d_0804c7c4
 d_0804c7c4:
-	.incbin "assets/rodata.bin", 0x6570, 8
-@ DATA_0804c7cc: 4 bytes = word 0x080bbb04->'触发模式:' | ldr.w r0,[r10,r6,lsl #0x2] at 0x080136c6 in draw_panels_by_selector_20001062 | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf)
+	.word t_080bbc28, t_080bbc2b                           @ AC DC
+@ DATA_0804c7cc: trigger labels, two sets of 3 words (V1.2.0: Chinese, then English), chosen by
+@ the language byte in draw_panels_by_selector_20001062; ldr.w r0,[r10,r6,lsl #0x2] at 0x080136c6
 	.global DATA_0804c7cc
 DATA_0804c7cc:
 	.global d_0804c7cc
 d_0804c7cc:
-	.incbin "assets/rodata.bin", 0x6578, 4
-@ DATA_0804c7d0: 4 bytes = word 0x080bbbec->'触发沿:' | ldr r0,[r0,#0x4] at 0x08013786 in draw_panels_by_selector_20001062 | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf)
+	.word t_080bba31                                       @ Mode:
+@ DATA_0804c7d0: ldr r0,[r0,#0x4] at 0x08013786
 	.global DATA_0804c7d0
 DATA_0804c7d0:
-	.incbin "assets/rodata.bin", 0x657c, 4
-@ DATA_0804c7d4: 4 bytes = word 0x080bbb20->'触发通道:' | ldr r0,[r0,#0x8] at 0x08013994 in draw_panels_by_selector_20001062 | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf)
+	.word t_080bba37                                       @ Edge:
+@ DATA_0804c7d4: ldr r0,[r0,#0x8] at 0x08013994; then the second set
 	.global DATA_0804c7d4
 DATA_0804c7d4:
-	.incbin "assets/rodata.bin", 0x6580, 16
-@ DATA_0804c7e4: 4 bytes = word 0x080bdd54->'正常' | movt r2,#0x804 at 0x0801eb76 in draw_bottom_strip | draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bba5a                                       @ Channel:
+	.word t_080bba31, t_080bba37, t_080bba5a               @ Mode: Edge: Channel:
+@ DATA_0804c7e4: trigger modes, two sets of 3 words (V1.2.0: Chinese, then English); read with
+@ r5 = 0x0804c7e4 + 12*r8 (r8 = 0 or 1) by ldr.w r0,[r5,r0,lsl #2] at 0x0801eb06 and
+@ ldr.w r5,[r1,r0,lsl #2] at 0x0801eb7e in draw_bottom_strip
 	.global DATA_0804c7e4
 DATA_0804c7e4:
 	.global d_0804c7e4
 d_0804c7e4:
-	.incbin "assets/rodata.bin", 0x6590, 4
-@ DATA_0804c7e8: 12 bytes = 3 words 0x080bd86b->'自动', 0x080bd72f->'单次', 0x080bc707->'Normal' | ldr.w r0,[r5,r0,lsl #0x2] at 0x0801eb06 in draw_bottom_strip | draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bc707                                       @ Normal
 	.global DATA_0804c7e8
 DATA_0804c7e8:
-	.incbin "assets/rodata.bin", 0x6594, 16
-@ UNREF_0804c7f8: 4 bytes = 1 word: 0x080bc184->'Single' | READ: ldr.w r0,[r5,r0,lsl #2] at 0x0801eb06 with r5 = 0x0804c7e4 + 12*r8 (movt at 0x0801eafe, orr.w r1,r8,r8,lsl #1 at 0x0801eafa, add.w r5,r2,r1,lsl #2 at 0x0801eb02, r8 = 0 or 1 from subs/movne at 0x0801eaee..0x0801eaf4) and r0 = ldrb [r7,#23] at 0x0801eaf8 (no compare); ldr.w r5,[r1,r0,lsl #2] at 0x0801eb7e with r1 = 0x0804c7e4 + 12*r8 (0x0801eb72..0x0801eb7a); ldr.w r0,[r1,r0,lsl #2] at 0x0801371c with r1 = 0x0804c7e4 + 4*r6 (add.w at 0x08013718) and r0 = ldrb [r4,#23] at 0x08013712; this word is offset 0x14 from 0x0804c7e4 (r8 = 1 and byte value 2)
+	.word t_080bca92, t_080bc184                           @ Auto Single
+	.word t_080bc707, t_080bca92                           @ Normal Auto
 	.global UNREF_0804c7f8
 UNREF_0804c7f8:
-	.incbin "assets/rodata.bin", 0x65a4, 4
-@ DATA_0804c7fc: 8 bytes = 2 words 0x080bb975->'CH1', 0x080bb9e0->'CH2' | ldr.w r5,[r1,r0,lsl #0x2] at 0x0801ebde in draw_bottom_strip; ldr.w r0,[r0,r1,lsl #0x2] at 0x0801eda4 in draw_bottom_strip; 1 further references listed | draw_panels_by_selector_20001062: menu-panel drawing routine (switch on 0x20001062 & 0xf); draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bc184                                       @ Single
+@ DATA_0804c7fc: channel names; ldr.w r5,[r1,r0,lsl #0x2] at 0x0801ebde and
+@ ldr.w r0,[r0,r1,lsl #0x2] at 0x0801eda4 in draw_bottom_strip, and in
+@ draw_panels_by_selector_20001062
 	.global DATA_0804c7fc
 DATA_0804c7fc:
 	.global d_0804c7fc
 d_0804c7fc:
-	.incbin "assets/rodata.bin", 0x65a8, 8
+	.word t_080bb975, t_080bb9e0                           @ CH1 CH2
+@ d_0804c804: oscilloscope settings items, 8 language blocks of 8 words, read by
+@ ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (idx = the byte at
+@ 0x20001058, ldrb.w r0,[r9,#3936] at 0x08012e30). Items: Display Mode, Cursor Measurement,
+@ Parameter Measurement, CH1 Settings, CH2 Settings, Trigger Settings, Persistence, Mathematics.
 	.global d_0804c804
 d_0804c804:
-	.incbin "assets/rodata.bin", 0x65b0, 28
-@ UNREF_0804c820: 4 bytes = 1 word: 0x080bd57a->'运 算' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; this word is idx = 1, r7 = 7 (offset 0x1c)
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 1 (items 0..6)
+	.word t_080bccdb, t_080bcd0e, t_080bc0e1
 	.global UNREF_0804c820
 UNREF_0804c820:
-	.incbin "assets/rodata.bin", 0x65cc, 16
-@ UNREF_0804c830: 12 bytes = 3 words: 0x080bccce->'CH1 Settings', 0x080bccdb->'CH2 Settings', 0x080bcd0e->'Trigger Settings' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; these words are idx = 2, r7 = 3, 4, 5 (offset 0x2c = 32 + 12)
+	.word t_080bcc33                                       @ block 1 (item 7)
+	.word t_080bc104, t_080bce05, t_080bcdef               @ block 2 (items 0..2)
 	.global UNREF_0804c830
 UNREF_0804c830:
-	.incbin "assets/rodata.bin", 0x65dc, 108
-@ UNREF_0804c89c: 4 bytes = 1 word: 0x080bbe39->'Persistencia' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; this word is idx = 5, r7 = 6 (offset 0x98 = 32*4 + 24)
+	.word t_080bccce, t_080bccdb, t_080bcd0e, t_080bc0e1   @ block 2 (items 3..7)
+	.word t_080bcc33
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 3
+	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 4
+	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 5 (items 0..5)
+	.word t_080bccdb, t_080bcd0e
 	.global UNREF_0804c89c
 UNREF_0804c89c:
-	.incbin "assets/rodata.bin", 0x6648, 32
-@ UNREF_0804c8bc: 20 bytes = 5 words: 0x080bbe6c->'Persistência', 0x080bbd43->'Matemática', 0x080bcd9e->'Anzeigemodus', 0x080bc39f->'Cursor-Messung', 0x080bc3ae->'Parametermessung' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; these words are idx = 6 r7 = 6, 7 (0x0804c8bc, 0x0804c8c0) and idx = 7 r7 = 0, 1, 2 (0x0804c8c4..0x0804c8cc)
+	.word t_080bc0e1, t_080bcc33                           @ block 5 (items 6, 7)
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 6 (items 0..5)
+	.word t_080bccdb, t_080bcd0e
 	.global UNREF_0804c8bc
 UNREF_0804c8bc:
-	.incbin "assets/rodata.bin", 0x6668, 32
-@ UNREF_0804c8dc: 8 bytes = 2 words: 0x080bc3bf->'Nachleuchtung', 0x080bc6be->'Mathematik' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; these words are idx = 7, r7 = 6, 7 (offset 0xd8 = 32*6 + 24)
+	.word t_080bc0e1, t_080bcc33                           @ block 6 (items 6, 7)
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 7 (items 0..5)
+	.word t_080bccdb, t_080bcd0e
 	.global UNREF_0804c8dc
 UNREF_0804c8dc:
-	.incbin "assets/rodata.bin", 0x6688, 20
-@ UNREF_0804c8f0: 16 bytes = 4 words: 0x080bd4d6->'CH1 설정', 0x080bd4e1->'CH2 설정', 0x080bd517->'트리거 설정', 0x080bdfdd->'잔상 효과' | READ: ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (ldrb.w r0,[r9,#3936] at 0x08012e30 = idx, add.w r0,fp,r0,lsl #5 at 0x08012e3c with fp = 0x0804c804, add.w r0,r0,r7,lsl #2 at 0x08012e40), i.e. address = 0x0804c804 + 32*(idx-1) + 4*r7, r7 not bounded by a compare near it; the table has 8 words per idx value; these words are idx = 8, r7 = 3, 4, 5, 6 (offset 0xec = 32*7 + 12)
+	.word t_080bc0e1, t_080bcc33                           @ block 7 (items 6, 7)
+	.word t_080bc104, t_080bce05, t_080bcdef               @ block 8 (items 0..2)
 	.global UNREF_0804c8f0
 UNREF_0804c8f0:
-	.incbin "assets/rodata.bin", 0x669c, 16
-@ DATA_0804c900: 12 bytes = 3 words 0x080bd99f->'수학 연산', 0x080bd98f->'示波器设置', 0x080bcce8->'Oscilloscope Settings' | ldr.w r0,[r0,#-0x4] at 0x08012db0 in fn_08012d84; ldr.w r0,[r0,#-0x4] at 0x08010374 in fn_08010314 | fn_08010314: draws 71.jpg at (0,0) and a string from the table indexed by [0x20001058]; fn_08012d84: draws 71.jpg and a string from the table indexed by 0x20001058 | purpose not determined from the code
+	.word t_080bccce, t_080bccdb, t_080bcd0e, t_080bc0e1   @ block 8 (items 3..6)
+@ DATA_0804c900: block 8 item 7; also read as [d_0804c904 + 4*byte - 4] with byte 0 by
+@ ldr.w r0,[r0,#-0x4] at 0x08012db0 in fn_08012d84 and at 0x08010374 in fn_08010314
 	.global DATA_0804c900
 DATA_0804c900:
-	.incbin "assets/rodata.bin", 0x66ac, 4
+	.word t_080bcc33
+@ d_0804c904: title row (8 words), read by ldr.w r0,[r0,#-4] at 0x08010374 and 0x08012db0
+@ with r0 = 0x0804c904 + 4*idx, idx = the byte at 0x20001058
 	.global d_0804c904
 d_0804c904:
-	.incbin "assets/rodata.bin", 0x66b0, 28
-@ UNREF_0804c920: 4 bytes = 1 word: 0x080bd4ec->'오실로스코프 설정' | READ: ldr.w r0,[r0,#-4] at 0x08010374 and 0x08012db0 with r0 = 0x0804c904 + 4*idx (add.w at 0x08010370 and 0x08012dac, base from movw/movt ending at 0x0801036c and 0x08012da8); idx = the byte at 0x20001058 (ldrb with offset 3936 from 0x200000f8); no compare limits idx between its load and the ldr, so the code allows 0..255; draw_language_list (0x0801f324) tests the byte for 1 and 2; this word is idx = 8 of the 8-word row 0x0804c904..0x0804c923
+	.word t_080bcce8, t_080bcce8, t_080bcce8, t_080bcce8   @ Oscilloscope Settings
+	.word t_080bcce8, t_080bcce8, t_080bcce8
 	.global UNREF_0804c920
 UNREF_0804c920:
-	.incbin "assets/rodata.bin", 0x66cc, 4
+	.word t_080bcce8
+@ d_0804c924: four row addresses, read by ldr.w r0,[r1,r0,lsl #2] at 0x080100c2 with
+@ r1 = 0x0804c924 (movw/movt at 0x080100ba/0x080100be) and r0 = ldrsb.w [r5,#3945] at
+@ 0x080100b2, cmp r0,#3 / bhi at 0x080100b6 / 0x080100b8 (0..3); then the row word by the
+@ language byte. The fifth word starts the row .L0804c934.
 	.global d_0804c924
 d_0804c924:
-	.incbin "assets/rodata.bin", 0x66d0, 20
-@ UNREF_0804c938: 4 bytes = 1 word: 0x080bcd16->'Settings' | READ: ldrsb.w r0,[r5,#3945] at 0x080100b2 with cmp r0,#3 / bhi at 0x080100b6 / 0x080100b8 (0..3), ldr.w r0,[r1,r0,lsl #2] at 0x080100c2 with r1 = 0x0804c924 (movw/movt at 0x080100ba/0x080100be) selecting one of the row addresses 0x0804c358, 0x0804c378, 0x0804c398, 0x0804c934 stored at 0x0804c924..0x0804c930, then ldrb.w r1,[r5,#3936] at 0x080100c6 (idx), add.w r0,r0,r1,lsl #2 at 0x080100ce and ldr.w r0,[r0,#-4] at 0x080100d2 (the same sequence at 0x08012d3c..0x08012d58); idx is not compared against a limit; for the value 3 the row is 0x0804c934 and this word is idx = 2
+	.word .L0804c358, .L0804c378, d_0804c398, .L0804c934
+.L0804c934:
+	.word t_080bcd16                                       @ Settings
 	.global UNREF_0804c938
 UNREF_0804c938:
-	.incbin "assets/rodata.bin", 0x66e4, 20
-@ UNREF_0804c94c: 8 bytes = 2 words: 0x080bc36a->'Einstellung', 0x080bd521->'설정' | READ: ldrsb.w r0,[r5,#3945] at 0x080100b2 with cmp r0,#3 / bhi at 0x080100b6 / 0x080100b8 (0..3), ldr.w r0,[r1,r0,lsl #2] at 0x080100c2 with r1 = 0x0804c924 (movw/movt at 0x080100ba/0x080100be) selecting one of the row addresses 0x0804c358, 0x0804c378, 0x0804c398, 0x0804c934 stored at 0x0804c924..0x0804c930, then ldrb.w r1,[r5,#3936] at 0x080100c6 (idx), add.w r0,r0,r1,lsl #2 at 0x080100ce and ldr.w r0,[r0,#-4] at 0x080100d2 (the same sequence at 0x08012d3c..0x08012d58); idx is not compared against a limit; for the value 3 the row is 0x0804c934 and these words are idx = 7 and 8
+	.word t_080bcd16, t_080bcd16, t_080bcd16, t_080bcd16, t_080bcd16
 	.global UNREF_0804c94c
 UNREF_0804c94c:
-	.incbin "assets/rodata.bin", 0x66f8, 8
-@ DATA_0804c954: 104 bytes = 26 words, each an address of a text: 0x080bbd21->'10mV', 0x080bbd26->'20mV', 0x080bbd2b->'50mV', 0x080bbd0f->'100mV', 0x080bbd15->'200mV', 0x080bbd1b->'500mV', 0x080bbd06->'1V', 0x080bbd09->'2V', 0x080bbd0c->'5V', 0x080bbcfa->'10V', 0x080bbcfe->'20V', 0x080bbd02->'50V', 0x080bbcf5->'100V', 0x080bbcb9->'10nS', 0x080bbcbe->'20nS', 0x080bbcc3->'50nS', 0x080bbca7->'100nS', 0x080bbcad->'200nS', 0x080bbcb3->'500nS', 0x080bbce9->'1uS', 0x080bbced->'2uS', 0x080bbcf1->'5uS', 0x080bbcda->'10uS', 0x080bbcdf->'20uS', 0x080bbce4->'50uS', 0x080bbcc8->'100uS' | ldr.w r0,[r7,r0,lsl #0x2] at 0x0801e7c0 in draw_bottom_strip; ldr.w r0,[r7,r0,lsl #0x2] at 0x0801e7f4 in draw_bottom_strip; 4 further references listed (index = byte 0x200000fe*3 + byte 0x200000fa: ldrb at 0x0801e7a2/0x0801e7a4, add.w at 0x0801e7a6/0x0801e7aa) | draw_bottom_strip: draws the bottom status strip at y=0xdd (JPEG 3.jpg, strings, 1-bit bitmap)
+	.word t_080bcd16, t_080bcd16
+@ DATA_0804c954: volts per division texts (13 words); draw_bottom_strip, display_task_dispatch
 	.global DATA_0804c954
 DATA_0804c954:
 	.global d_0804c954
 d_0804c954:
-	.incbin "assets/rodata.bin", 0x6700, 52
+	.word t_080bbd21, t_080bbd26, t_080bbd2b               @ 10mV 20mV 50mV
+	.word t_080bbd0f, t_080bbd15, t_080bbd1b               @ 100mV 200mV 500mV
+	.word t_080bbd06, t_080bbd09, t_080bbd0c               @ 1V 2V 5V
+	.word t_080bbcfa, t_080bbcfe, t_080bbd02               @ 10V 20V 50V
+	.word t_080bbcf5                                       @ 100V
+@ d_0804c988: time per division texts (29 words); fn_08012ff4, display_task_dispatch,
+@ draw_bottom_strip
 	.global d_0804c988
 d_0804c988:
-	.incbin "assets/rodata.bin", 0x6734, 56
-@ UNREF_0804c9c0: 62 bytes = 15 words 0x080bbcd4->'500uS', 0x080bbc9b->'1mS', 0x080bbc9f->'2mS', 0x080bbca3->'5mS', 0x080bbc8c->'10mS', 0x080bbc91->'20mS', 0x080bbc96->'50mS', 0x080bbc7a->'100mS', 0x080bbc80->'200mS', 0x080bbc86->'500mS', 0x080bbc6d->'1S', 0x080bbc70->'2S', 0x080bbc73->'5S', 0x080bbc65->'10S', 0x080bbc69->'20S' followed by the 2 bytes 40 01 that start the halfword record array at 0x0804c9fc | READ: ldr.w r2,[r1,r0,lsl #2] at 0x0801302a with r1 = 0x0804c988 (movw/movt at 0x0801301e/0x08013022) and r0 = ldrb.w [r6,#45] at 0x0801301a (r6 = 0x200000f8 from 0x08012ff8/0x08012ffc), no compare bounds r0, so 0x0804c988 + 4*r0 reaches this region (it starts at index 14); also ldr.w r0,[r7,r0,lsl #2] at 0x0801e7c0 with r7 = 0x0804c954 (movw 0x0801e7ac, movt 0x0801e7b8) and r0 = 3*[r4+6] + [r4+2] (add.w r0,r0,r0,lsl #1 at 0x0801e7a6, add r0,r1 at 0x0801e7aa), where this region starts at index 27
+	.word t_080bbcb9, t_080bbcbe, t_080bbcc3               @ 10nS 20nS 50nS
+	.word t_080bbca7, t_080bbcad, t_080bbcb3               @ 100nS 200nS 500nS
+	.word t_080bbce9, t_080bbced, t_080bbcf1               @ 1uS 2uS 5uS
+	.word t_080bbcda, t_080bbcdf, t_080bbce4               @ 10uS 20uS 50uS
+	.word t_080bbcc8, t_080bbcce                           @ 100uS 200uS
 	.global UNREF_0804c9c0
 UNREF_0804c9c0:
-	.incbin "assets/rodata.bin", 0x676c, 60
+	.word t_080bbcd4                                       @ 500uS
+	.word t_080bbc9b, t_080bbc9f, t_080bbca3               @ 1mS 2mS 5mS
+	.word t_080bbc8c, t_080bbc91, t_080bbc96               @ 10mS 20mS 50mS
+	.word t_080bbc7a, t_080bbc80, t_080bbc86               @ 100mS 200mS 500mS
+	.word t_080bbc6d, t_080bbc70, t_080bbc73               @ 1S 2S 5S
+	.word t_080bbc65, t_080bbc69                           @ 10S 20S
 	.global d_0804c9fc
 d_0804c9fc:
 	.incbin "assets/rodata.bin", 0x67a8, 2
@@ -1321,363 +1500,13 @@ d_080bb40c:
 	.global DATA_080bb40e
 DATA_080bb40e:
 	.incbin "assets/rodata.bin", 0x751ba, 8
-@ DATA_080bb416: 86 bytes of UTF-8 text 'Ein Zurücksetzen auf die Werkseinstellungen wird alle vorherigen Änderungen rückgä' | the 32-bit word at 0x0801e174 holds 0x080bb416
-	.global DATA_080bb416
-DATA_080bb416:
-	.incbin "assets/rodata.bin", 0x751c2, 145
-@ DATA_080bb4a7: 76 bytes of UTF-8 text 'A restauração às configurações de fábrica desfará todas as alteraçõ' | the 32-bit word at 0x0801e170 holds 0x080bb4a7
-	.global DATA_080bb4a7
-DATA_080bb4a7:
-	.incbin "assets/rodata.bin", 0x75253, 330
-@ DATA_080bb5f1: 27 bytes of UTF-8 text 'Esperando Medición Automá' | the 32-bit word at 0x0804c060 holds 0x080bb5f1
-	.global DATA_080bb5f1
-DATA_080bb5f1:
-	.incbin "assets/rodata.bin", 0x7539d, 35
-@ DATA_080bb614: 28 bytes of UTF-8 text 'Aguardando Medição Automá' | the 32-bit word at 0x0804c064 holds 0x080bb614
-	.global DATA_080bb614
-DATA_080bb614:
-	.incbin "assets/rodata.bin", 0x753c0, 36
-@ DATA_080bb638: 29 bytes of UTF-8 text 'Esperando corrección automá' | the 32-bit word at 0x0804c080 holds 0x080bb638
-	.global DATA_080bb638
-DATA_080bb638:
-	.incbin "assets/rodata.bin", 0x753e4, 37
-@ DATA_080bb65d: 29 bytes of UTF-8 text 'Aguardando correção automá' | the 32-bit word at 0x0804c084 holds 0x080bb65d
-	.global DATA_080bb65d
-DATA_080bb65d:
-	.incbin "assets/rodata.bin", 0x75409, 94
-@ DATA_080bb6bb: 3 bytes of UTF-8 text 'Lö' | the 32-bit word at 0x0804c1a0 holds 0x080bb6bb
-	.global DATA_080bb6bb
-DATA_080bb6bb:
-	.incbin "assets/rodata.bin", 0x75467, 104
-@ DATA_080bb723: 17 bytes of UTF-8 text 'Warten auf Auslö' | the 32-bit word at 0x0804c048 holds 0x080bb723
-	.global DATA_080bb723
-DATA_080bb723:
-	.incbin "assets/rodata.bin", 0x754cf, 515
-	.global d_080bb926
-d_080bb926:
-	.incbin "assets/rodata.bin", 0x756d2, 4
-	.global d_080bb92a
-d_080bb92a:
-	.incbin "assets/rodata.bin", 0x756d6, 28
-@ DATA_080bb946: 13 bytes of UTF-8 text 'Configuraçõ' | the 32-bit word at 0x0804c8b0 holds 0x080bb946
-	.global DATA_080bb946
-DATA_080bb946:
-	.incbin "assets/rodata.bin", 0x756f2, 50
-	.global d_080bb978
-d_080bb978:
-	.incbin "assets/rodata.bin", 0x75724, 4
-	.global d_080bb97c
-d_080bb97c:
-	.incbin "assets/rodata.bin", 0x75728, 26
-@ DATA_080bb996: 13 bytes of UTF-8 text 'Configuraçõ' | the 32-bit word at 0x0804c8b4 holds 0x080bb996
-	.global DATA_080bb996
-DATA_080bb996:
-	.incbin "assets/rodata.bin", 0x75742, 78
-	.global d_080bb9e4
-d_080bb9e4:
-	.incbin "assets/rodata.bin", 0x75790, 2
-	.global d_080bb9e6
-d_080bb9e6:
-	.incbin "assets/rodata.bin", 0x75792, 56
-	.global d_080bba1e
-d_080bba1e:
-	.incbin "assets/rodata.bin", 0x757ca, 4
-	.global d_080bba22
-d_080bba22:
-	.incbin "assets/rodata.bin", 0x757ce, 518
-@ UNREF_080bbc28: 6 bytes of UTF-8 text, NUL-separated: 'AC|DC|' | a 32-bit word at 0x0804c7c4 holds 0x080bbc28 (offset 0x0); a 32-bit word at 0x0804c7c8 holds 0x080bbc2b (offset 0x3) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r5,[r1,r0,lsl #2] at 0x0801e8d4 and 0x0801ea24 (base 0x0804c7c4, movt at 0x0801e8d0 and 0x0801ea20)
-	.global UNREF_080bbc28
-UNREF_080bbc28:
-	.incbin "assets/rodata.bin", 0x759d4, 10
-	.global d_080bbc32
-d_080bbc32:
-	.incbin "assets/rodata.bin", 0x759de, 4
-	.global d_080bbc36
-d_080bbc36:
-	.incbin "assets/rodata.bin", 0x759e2, 30
-	.global d_080bbc54
-d_080bbc54:
-	.incbin "assets/rodata.bin", 0x75a00, 4
-	.global d_080bbc58
-d_080bbc58:
-	.incbin "assets/rodata.bin", 0x75a04, 20
-	.global d_080bbc6c
-d_080bbc6c:
-	.incbin "assets/rodata.bin", 0x75a18, 4
-@ UNREF_080bbc70: 6 bytes of UTF-8 text, NUL-separated: '2S|5S|' | a 32-bit word at 0x0804c9ec holds 0x080bbc70 (offset 0x0); a 32-bit word at 0x0804c9f0 holds 0x080bbc73 (offset 0x3) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r2,[r1,r0,lsl #2] at 0x0801302a (base 0x0804c988, index 25 and 26 for the words at 0x0804c9ec and 0x0804c9f0) and ldr.w r0,[r7,r0,lsl #2] at 0x0801e7c0 (base 0x0804c954, index 38 and 39), neither index compared against a limit
-	.global UNREF_080bbc70
-UNREF_080bbc70:
-	.incbin "assets/rodata.bin", 0x75a1c, 22
-	.global d_080bbc86
-d_080bbc86:
-	.incbin "assets/rodata.bin", 0x75a32, 78
-@ UNREF_080bbcd4: 90 bytes of UTF-8 text, NUL-separated: '500uS|10uS|20uS|50uS|1uS|2uS|5uS|100V|10V|20V|50V|1V|...' | a 32-bit word at 0x0804c404 holds 0x080bbd2d (offset 0x59); a 32-bit word at 0x0804c954 holds 0x080bbd21 (offset 0x4d); a 32-bit word at 0x0804c958 holds 0x080bbd26 (offset 0x52); 27 such 32-bit words in total (4-byte aligned scan of the image): 0x0801ca38, 0x0801ca40, 0x0801ca54, 0x0804bf9c, 0x0804bfa4, 0x0804bfa8, 0x0804c404 and 0x0804c954..0x0804c9c0 (20 more) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r0,[r1,r0,lsl #2] at 0x0801636e (base 0x0804c404) and ldr.w r6,[r0,r3,lsl #2] at 0x0801cb64, 0x0801cc18, 0x0801ccc0, ldr.w r0,[r7,r0,lsl #2] at 0x0801e7c0 (base 0x0804c954), ldr.w r2,[r1,r0,lsl #2] at 0x0801302a (base 0x0804c988), ldr.w r0,[r0,r4,lsl #2] at 0x0801bbbc (rows of the table at 0x0801ca24) and ldr.w r7,[r0,r3,lsl #2] at 0x0801bd7e (rows of the table at 0x0804bf88)
-	.global UNREF_080bbcd4
-UNREF_080bbcd4:
-	.incbin "assets/rodata.bin", 0x75a80, 90
-	.global d_080bbd2e
-d_080bbd2e:
-	.incbin "assets/rodata.bin", 0x75ada, 6
-@ UNREF_080bbd34: 620 bytes of UTF-8 text, NUL-separated: 'Índice arriba|Matemática|Inicialização Automática|Nada|Tensão de Corrente Alternada|Grande Corrente Alternada|Pequeno Corrente Alternada|Onda cuadrada|Onda quad...' | a 32-bit word at 0x0804c1d8 holds 0x080bbe0b (offset 0xd7); a 32-bit word at 0x0804c1dc holds 0x080bbdf4 (offset 0xc0); a 32-bit word at 0x0804c2c8 holds 0x080bbeca (offset 0x196); 39 such addresses in total | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by the language tables 0x0804c1c8 (ldr.w r0,[r0,#-4] at 0x08011572, 0x0801e484), 0x0804c258 (ldr.w r0,[r0,#-28] at 0x0801cdac), 0x0804c3b8 (ldr.w r0,[r0,#-4] at 0x08010fc8, 0x0801cd28), 0x0804c43c (ldr.w r0,[r0,#-48] at 0x08010b00, 0x08015c40), 0x0804c5bc (ldr.w r0,[r0,#-12] at 0x08015a5e), 0x0804c61c (ldr.w r0,[r0,#-52] at 0x080157e6), 0x0804c7e4 (ldr.w r0,[r1,r0,lsl #2] at 0x0801371c, 0x0801eb06), 0x0804c804 (ldr.w r0,[r0,#-32] at 0x08012e44) and the row table 0x0804c208 (ldr.w r1,[r2,r1,lsl #2] at 0x0801d244 then ldr.w r3,[r1,#-4] at 0x0801d252), each indexed by the byte at 0x20001058 without a limit compare
-	.global UNREF_080bbd34
-UNREF_080bbd34:
-	.incbin "assets/rodata.bin", 0x75ae0, 772
-	.global d_080bc038
-d_080bc038:
-	.incbin "assets/rodata.bin", 0x75de4, 8
-	.global d_080bc040
-d_080bc040:
-	.incbin "assets/rodata.bin", 0x75dec, 78
-@ DATA_080bc08e: 30 bytes of UTF-8 text 'Esperando calibración automá' | the 32-bit word at 0x0804c0c0 holds 0x080bc08e
-	.global DATA_080bc08e
-DATA_080bc08e:
-	.incbin "assets/rodata.bin", 0x75e3a, 147
-@ DATA_080bc121: 31 bytes of UTF-8 text 'Aguardando calibração automá' | the 32-bit word at 0x0804c0c4 holds 0x080bc121
-	.global DATA_080bc121
-DATA_080bc121:
-	.incbin "assets/rodata.bin", 0x75ecd, 105
-	.global d_080bc18a
-d_080bc18a:
-	.incbin "assets/rodata.bin", 0x75f36, 26
-	.global d_080bc1a4
-d_080bc1a4:
-	.incbin "assets/rodata.bin", 0x75f50, 16
-	.global d_080bc1b4
-d_080bc1b4:
-	.incbin "assets/rodata.bin", 0x75f60, 82
-@ DATA_080bc206: 3 bytes of UTF-8 text 'Sä' | the 32-bit word at 0x0804c75c holds 0x080bc206
-	.global DATA_080bc206
-DATA_080bc206:
-	.incbin "assets/rodata.bin", 0x75fb2, 133
-@ DATA_080bc28b: 2 bytes of UTF-8 text 'Í' | the 32-bit word at 0x0804c740 holds 0x080bc28b
-	.global DATA_080bc28b
-DATA_080bc28b:
-	.incbin "assets/rodata.bin", 0x76037, 181
-	.global d_080bc340
-d_080bc340:
-	.incbin "assets/rodata.bin", 0x760ec, 5
-@ UNREF_080bc345: 143 bytes of UTF-8 text, NUL-separated: 'Indexrückgang|Mehrklang|USB Sharing|Einstellung|Gleichstromspannung|Wechselstromspannung|Cursor-Messung|Parametermessung|Nachleuchtung|Grenzü' | a 32-bit word at 0x0804c284 holds 0x080bc35e (offset 0x19); a 32-bit word at 0x0804c560 holds 0x080bc376 (offset 0x31); a 32-bit word at 0x0804c564 holds 0x080bc38a (offset 0x45); 10 such 32-bit words in total (4-byte aligned scan of the image); the additional one at 0x0804c0a8 holds 0x080bc3cd (offset 0x88) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r0,[r0,#-4] at 0x08010748 (row 0x0804c398), ldr.w r0,[r0,#-28] at 0x0801cdac (0x0804c258 block, word 0x0804c284), ldr.w r0,[r0,#-4] at 0x080100d2 and 0x08012d58 (row 0x0804c934, word 0x0804c94c), ldr.w r0,[r0,#-48] at 0x08010b00 (words 0x0804c560, 0x0804c564), ldr.w r0,[r0,#-52] at 0x080157e6 (words 0x0804c774, 0x0804c77c), ldr.w r0,[r0,#-32] at 0x08012e44 (words 0x0804c8c8, 0x0804c8cc, 0x0804c8dc) and ldr.w r0,[r0,#-4] at 0x0801c9a0 (word 0x0804c0a8)
-	.global UNREF_080bc345
-UNREF_080bc345:
-	.incbin "assets/rodata.bin", 0x760f1, 181
-	.global d_080bc3fa
-d_080bc3fa:
-	.incbin "assets/rodata.bin", 0x761a6, 24
-	.global d_080bc412
-d_080bc412:
-	.incbin "assets/rodata.bin", 0x761be, 22
-	.global d_080bc428
-d_080bc428:
-	.incbin "assets/rodata.bin", 0x761d4, 22
-	.global d_080bc43e
-d_080bc43e:
-	.incbin "assets/rodata.bin", 0x761ea, 24
-	.global d_080bc456
-d_080bc456:
-	.incbin "assets/rodata.bin", 0x76202, 22
-	.global d_080bc46c
-d_080bc46c:
-	.incbin "assets/rodata.bin", 0x76218, 22
-	.global d_080bc482
-d_080bc482:
-	.incbin "assets/rodata.bin", 0x7622e, 22
-	.global d_080bc498
-d_080bc498:
-	.incbin "assets/rodata.bin", 0x76244, 22
-	.global d_080bc4ae
-d_080bc4ae:
-	.incbin "assets/rodata.bin", 0x7625a, 22
-	.global d_080bc4c4
-d_080bc4c4:
-	.incbin "assets/rodata.bin", 0x76270, 24
-	.global d_080bc4dc
-d_080bc4dc:
-	.incbin "assets/rodata.bin", 0x76288, 22
-	.global d_080bc4f2
-d_080bc4f2:
-	.incbin "assets/rodata.bin", 0x7629e, 22
-	.global d_080bc508
-d_080bc508:
-	.incbin "assets/rodata.bin", 0x762b4, 22
-	.global d_080bc51e
-d_080bc51e:
-	.incbin "assets/rodata.bin", 0x762ca, 20
-	.global d_080bc532
-d_080bc532:
-	.incbin "assets/rodata.bin", 0x762de, 24
-	.global d_080bc54a
-d_080bc54a:
-	.incbin "assets/rodata.bin", 0x762f6, 22
-	.global d_080bc560
-d_080bc560:
-	.incbin "assets/rodata.bin", 0x7630c, 22
-	.global d_080bc576
-d_080bc576:
-	.incbin "assets/rodata.bin", 0x76322, 20
-	.global d_080bc58a
-d_080bc58a:
-	.incbin "assets/rodata.bin", 0x76336, 24
-	.global d_080bc5a2
-d_080bc5a2:
-	.incbin "assets/rodata.bin", 0x7634e, 22
-	.global d_080bc5b8
-d_080bc5b8:
-	.incbin "assets/rodata.bin", 0x76364, 22
-	.global d_080bc5ce
-d_080bc5ce:
-	.incbin "assets/rodata.bin", 0x7637a, 22
-	.global d_080bc5e4
-d_080bc5e4:
-	.incbin "assets/rodata.bin", 0x76390, 24
-	.global d_080bc5fc
-d_080bc5fc:
-	.incbin "assets/rodata.bin", 0x763a8, 22
-	.global d_080bc612
-d_080bc612:
-	.incbin "assets/rodata.bin", 0x763be, 22
-	.global d_080bc628
-d_080bc628:
-	.incbin "assets/rodata.bin", 0x763d4, 22
-	.global d_080bc63e
-d_080bc63e:
-	.incbin "assets/rodata.bin", 0x763ea, 22
-	.global d_080bc654
-d_080bc654:
-	.incbin "assets/rodata.bin", 0x76400, 22
-	.global d_080bc66a
-d_080bc66a:
-	.incbin "assets/rodata.bin", 0x76416, 22
-	.global d_080bc680
-d_080bc680:
-	.incbin "assets/rodata.bin", 0x7642c, 46
-	.global d_080bc6ae
-d_080bc6ae:
-	.incbin "assets/rodata.bin", 0x7645a, 16
-@ UNREF_080bc6be: 107 bytes of UTF-8 text, NUL-separated: 'Mathematik|Pulso Sink|Onda senoidal|Onda sinusoidal|descenso exponencial|Normal|Cancel|Kleiner Gleichstrom|' | a 32-bit word at 0x0804c57c holds 0x080bc715 (offset 0x57); a 32-bit word at 0x0804c6ec holds 0x080bc6e2 (offset 0x24); a 32-bit word at 0x0804c70c holds 0x080bc6f2 (offset 0x34); 9 such 32-bit words in total (4-byte aligned scan of the image); the additional one at 0x0801f2a8 holds 0x080bc70e (offset 0x50) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r0,[r0,#-32] at 0x08012e44 (word 0x0804c8e0), ldr.w r0,[r0,#-52] at 0x080157e6 (words 0x0804c6ec, 0x0804c70c, 0x0804c718, 0x0804c720, 0x0804c74c), ldr.w r0,[r1,r0,lsl #2] at 0x0801371c and 0x0801eb06 (word 0x0804c7f0), ldr.w r5,[r0,#-4] at 0x0801f23a (word 0x0801f2a8) and ldr.w r0,[r0,#-48] at 0x08010b00 (words 0x0804c57c, 0x0804c584)
-	.global UNREF_080bc6be
-UNREF_080bc6be:
-	.incbin "assets/rodata.bin", 0x7646a, 107
-@ DATA_080bc729: 5 bytes of UTF-8 text 'Groß' | the 32-bit word at 0x0804c584 holds 0x080bc729
-	.global DATA_080bc729
-DATA_080bc729:
-	.incbin "assets/rodata.bin", 0x764d5, 41
-@ DATA_080bc752: 5 bytes of UTF-8 text 'Groß' | the 32-bit word at 0x0804c588 holds 0x080bc752
-	.global DATA_080bc752
-DATA_080bc752:
-	.incbin "assets/rodata.bin", 0x764fe, 53
-@ DATA_080bc787: 6 bytes of UTF-8 text 'Bestä' | the 32-bit word at 0x0801f29c holds 0x080bc787
-	.global DATA_080bc787
-DATA_080bc787:
-	.incbin "assets/rodata.bin", 0x76533, 126
-@ DATA_080bc805: 3 bytes of UTF-8 text 'Lö' | the 32-bit word at 0x0801f27c holds 0x080bc805
-	.global DATA_080bc805
-DATA_080bc805:
-	.incbin "assets/rodata.bin", 0x765b1, 59
-	.global d_080bc840
-d_080bc840:
-	.incbin "assets/rodata.bin", 0x765ec, 24
-	.global d_080bc858
-d_080bc858:
-	.incbin "assets/rodata.bin", 0x76604, 322
-@ DATA_080bc99a: 13 bytes of UTF-8 text 'Configuraçõ' | the 32-bit word at 0x0804c8b8 holds 0x080bc99a
-	.global DATA_080bc99a
-DATA_080bc99a:
-	.incbin "assets/rodata.bin", 0x76746, 63
-@ DATA_080bc9d9: 13 bytes of UTF-8 text 'Configuració' | the 32-bit word at 0x0804c914 holds 0x080bc9d9
-	.global DATA_080bc9d9
-DATA_080bc9d9:
-	.incbin "assets/rodata.bin", 0x76785, 96
-@ DATA_080bca39: 13 bytes of UTF-8 text 'Configuració' | the 32-bit word at 0x0804c898 holds 0x080bca39
-	.global DATA_080bca39
-DATA_080bca39:
-	.incbin "assets/rodata.bin", 0x767e5, 26
-@ DATA_080bca53: 6 bytes of UTF-8 text 'Multí' | the 32-bit words at 0x0804c368 and 0x0804c36c both hold 0x080bca53
-	.global DATA_080bca53
-DATA_080bca53:
-	.incbin "assets/rodata.bin", 0x767ff, 127
-	.global d_080bcad2
-d_080bcad2:
-	.incbin "assets/rodata.bin", 0x7687e, 18
-	.global d_080bcae4
-d_080bcae4:
-	.incbin "assets/rodata.bin", 0x76890, 159
-@ DATA_080bcb83: 8 bytes of UTF-8 text 'Medició' | the 32-bit word at 0x0804c888 holds 0x080bcb83
-	.global DATA_080bcb83
-DATA_080bcb83:
-	.incbin "assets/rodata.bin", 0x7692f, 20
-@ DATA_080bcb97: 8 bytes of UTF-8 text 'Mediçã' | the 32-bit word at 0x0804c8a8 holds 0x080bcb97
-	.global DATA_080bcb97
-DATA_080bcb97:
-	.incbin "assets/rodata.bin", 0x76943, 121
-	.global d_080bcc10
-d_080bcc10:
-	.incbin "assets/rodata.bin", 0x769bc, 22
-@ DATA_080bcc26: 7 bytes of UTF-8 text 'Matemá' | the 32-bit word at 0x0804c8a0 holds 0x080bcc26
-	.global DATA_080bcc26
-DATA_080bcc26:
-	.incbin "assets/rodata.bin", 0x769d2, 24
-	.global d_080bcc3e
-d_080bcc3e:
-	.incbin "assets/rodata.bin", 0x769ea, 295
-@ DATA_080bcd65: 18 bytes of UTF-8 text 'Medición de pará' | the 32-bit word at 0x0804c88c holds 0x080bcd65
-	.global DATA_080bcd65
-DATA_080bcd65:
-	.incbin "assets/rodata.bin", 0x76b11, 25
-@ DATA_080bcd7e: 18 bytes of UTF-8 text 'Medição de parâ' | the 32-bit word at 0x0804c8ac holds 0x080bcd7e
-	.global DATA_080bcd7e
-DATA_080bcd7e:
-	.incbin "assets/rodata.bin", 0x76b2a, 511
-@ DATA_080bcf7d: 4 bytes e7 9b b4 e6 = UTF-8 for U+76F4 followed by the lead byte 0xe6; the bytes 0x080bcf81 (b5) and 0x080bcf82 (81) complete U+6D41, then e5 a4 a7 (U+5927) at 0x080bcf83..0x080bcf85 and the bytes of UNREF_080bcf86 follow, so the NUL-terminated text at 0x080bcf7d reads '直流大电流' | the 32-bit word at 0x0804c464 holds 0x080bcf7d
-	.global DATA_080bcf7d
-DATA_080bcf7d:
-	.incbin "assets/rodata.bin", 0x76d29, 5
-@ UNREF_080bcf82: 3 bytes 81 e5 a4 = the last byte of the UTF-8 sequence e6 b5 81 (U+6D41) that starts at 0x080bcf80, followed by the first two bytes of the sequence e5 a4 a7 (U+5927) that is completed by the byte 0x080bcf85 | READ: part of the NUL-terminated text that starts at 0x080bcf7d (pointer word 0x080bcf7d at 0x0804c464, read as idx = 1 col 10 of the 12-word-per-idx table 0x0804c43c by ldr.w r0,[r0,#-48] at 0x08010b00 / 0x08015c40: address = 0x0804c43c + 48*(idx-1) + 4*col = 0x0804c464 for idx = 1, col = 10); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bcf82
-UNREF_080bcf82:
-	.incbin "assets/rodata.bin", 0x76d2e, 4
-@ UNREF_080bcf86: 29 bytes of UTF-8 text, NUL-separated: '电流|大きい交流電流|' | a 32-bit word at 0x0804c4f8 holds 0x080bcf8d (offset 0x7) | READ: part of NUL-terminated texts reached through the words 0x080bcf8d at 0x0804c4f8 (idx = 4, col 11 of the table 0x0804c43c read by ldr.w r0,[r0,#-48] at 0x08010b00 / 0x08015c40) and 0x080bcf7d at 0x0804c464 (idx = 1, col 10; the text from 0x080bcf7d runs through this region); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bcf86
-UNREF_080bcf86:
-	.incbin "assets/rodata.bin", 0x76d32, 29
-@ DATA_080bcfa3: 21 bytes of UTF-8 text '小さい交流電流' | the 32-bit word at 0x0804c4f0 holds 0x080bcfa3
-	.global DATA_080bcfa3
-DATA_080bcfa3:
-	.incbin "assets/rodata.bin", 0x76d4f, 25
-@ UNREF_080bcfbc: 19 bytes of UTF-8 text, NUL-separated: 'きい直流電流|' | READ: part of the NUL-terminated text that starts at 0x080bcfb9 (word 0x080bcfb9 at 0x0804c4f4 = idx = 4 col 10 of the table 0x0804c43c read by ldr.w r0,[r0,#-48] at 0x08010b00 / 0x08015c40: address = 0x0804c43c + 48*(idx-1) + 4*col); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bcfbc
-UNREF_080bcfbc:
-	.incbin "assets/rodata.bin", 0x76d68, 19
-@ DATA_080bcfcf: 9 bytes of UTF-8 text '小さい' | the 32-bit word at 0x0804c4ec holds 0x080bcfcf
-	.global DATA_080bcfcf
-DATA_080bcfcf:
-	.incbin "assets/rodata.bin", 0x76d7b, 13
-@ UNREF_080bcfdc: 9 bytes of UTF-8 text, NUL-separated: '\xb5\x81電流|' | READ: part of the NUL-terminated text that starts at 0x080bcfcf (word 0x080bcfcf at 0x0804c4ec = idx = 4 col 8 of the table 0x0804c43c read by ldr.w r0,[r0,#-48] at 0x08010b00 / 0x08015c40); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bcfdc
-UNREF_080bcfdc:
-	.incbin "assets/rodata.bin", 0x76d88, 9
-@ DATA_080bcfe5: 3 bytes of UTF-8 text 'バ' | the 32-bit word at 0x0804c1d4 holds 0x080bcfe5
-	.global DATA_080bcfe5
-DATA_080bcfe5:
-	.incbin "assets/rodata.bin", 0x76d91, 7
-@ UNREF_080bcfec: 18 bytes of UTF-8 text, NUL-separated: '\xae\x8b低、充電！|' | READ: part of the NUL-terminated text that starts at 0x080bcfe5 (word 0x080bcfe5 at 0x0804c1d4 = idx = 4 of the 8-word row 0x0804c1c8..0x0804c1e7 read by ldr.w r0,[r0,#-4] at 0x08011572 / 0x0801e484 with r0 = 0x0804c1c8 + 4*idx); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bcfec
-UNREF_080bcfec:
-	.incbin "assets/rodata.bin", 0x76d98, 174
-	.global d_080bd09a
-d_080bd09a:
-	.incbin "assets/rodata.bin", 0x76e46, 1350
-@ DATA_080bd5e0: 4 bytes ed 81 b0 20 = UTF-8 for U+D070 followed by a space (0x20) | the 32-bit word at 0x0804c5b8 holds 0x080bd5e0
-	.global DATA_080bd5e0
-DATA_080bd5e0:
-	.incbin "assets/rodata.bin", 0x7738c, 8
-@ UNREF_080bd5e8: 10 bytes of UTF-8 text, NUL-separated: '\xa5\x98 전류|' | READ: part of the NUL-terminated text that starts at 0x080bd5e0 (word 0x080bd5e0 at 0x0804c5b8, read by ldr.w r0,[r0,#-12] at 0x08015a5e with r0 = 0x0804c5bc + 12*idx + 4*r8 (add.w at 0x08015a4e and 0x08015a56): 0x0804c5bc + 12*0 + 4*2 - 12 = 0x0804c5b8 for idx = 0 (the initial value of the byte at 0x20001058 in the initial RAM image (unpacked from 0x080BE480) is 0) and r8 = 2); the text bytes are read from the pointer by the text routines (decode_utf8_char via 0x0803a40c) until the NUL, so these bytes are read
-	.global UNREF_080bd5e8
-UNREF_080bd5e8:
-	.incbin "assets/rodata.bin", 0x77394, 922
-@ UNREF_080bd982: 22 bytes of UTF-8 text, NUL-separated: '系统设置|示波器' | a 32-bit word at 0x0804c3b8 holds 0x080bd982 (offset 0x0); a 32-bit word at 0x0804c904 holds 0x080bd98f (offset 0xd) | read: the text bytes are read from the pointer words by the text routines (decode_utf8_char via 0x0803a40c) until the NUL; the pointer words are loaded by ldr.w r0,[r0,#-4] at 0x08010fc8 and 0x0801cd28 (word 0x0804c3b8, base 0x0804c3b8 + 4*idx - 4) and ldr.w r0,[r0,#-4] at 0x08010374 and 0x08012db0 (word 0x0804c904, row 0x0804c904)
-	.global UNREF_080bd982
-UNREF_080bd982:
-	.incbin "assets/rodata.bin", 0x7772e, 1754
+@ (the last 2 of these 8 bytes, 20 00 at 0x080bb414, were the text " " of draw_arc_gauge,
+@ now t_080bb414 in src/text.s; the bytes are kept here unchanged)
+@ (V1.2.0 had its text area, every language, at 0x080bb416..0x080be05b here; the English texts
+@ are in src/text.s now.) d_080be05c and the data after it are read as halfwords and words: the
+@ next line pads with zero bytes to a multiple of 4 from the section start (the section is
+@ 4-aligned, see the .p2align at its start), as the vendor address 0x080be05c was.
+	.p2align 2
 	.global d_080be05c
 d_080be05c:
 	.incbin "assets/rodata.bin", 0x77e08, 4

@@ -85,9 +85,9 @@ fn_08012ff4:
 	add.w	r1, r2, r1, lsl #2
 	ldrh.w	r0, [r1, r0, lsl #1]
 	movw	r6, #0x1144
-	movw	r1, #:lower16:d_080bbd2e
+	movw	r1, #:lower16:t_080bbd2e
 	movt	r6, #0x2000
-	movt	r1, #:upper16:d_080bbd2e
+	movt	r1, #:upper16:t_080bbd2e
 	movs	r4, #1
 	strd	r1, r6, [sp]
 	str	r0, [sp, #8]
@@ -265,9 +265,9 @@ fn_08012ff4:
 	cmp	r1, #1
 	bne.n	.L08013254
 	movw	r6, #0x1144
-	movw	r0, #:lower16:d_080bb978+1
+	movw	r0, #:lower16:t_080bb979
 	movt	r6, #0x2000
-	movt	r0, #:upper16:d_080bb978+1
+	movt	r0, #:upper16:t_080bb979
 	movs	r4, #1
 	strd	r0, r6, [sp]
 	movs	r0, #0xc4
@@ -277,8 +277,8 @@ fn_08012ff4:
 	str	r5, [sp, #8]
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #:lower16:d_080bb9e4
-	movt	r0, #:upper16:d_080bb9e4
+	movw	r0, #:lower16:t_080bb9e4
+	movt	r0, #:upper16:t_080bb9e4
 	b.n	.L080132e2
 .L08013254:
 	add	sp, #0x10
@@ -299,10 +299,10 @@ fn_08012ff4:
 	pop	{r4, r5, r6, pc}
 .L08013276:
 	movw	r6, #0x1144
-	movw	r0, #:lower16:d_080bb97c
+	movw	r0, #:lower16:t_080bb97c
 	movs	r4, #1
 	movt	r6, #0x2000
-	movt	r0, #:upper16:d_080bb97c
+	movt	r0, #:upper16:t_080bb97c
 	b.n	.L080132c6
 .L0801328a:
 	movw	r6, #0x1144
@@ -310,8 +310,8 @@ fn_08012ff4:
 	movt	r6, #0x2000
 	lsls	r0, r0, #24
 	bmi.n	.L080132be
-	movw	r0, #:lower16:d_080bb978+1
-	movt	r0, #:upper16:d_080bb978+1
+	movw	r0, #:lower16:t_080bb979
+	movt	r0, #:upper16:t_080bb979
 	strd	r0, r6, [sp]
 	movs	r0, #0xc4
 	movs	r1, #0
@@ -320,12 +320,12 @@ fn_08012ff4:
 	str	r5, [sp, #8]
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #:lower16:d_080bb97c
-	movt	r0, #:upper16:d_080bb97c
+	movw	r0, #:lower16:t_080bb97c
+	movt	r0, #:upper16:t_080bb97c
 	b.n	.L080132e2
 .L080132be:
-	movw	r0, #:lower16:d_080bb9e4
-	movt	r0, #:upper16:d_080bb9e4
+	movw	r0, #:lower16:t_080bb9e4
+	movt	r0, #:upper16:t_080bb9e4
 .L080132c6:
 	strd	r0, r6, [sp]
 	movs	r0, #0xc4
@@ -335,8 +335,8 @@ fn_08012ff4:
 	str	r5, [sp, #8]
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #:lower16:d_080bb9e6+1
-	movt	r0, #:upper16:d_080bb9e6+1
+	movw	r0, #:lower16:t_080bb9e7
+	movt	r0, #:upper16:t_080bb9e7
 .L080132e2:
 	strd	r0, r6, [sp]
 	movs	r0, #0xe8

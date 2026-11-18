@@ -155,8 +155,8 @@ draw_panels_by_selector_20001062:
 	bne.n	.L08013400
 	add.w	r0, r1, #0x3d
 	uxth	r2, r0
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	bl	decode_image_file_with_offset
 .L080133ec:
@@ -312,8 +312,8 @@ draw_panels_by_selector_20001062:
 	tst	r1, r0
 	add.w	r0, r6, #0x44
 	beq.n	.L080135a0
-	movw	r1, #:lower16:d_080bbc54+1
-	movt	r1, #:upper16:d_080bbc54+1
+	movw	r1, #:lower16:t_080bbc55
+	movt	r1, #:upper16:t_080bbc55
 	b.n	.L080135a8
 .L08013580:
 	add	r0, r12
@@ -329,8 +329,8 @@ draw_panels_by_selector_20001062:
 	movt	r1, #:upper16:d_0804c7c4
 	b.n	.L08013380
 .L080135a0:
-	movw	r1, #:lower16:d_080bbc36+1
-	movt	r1, #:upper16:d_080bbc36+1
+	movw	r1, #:lower16:t_080bbc37
+	movt	r1, #:upper16:t_080bbc37
 .L080135a8:
 	str	r1, [sp, #0]
 	movw	r1, #0x1114
@@ -345,8 +345,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r12, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L080139ec
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x3d
 	bl	decode_image_file_with_offset
@@ -355,8 +355,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r0, #0x34]
 	cmp	r0, #0
 	beq.w	.L08014a5c
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 	b.w	.L08014a66
 .L080135fe:
@@ -366,8 +366,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r12, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L08013b12
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x3d
 	bl	decode_image_file_with_offset
@@ -376,8 +376,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r0, #0x23a]
 	lsls	r0, r0, #0x1f
 	bne.w	.L08014308
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 	b.w	.L08014312
 .L08013642:
@@ -388,11 +388,11 @@ draw_panels_by_selector_20001062:
 	cmp	r0, #0
 	beq.w	.L080144fa
 	ldrb.w	r0, [r12, #0xf6b]
-	movw	r1, #:lower16:d_080bc4dc
+	movw	r1, #:lower16:t_080bc4dc
 	lsls	r0, r0, #0x1c
-	movw	r0, #:lower16:d_080bc560
-	movt	r0, #:upper16:d_080bc560
-	movt	r1, #:upper16:d_080bc4dc
+	movw	r0, #:lower16:t_080bc560
+	movt	r0, #:upper16:t_080bc560
+	movt	r1, #:upper16:t_080bc4dc
 	it	eq
 	moveq	r0, r1
 	b.w	.L0801450c
@@ -403,8 +403,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r12, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L08013c60
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x4b
 	bl	decode_image_file_with_offset
@@ -438,10 +438,10 @@ draw_panels_by_selector_20001062:
 	movs	r3, #0x20
 	str	r5, [sp, #8]
 	bl	draw_wrapped_text_in_box
-	movw	r8, #:lower16:d_080bc63e+1
-	movw	r1, #:lower16:d_080bc428+1
-	movt	r8, #:upper16:d_080bc63e+1
-	movt	r1, #:upper16:d_080bc428+1
+	movw	r8, #:lower16:t_080bc63f
+	movw	r1, #:lower16:t_080bc429
+	movt	r8, #:upper16:t_080bc63f
+	movt	r1, #:upper16:t_080bc429
 	mov	r0, r8
 	cmp	r7, #0
 	it	eq
@@ -469,8 +469,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r4, #0xf6b]
 	cmp	r0, #1
 	bne.w	.L08013d86
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x6f
 	bl	decode_image_file_with_offset
@@ -501,9 +501,9 @@ draw_panels_by_selector_20001062:
 	str.w	r9, [sp, #8]
 	str	r7, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	movw	r1, #:lower16:d_080bc428+1
+	movw	r1, #:lower16:t_080bc429
 	mov	r0, r8
-	movt	r1, #:upper16:d_080bc428+1
+	movt	r1, #:upper16:t_080bc429
 	cmp	r4, #1
 	it	eq
 	moveq	r0, r1
@@ -620,8 +620,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r12, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L08013eae
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x3d
 	bl	decode_image_file_with_offset
@@ -630,8 +630,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r0, #0x3c]
 	cmp	r0, #0
 	beq.w	.L08014c56
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 	b.w	.L08014c60
 .L080138f2:
@@ -643,8 +643,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r12, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L08013fd6
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x2f
 	bl	decode_image_file_with_offset
@@ -653,8 +653,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r0, [r0, #0x35]
 	cmp	r0, #0
 	beq.w	.L08015204
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xb2
 	b.w	.L0801520e
 .L0801393e:
@@ -666,8 +666,8 @@ draw_panels_by_selector_20001062:
 	ldrb.w	r1, [r2, #0xf6b]
 	cmp	r1, #2
 	bne.w	.L080140f6
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x93
 	bl	decode_image_file_with_offset
@@ -698,8 +698,8 @@ draw_panels_by_selector_20001062:
 	movs	r3, #0x20
 	str	r5, [sp, #8]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #:lower16:d_080bc428+1
-	movt	r0, #:upper16:d_080bc428+1
+	movw	r0, #:lower16:t_080bc429
+	movt	r0, #:upper16:t_080bc429
 	cmp	r4, #2
 	it	eq
 	moveq	r8, r0
@@ -1002,12 +1002,12 @@ draw_panels_by_selector_20001062:
 	cmp	r0, #0
 	beq.w	.L08014504
 	ldrb.w	r0, [r12, #0xf6b]
-	movw	r1, #:lower16:d_080bc508
+	movw	r1, #:lower16:t_080bc508
 	lsls	r0, r0, #0x1c
-	movw	r0, #:lower16:d_080bc5a2
-	movt	r0, #:upper16:d_080bc5a2
+	movw	r0, #:lower16:t_080bc5a2
+	movt	r0, #:upper16:t_080bc5a2
 	mov	r4, r12
-	movt	r1, #:upper16:d_080bc508
+	movt	r1, #:upper16:t_080bc508
 	it	eq
 	moveq	r0, r1
 	b.w	.L0801450e
@@ -1648,23 +1648,25 @@ draw_panels_by_selector_20001062:
 	movs	r5, #0x7b
 	b.n	.L080141da
 .L08014198:
-	.word	0x080bbb5d
-	.word	0x080bbae8
-	.word	0x080bbada
-	.word	0x080bba25
-	.word	0x080bbb6b
-	.word	0x080bba5a
-	.word	0x080bba2a
-	.word	0x080bba3d
-	.word	0x080bba25
-	.word	0x080bbaac
+	@ channel panel labels, two sets of 5 (V1.2.0: Chinese, then English), chosen by the
+	@ language byte: both sets English now
+	.word	t_080bba5a	@ "Channel:"
+	.word	t_080bba2a	@ "Probe:"
+	.word	t_080bba3d	@ "Coupling:"
+	.word	t_080bba25	@ "FFT:"
+	.word	t_080bbaac	@ "20M Limit:"
+	.word	t_080bba5a	@ "Channel:"
+	.word	t_080bba2a	@ "Probe:"
+	.word	t_080bba3d	@ "Coupling:"
+	.word	t_080bba25	@ "FFT:"
+	.word	t_080bbaac	@ "20M Limit:"
 .L080141c0:
-	.word	0x080bc63f
-	.word	0x080bc63f
-	.word	0x080bc429
+	.word	t_080bc63f	@ "3:/System file/79.jpg"
+	.word	t_080bc63f
+	.word	t_080bc429	@ "3:/System file/80.jpg"
 .L080141cc:
-	.word	0x080bbc37
-	.word	0x080bbc55
+	.word	t_080bbc37	@ "OFF"
+	.word	t_080bbc55	@ "ON"
 .L080141d4:
 	adds	r5, #2
 	cmp	r5, r3
@@ -1732,10 +1734,10 @@ draw_panels_by_selector_20001062:
 	movs	r2, #0x47
 	cmp	r0, #0
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L08014a6e
@@ -1747,10 +1749,10 @@ draw_panels_by_selector_20001062:
 	lsls	r0, r0, #0x1f
 	mov.w	r2, #0x47
 	ittee	eq
-	movweq	r0, #:lower16:d_080bc5ce+1
-	movteq	r0, #:upper16:d_080bc5ce+1
-	movwne	r0, #:lower16:d_080bc4f2
-	movtne	r0, #:upper16:d_080bc4f2
+	movweq	r0, #:lower16:t_080bc5cf
+	movteq	r0, #:upper16:t_080bc5cf
+	movwne	r0, #:lower16:t_080bc4f2
+	movtne	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801431a
@@ -1762,10 +1764,10 @@ draw_panels_by_selector_20001062:
 	movs	r2, #0x47
 	cmp	r0, #0
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.w	.L08014c68
@@ -1777,16 +1779,16 @@ draw_panels_by_selector_20001062:
 	movs	r2, #0x39
 	cmp	r0, #0
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.w	.L08015216
 .L08014308:
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 .L08014312:
 	movs	r2, #0x45

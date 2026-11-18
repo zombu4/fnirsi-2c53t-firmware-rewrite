@@ -71,16 +71,16 @@
 	movs	r2, #0x6b
 	cmp	r0, #1
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801e00c
 .L0801dffa:
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 .L0801e004:
 	movs	r2, #0x69
@@ -105,8 +105,8 @@
 	ldrb.w	r0, [r1, #0xf6b]
 	cmp	r0, #2
 	bne.n	.L0801e070
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x85
 	bl	decode_image_file_with_offset
@@ -115,8 +115,8 @@
 	ldrb.w	r0, [r0, #0xf65]
 	cmp	r0, #2
 	bne.w	.L0801e22a
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 	b.n	.L0801e234
 .L0801e070:
@@ -210,23 +210,25 @@ firmware_version_text:
 	.asciz	"3:/System file/142.jpg"
 	.byte	0x00	@ string terminator padding (24 bytes in total)
 .L0801e13c:
-	.word	0x080bd2aa
-	.word	0x080bc8a6
-	.word	0x080bdc79
-	.word	0x080bd2aa
-	.word	0x080bc95e
-	.word	0x080bcabf
-	.word	0x080bcdc7
-	.word	0x080bd596
+	@ title of the factory reset warning, one word per language slot: all English now
+	.word	t_080bc8a6	@ "Caution"
+	.word	t_080bc8a6
+	.word	t_080bc8a6
+	.word	t_080bc8a6
+	.word	t_080bc8a6
+	.word	t_080bc8a6
+	.word	t_080bc8a6
+	.word	t_080bc8a6
 .L0801e15c:
-	.word	0x080bb5bd
-	.word	0x080bb479
-	.word	0x080bd344
-	.word	0x080bb518
-	.word	0x080bcc6c
-	.word	0x080bb4a7
-	.word	0x080bb416
-	.word	0x080bb56c
+	@ the warning text, one word per language slot: all English now
+	.word	t_080bb479	@ "Factory reset will undo all previous changes!"
+	.word	t_080bb479
+	.word	t_080bb479
+	.word	t_080bb479
+	.word	t_080bb479
+	.word	t_080bb479
+	.word	t_080bb479
+	.word	t_080bb479
 .L0801e17c:
 	adds	r4, #2
 	cmp	r4, r3
@@ -295,16 +297,16 @@ firmware_version_text:
 	movs	r2, #0x8f
 	cmp	r0, #2
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801e23c
 .L0801e22a:
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 .L0801e234:
 	movs	r2, #0x8d
@@ -329,8 +331,8 @@ firmware_version_text:
 	ldrb.w	r0, [r3, #0xf6b]
 	cmp	r0, #3
 	bne.n	.L0801e298
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0xa9
 	mov	r4, r3
@@ -338,8 +340,8 @@ firmware_version_text:
 	ldrb.w	r0, [r4, #0xf65]
 	cmp	r0, #3
 	bne.w	.L0801e3ea
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 	b.n	.L0801e3f4
 .L0801e298:
@@ -489,16 +491,16 @@ firmware_version_text:
 	movs	r2, #0xb3
 	cmp	r0, #3
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801e3fc
 .L0801e3ea:
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 .L0801e3f4:
 	movs	r2, #0xb1
@@ -524,14 +526,15 @@ firmware_version_text:
 	pop.w	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 	.byte	0x00, 0xbf	@ padding
 .L0801e420:
-	.word	0x080bd6d2
-	.word	0x080bc8d7
-	.word	0x080bd2d8
-	.word	0x080bd0ef
-	.word	0x080bcb2f
-	.word	0x080bcb38
-	.word	0x080bc6b6
-	.word	0x080bd7fa
+	@ "Return" button text, one word per language slot: all English now
+	.word	t_080bc8d7	@ "Return"
+	.word	t_080bc8d7
+	.word	t_080bc8d7
+	.word	t_080bc8d7
+	.word	t_080bc8d7
+	.word	t_080bc8d7
+	.word	t_080bc8d7
+	.word	t_080bc8d7
 .L0801e440:
 	.asciz	"15min"
 	.short	0x0000	@ padding

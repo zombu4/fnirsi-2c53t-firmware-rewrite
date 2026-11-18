@@ -848,8 +848,8 @@
 	str	r0, [r4]
 	bl	fill_output_waveform_table
 	bl	fn_08029d40
-	movw	r0, #:lower16:d_080bc18a+1
-	movt	r0, #:upper16:d_080bc18a+1
+	movw	r0, #:lower16:t_080bc18b
+	movt	r0, #:upper16:t_080bc18b
 	bl	scan_capture_files
 	strb.w	r0, [r10, #0xe1b]
 	ldr.w	r0, [r11, #4]

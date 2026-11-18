@@ -625,8 +625,8 @@ create_idle_and_tmr_svc_tasks:
 	str	r0, [sp]
 	movw	r0, #:lower16:idle_task_loop
 	movt	r0, #:upper16:idle_task_loop
-	movw	r1, #:lower16:d_080bbc32
-	movt	r1, #:upper16:d_080bbc32
+	movw	r1, #:lower16:t_080bbc32
+	movt	r1, #:upper16:t_080bbc32
 	movs	r2, #0x80
 	movs	r3, #0
 	bl	fn_080426a0

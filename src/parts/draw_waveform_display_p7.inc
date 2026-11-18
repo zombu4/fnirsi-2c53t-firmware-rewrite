@@ -52,8 +52,8 @@
 	ldrd	r2, r3, [sp, #0x30]
 	ldr.w	r7, [r1, r0, lsl #2]
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bcc10+1
-	movt	r1, #:upper16:d_080bcc10+1
+	movw	r1, #:lower16:t_080bcc11
+	movt	r1, #:upper16:t_080bcc11
 	mov	r0, r4
 	str	r7, [sp]
 	bl	format_to_buffer_080073b4
@@ -192,8 +192,8 @@
 	beq.n	.L0801c884
 	cmp	r0, #1
 	bne.n	.L0801c8ba
-	movw	r0, #:lower16:d_080bc18a+1
-	movt	r0, #:upper16:d_080bc18a+1
+	movw	r0, #:lower16:t_080bc18b
+	movt	r0, #:upper16:t_080bc18b
 	bl	scan_capture_files
 	ldrb.w	r1, [r9, #0xf60]
 	movw	r2, #:lower16:d_0804bfd0
@@ -216,8 +216,8 @@
 	movw	r4, #0x8360
 	ldrb.w	r2, [r9, #0xe11]
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bcae4+1
-	movt	r1, #:upper16:d_080bcae4+1
+	movw	r1, #:lower16:t_080bcae5
+	movt	r1, #:upper16:t_080bcae5
 	mov	r0, r4
 	bl	format_to_buffer_080073b4
 	movs	r0, #0x3f
@@ -393,20 +393,20 @@
 	.byte	0x00
 	.byte	0x01, 0x02, 0x02, 0x01, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
 .L0801ca24:
-	.word	0x080bcee6
-	.word	0x080bcee1
-	.word	0x080bcee5
+	.word	t_080bcee6	@ "Hz"
+	.word	t_080bcee1	@ "KHz"
+	.word	t_080bcee5	@ "MHz"
 	.word	0x00000000
-	.word	0x080bbcc5
-	.word	0x080bbcf2
-	.word	0x080bbca4
-	.word	0x080bbcf3
-	.word	0x080bb5ef
+	.word	t_080bbcc5	@ "nS"
+	.word	t_080bbcf2	@ "uS"
+	.word	t_080bbca4	@ "mS"
+	.word	t_080bbcf3	@ "S"
+	.word	t_080bb5ef	@ "%"
 	.word	0x00000000
 	.word	0x00000000
 	.word	0x00000000
-	.word	0x080bbd2d
-	.word	0x080bbd2e
+	.word	t_080bbd2d	@ "mV"
+	.word	t_080bbd2e	@ "V"
 	.word	0x00000000
 	.word	0x00000000
 .L0801ca64:
@@ -416,13 +416,13 @@
 	.asciz	"%s%.1f%s"
 	.byte	0x00, 0x00, 0x00	@ padding
 .L0801ca7c:
-	.word	0x080bba0c
-	.word	0x080bba17
-	.word	0x080bba14
-	.word	0x080bba10
-	.word	0x080bba1e
-	.word	0x080bba1b
-	.word	0x080bbabd
+	.word	t_080bba0c	@ "X1:"
+	.word	t_080bba17	@ "X2:"
+	.word	t_080bba14	@ "X1-X2:"
+	.word	t_080bba10	@ "Y1:"
+	.word	t_080bba1e	@ "Y2:"
+	.word	t_080bba1b	@ "Y1-Y2:"
+	.word	t_080bbabd	@ "1/d|X|:"
 .L0801ca98:
 	.byte	0x01, 0x01, 0x01
 	.byte	0x02

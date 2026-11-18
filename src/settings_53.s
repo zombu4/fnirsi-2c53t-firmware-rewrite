@@ -1071,8 +1071,8 @@ fn_08033f7c:
 fn_08033fbc_unlocked:
 	push	{r4, lr}
 	sub	sp, #0x38
-	movw	r0, #:lower16:d_080bc18a+1
-	movt	r0, #:upper16:d_080bc18a+1
+	movw	r0, #:lower16:t_080bc18b
+	movt	r0, #:upper16:t_080bc18b
 	str	r0, [sp, #0x34]
 	add	r0, sp, #0x34
 	mov	r1, sp

@@ -88,8 +88,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r3, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L0801d480
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x3d
 	bl	decode_image_file_with_offset
@@ -98,13 +98,13 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r0, #0xf60]
 	cmp	r0, #1
 	bne.w	.L0801dc1c
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 	b.w	.L0801dc26
 .L0801cfc2:
-	movw	r0, #:lower16:d_080bc58a+1
-	movt	r0, #:upper16:d_080bc58a+1
+	movw	r0, #:lower16:t_080bc58b
+	movt	r0, #:upper16:t_080bc58b
 	movs	r1, #0x9d
 	movs	r2, #0x54
 	bl	decode_image_file_with_offset
@@ -116,8 +116,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r1, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L0801d5a6
-	movw	r0, #:lower16:d_080bc628
-	movt	r0, #:upper16:d_080bc628
+	movw	r0, #:lower16:t_080bc628
+	movt	r0, #:upper16:t_080bc628
 	movs	r1, #0x7a
 	movs	r2, #0x4d
 	bl	decode_image_file_with_offset
@@ -170,8 +170,8 @@ draw_page_by_selector_nibble:
 	movs	r0, #0x3d
 	add.w	r0, r0, r8, lsl #2
 	uxth	r2, r0
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	mov	r5, r3
 	bl	decode_image_file_with_offset
@@ -182,9 +182,9 @@ draw_page_by_selector_nibble:
 	bne.w	.L0801d210
 	ldr	r1, [sp, #0x18]
 	uxth	r2, r0
-	movw	r0, #:lower16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
 	uxth	r1, r1
-	movt	r0, #:upper16:d_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	b.n	.L0801d21c
 .L0801d0b0:
 	uxtb.w	lr, r6
@@ -337,10 +337,10 @@ draw_page_by_selector_nibble:
 	ldr	r0, [sp, #0x18]
 	uxth	r1, r0
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	ldr.w	r8, [sp, #0x20]
 	movs	r0, #1
@@ -348,9 +348,9 @@ draw_page_by_selector_nibble:
 	.short	0xbf00	@ padding
 .L0801d210:
 	uxth	r2, r0
-	movw	r0, #:lower16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
 	ldr	r1, [sp, #0x14]
-	movt	r0, #:upper16:d_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 .L0801d21c:
 	bl	decode_image_file_with_offset
 	movs	r0, #2
@@ -398,8 +398,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r3, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L0801d630
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x3d
 	mov	r4, r3
@@ -407,29 +407,29 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r4, #0xf65]
 	cmp	r0, #0
 	beq.w	.L0801de1e
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 	b.w	.L0801de28
 .L0801d2d0:
 	ldrb.w	r0, [r3, #0xf69]
 	cmp	r0, #0
 	beq.w	.L0801dab6
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x6f
 	bl	decode_image_file_with_offset
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 	movs	r2, #0x77
 	bl	decode_image_file_with_offset
 	movs	r0, #2
 	b.w	.L0801dbf0
 .L0801d300:
-	movw	r0, #:lower16:d_080bc43e+1
-	movt	r0, #:upper16:d_080bc43e+1
+	movw	r0, #:lower16:t_080bc43f
+	movt	r0, #:upper16:t_080bc43f
 	movs	r1, #0x72
 	movs	r2, #0x30
 	mov	r5, r3
@@ -540,8 +540,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [lr, #0xf6b]
 	cmp	r0, #0
 	bne.w	.L0801d766
-	movw	r0, #:lower16:d_080bc4c4+1
-	movt	r0, #:upper16:d_080bc4c4+1
+	movw	r0, #:lower16:t_080bc4c5
+	movt	r0, #:upper16:t_080bc4c5
 	movs	r1, #0x70
 	movs	r2, #0x9a
 	bl	decode_image_file_with_offset
@@ -689,8 +689,8 @@ draw_page_by_selector_nibble:
 	strh.w	r12, [r8, r1, lsl #1]
 	b.n	.L0801d528
 .L0801d5a6:
-	movw	r0, #:lower16:d_080bc5b8
-	movt	r0, #:upper16:d_080bc5b8
+	movw	r0, #:lower16:t_080bc5b8
+	movt	r0, #:upper16:t_080bc5b8
 	movs	r1, #0x7c
 	movs	r2, #0x4f
 	bl	decode_image_file_with_offset
@@ -715,8 +715,8 @@ draw_page_by_selector_nibble:
 	movs	r3, #0xf
 	str	r7, [sp, #4]
 	bl	recolor_rect_above_threshold
-	movw	r0, #:lower16:d_080bc58a+1
-	movt	r0, #:upper16:d_080bc58a+1
+	movw	r0, #:lower16:t_080bc58b
+	movt	r0, #:upper16:t_080bc58b
 	movs	r1, #0x9d
 	movs	r2, #0x9c
 	bl	decode_image_file_with_offset
@@ -726,8 +726,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r6, #0xf6b]
 	cmp	r0, #1
 	bne.w	.L0801d89a
-	movw	r0, #:lower16:d_080bc412
-	movt	r0, #:upper16:d_080bc412
+	movw	r0, #:lower16:t_080bc412
+	movt	r0, #:upper16:t_080bc412
 	movs	r1, #0x7b
 	movs	r2, #0x94
 	bl	decode_image_file_with_offset
@@ -1014,16 +1014,16 @@ draw_page_by_selector_nibble:
 	movs	r2, #0x47
 	cmp	r0, #1
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801dc2e
 .L0801d89a:
-	movw	r0, #:lower16:d_080bc5e4+1
-	movt	r0, #:upper16:d_080bc5e4+1
+	movw	r0, #:lower16:t_080bc5e5
+	movt	r0, #:upper16:t_080bc5e5
 	movs	r1, #0x7c
 	movs	r2, #0x95
 	bl	decode_image_file_with_offset
@@ -1057,10 +1057,10 @@ draw_page_by_selector_nibble:
 	movs	r2, #0x47
 	cmp	r0, #0
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801de30
@@ -1092,8 +1092,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [lr, #0xf6b]
 	cmp	r0, #1
 	bne.n	.L0801d988
-	movw	r0, #:lower16:d_080bc4c4+1
-	movt	r0, #:upper16:d_080bc4c4+1
+	movw	r0, #:lower16:t_080bc4c5
+	movt	r0, #:upper16:t_080bc4c5
 	movs	r1, #0x70
 	movs	r2, #0xbe
 	bl	decode_image_file_with_offset
@@ -1387,8 +1387,8 @@ draw_page_by_selector_nibble:
 	strh.w	r12, [r8, r1, lsl #1]
 	b.n	.L0801db60
 .L0801dbde:
-	movw	r0, #:lower16:d_080bc5ce+1
-	movt	r0, #:upper16:d_080bc5ce+1
+	movw	r0, #:lower16:t_080bc5cf
+	movt	r0, #:upper16:t_080bc5cf
 	movs	r1, #0xa6
 	movs	r2, #0x79
 	bl	decode_image_file_with_offset
@@ -1398,9 +1398,9 @@ draw_page_by_selector_nibble:
 	movt	r1, #:upper16:d_0804c180
 	ldrh.w	r0, [r1, r0, lsl #1]
 	movw	r1, #0x1114
-	movw	r2, #:lower16:d_080bbc54+1
+	movw	r2, #:lower16:t_080bbc55
 	movt	r1, #0x2000
-	movt	r2, #:upper16:d_080bbc54+1
+	movt	r2, #:upper16:t_080bbc55
 	movs	r7, #1
 	strd	r2, r1, [sp, #0]
 	str	r0, [sp, #8]
@@ -1408,8 +1408,8 @@ draw_page_by_selector_nibble:
 	movs	r1, #0x6f
 	b.w	.L0801e40e
 .L0801dc1c:
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 .L0801dc26:
 	movs	r2, #0x45
@@ -1419,10 +1419,10 @@ draw_page_by_selector_nibble:
 	movw	r9, #:lower16:d_0804c180
 	movt	r9, #:upper16:d_0804c180
 	ldrh.w	r0, [r9, r0, lsl #1]
-	movw	r2, #:lower16:d_080bd09a+1
+	movw	r2, #:lower16:t_080bd09b
 	movs	r1, #1
 	movw	r8, #0x1114
-	movt	r2, #:upper16:d_080bd09a+1
+	movt	r2, #:upper16:t_080bd09b
 	movt	r8, #0x2000
 	str	r2, [sp, #0]
 	strd	r0, r1, [sp, #8]
@@ -1439,8 +1439,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r3, #0xf6b]
 	cmp	r0, #1
 	bne.n	.L0801dca0
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x85
 	mov	r4, r3
@@ -1448,8 +1448,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r4, #0xf60]
 	cmp	r0, #2
 	bne.w	.L0801ddf2
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 	b.n	.L0801ddfc
 .L0801dca0:
@@ -1599,16 +1599,16 @@ draw_page_by_selector_nibble:
 	movs	r2, #0x8f
 	cmp	r0, #2
 	ittee	ne
-	movwne	r0, #:lower16:d_080bc5ce+1
-	movtne	r0, #:upper16:d_080bc5ce+1
-	movweq	r0, #:lower16:d_080bc4f2
-	movteq	r0, #:upper16:d_080bc4f2
+	movwne	r0, #:lower16:t_080bc5cf
+	movtne	r0, #:upper16:t_080bc5cf
+	movweq	r0, #:lower16:t_080bc4f2
+	movteq	r0, #:upper16:t_080bc4f2
 	bl	decode_image_file_with_offset
 	movs	r0, #1
 	b.n	.L0801de04
 .L0801ddf2:
-	movw	r0, #:lower16:d_080bc5fc
-	movt	r0, #:upper16:d_080bc5fc
+	movw	r0, #:lower16:t_080bc5fc
+	movt	r0, #:upper16:t_080bc5fc
 	movs	r1, #0xa5
 .L0801ddfc:
 	movs	r2, #0x8d
@@ -1616,8 +1616,8 @@ draw_page_by_selector_nibble:
 	movs	r0, #2
 .L0801de04:
 	ldrh.w	r0, [r9, r0, lsl #1]
-	movw	r1, #:lower16:d_080bc6ae
-	movt	r1, #:upper16:d_080bc6ae
+	movw	r1, #:lower16:t_080bc6ae
+	movt	r1, #:upper16:t_080bc6ae
 	movs	r7, #1
 	strd	r1, r8, [sp, #0]
 	str	r0, [sp, #8]
@@ -1625,8 +1625,8 @@ draw_page_by_selector_nibble:
 	movs	r1, #0x85
 	b.n	.L0801e40e
 .L0801de1e:
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 .L0801de28:
 	movs	r2, #0x45
@@ -1636,10 +1636,10 @@ draw_page_by_selector_nibble:
 	movw	r9, #:lower16:d_0804c180
 	movt	r9, #:upper16:d_0804c180
 	ldrh.w	r0, [r9, r0, lsl #1]
-	movw	r2, #:lower16:d_080bbc36+1
+	movw	r2, #:lower16:t_080bbc37
 	movs	r1, #1
 	movw	r8, #0x1114
-	movt	r2, #:upper16:d_080bbc36+1
+	movt	r2, #:upper16:t_080bbc37
 	movt	r8, #0x2000
 	str	r2, [sp, #0]
 	strd	r0, r1, [sp, #8]
@@ -1656,8 +1656,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r1, #0xf6b]
 	cmp	r0, #1
 	bne.n	.L0801dea8
-	movw	r0, #:lower16:d_080bc498+1
-	movt	r0, #:upper16:d_080bc498+1
+	movw	r0, #:lower16:t_080bc499
+	movt	r0, #:upper16:t_080bc499
 	movs	r1, #0x79
 	movs	r2, #0x61
 	bl	decode_image_file_with_offset
@@ -1666,8 +1666,8 @@ draw_page_by_selector_nibble:
 	ldrb.w	r0, [r0, #0xf65]
 	cmp	r0, #1
 	bne.w	.L0801dffa
-	movw	r0, #:lower16:d_080bc54a
-	movt	r0, #:upper16:d_080bc54a
+	movw	r0, #:lower16:t_080bc54a
+	movt	r0, #:upper16:t_080bc54a
 	movs	r1, #0xa6
 	b.n	.L0801e004
 .L0801dea8:

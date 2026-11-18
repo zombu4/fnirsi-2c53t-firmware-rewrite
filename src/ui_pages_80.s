@@ -37,8 +37,8 @@ draw_language_list:
 	cmp	r0, #0x1
 	movt	r4, #0x2000		@ r4 = clip rectangle 0x20008350
 	bne.n	.L0801f356
-	movw	r0, #:lower16:d_080bc482
-	movt	r0, #:upper16:d_080bc482
+	movw	r0, #:lower16:t_080bc482
+	movt	r0, #:upper16:t_080bc482
 	movs	r1, #0x44
 	movs	r2, #0x42
 	bl	decode_image_file_with_offset
@@ -189,10 +189,10 @@ draw_language_list:
 	movw	r10, #:lower16:d_0804c180
 	movt	r10, #:upper16:d_0804c180
 	ldrh.w	r0, [r10, r0, lsl #0x1]	@ colour halfword idx*2
-	movw	r2, #:lower16:d_080bd09a+1
+	movw	r2, #:lower16:t_080bd09b
 	movs	r1, #0x1
 	movw	r8, #0x1144
-	movt	r2, #:upper16:d_080bd09a+1
+	movt	r2, #:upper16:t_080bd09b
 	movt	r8, #0x2000		@ r8 = font block 0x20001144
 	str	r2, [sp, #0x0]
 	strd	r0, r1, [sp, #0x8]
@@ -205,8 +205,8 @@ draw_language_list:
 	ldrb.w	r0, [r9, #0xf60]
 	cmp	r0, #0x2
 	bne.n	.L0801f4c2
-	movw	r0, #:lower16:d_080bc482
-	movt	r0, #:upper16:d_080bc482
+	movw	r0, #:lower16:t_080bc482
+	movt	r0, #:upper16:t_080bc482
 	movs	r1, #0x44
 	movs	r2, #0x78
 	bl	decode_image_file_with_offset
@@ -355,8 +355,8 @@ draw_language_list:
 	movs	r0, #0x1
 .L0801f5de:
 	ldrh.w	r0, [r10, r0, lsl #0x1]	@ colour halfword idx*2
-	movw	r1, #:lower16:d_080bc6ae
-	movt	r1, #:upper16:d_080bc6ae
+	movw	r1, #:lower16:t_080bc6ae
+	movt	r1, #:upper16:t_080bc6ae
 	movs	r7, #0x1
 	strd	r1, r8, [sp, #0x0]
 	str	r0, [sp, #0x8]
@@ -708,9 +708,9 @@ fn_0801f8e0:
 	movw	r4, #0x8360
 	smlabb	r0, r1, r2, r0
 	movt	r4, #0x2000		@ r4 = destination 0x20008360
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	add.w	r2, r0, #0x17		@ n
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	mov	r0, r4
 	bl	format_to_buffer_080073b4
 	mov	r0, r4
@@ -740,15 +740,15 @@ fn_0801f924:
 	movt	r0, #0x2000
 	ldrb.w	r0, [r0, #0xf67]	@ byte 0x2000105f
 	cmp	r0, #0xa
-	movw	r0, #:lower16:d_080bc51e
-	movt	r0, #:upper16:d_080bc51e
+	movw	r0, #:lower16:t_080bc51e
+	movt	r0, #:upper16:t_080bc51e
 	bhi.n	.L0801f954
 	movw	r1, #0x1008
 	movt	r1, #0x4001
 	ldr	r1, [r1, #0x0]		@ word 0x40011008
 	lsls	r1, r1, #0x18		@ bit 7 to the sign flag
-	movw	r1, #:lower16:d_080bc576
-	movt	r1, #:upper16:d_080bc576
+	movw	r1, #:lower16:t_080bc576
+	movt	r1, #:upper16:t_080bc576
 	it	mi
 	movmi	r0, r1
 .L0801f954:

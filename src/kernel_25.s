@@ -1712,8 +1712,8 @@ create_tmr_svc_record_or_halt:
 	str	r0, [sp, #0x0]
 	movw	r0, #:lower16:timer_service_task
 	movt	r0, #:upper16:timer_service_task
-	movw	r1, #:lower16:d_080bc038
-	movt	r1, #:upper16:d_080bc038
+	movw	r1, #:lower16:t_080bc038
+	movt	r1, #:upper16:t_080bc038
 	movs	r2, #0x80
 	movs	r3, #0xa
 	bl	fn_080426a0

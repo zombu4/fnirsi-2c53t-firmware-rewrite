@@ -13,8 +13,8 @@
 	ldrb.w r0, [r3, #0xf6b]
 	cmp r0, #1
 	bne.n .L08014388
-	movw r0, #:lower16:d_080bc498+1
-	movt r0, #:upper16:d_080bc498+1
+	movw r0, #:lower16:t_080bc499
+	movt r0, #:upper16:t_080bc499
 	movs r1, #0x79
 	movs r2, #0x85
 	mov r4, r3
@@ -22,8 +22,8 @@
 	ldrb.w r0, [r4, #0x23a]
 	lsls r0, r0, #0x1e
 	bmi.w .L080144dc
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 	movs r1, #0xa5
 	b.n .L080144e6
 .L08014388:
@@ -173,16 +173,16 @@
 	lsls r0, r0, #0x1e
 	mov.w r2, #0x8f
 	ittee mi
-	movwmi r0, #:lower16:d_080bc4f2
-	movtmi r0, #:upper16:d_080bc4f2
-	movwpl r0, #:lower16:d_080bc5ce+1
-	movtpl r0, #:upper16:d_080bc5ce+1
+	movwmi r0, #:lower16:t_080bc4f2
+	movtmi r0, #:upper16:t_080bc4f2
+	movwpl r0, #:lower16:t_080bc5cf
+	movtpl r0, #:upper16:t_080bc5cf
 	bl decode_image_file_with_offset
 	movs r0, #1
 	b.n .L080144ee
 .L080144dc:
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 .L080144e6:
 	movs r2, #0x8d
@@ -194,12 +194,12 @@
 	adr.w r1, .L08015338
 	b.n .L08014c4a
 .L080144fa:
-	movw r0, #:lower16:d_080bc46c
-	movt r0, #:upper16:d_080bc46c
+	movw r0, #:lower16:t_080bc46c
+	movt r0, #:upper16:t_080bc46c
 	b.n .L0801450c
 .L08014504:
-	movw r0, #:lower16:d_080bc4ae+1
-	movt r0, #:upper16:d_080bc4ae+1
+	movw r0, #:lower16:t_080bc4af
+	movt r0, #:upper16:t_080bc4af
 .L0801450c:
 	mov r4, r12
 .L0801450e:
@@ -719,8 +719,8 @@
 	bmi.w .L0801454e
 	b.n .L08014574
 .L08014a5c:
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 .L08014a66:
 	movs r2, #0x45
@@ -749,8 +749,8 @@
 	ldrb.w r0, [r3, #0xf6b]
 	cmp r0, #1
 	bne.n .L08014adc
-	movw r0, #:lower16:d_080bc498+1
-	movt r0, #:upper16:d_080bc498+1
+	movw r0, #:lower16:t_080bc499
+	movt r0, #:upper16:t_080bc499
 	movs r1, #0x79
 	movs r2, #0x85
 	mov r4, r3
@@ -758,8 +758,8 @@
 	ldrb.w r0, [r4, #0x34]
 	cmp r0, #1
 	bne.w .L08014c2e
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 	b.n .L08014c38
 .L08014adc:
@@ -909,16 +909,16 @@
 	movs r2, #0x8f
 	cmp r0, #1
 	ittee ne
-	movwne r0, #:lower16:d_080bc5ce+1
-	movtne r0, #:upper16:d_080bc5ce+1
-	movweq r0, #:lower16:d_080bc4f2
-	movteq r0, #:upper16:d_080bc4f2
+	movwne r0, #:lower16:t_080bc5cf
+	movtne r0, #:upper16:t_080bc5cf
+	movweq r0, #:lower16:t_080bc4f2
+	movteq r0, #:upper16:t_080bc4f2
 	bl decode_image_file_with_offset
 	movs r0, #1
 	b.n .L08014c40
 .L08014c2e:
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 	movs r1, #0xa5
 .L08014c38:
 	movs r2, #0x8d
@@ -935,8 +935,8 @@
 	movs r1, #0x85
 	b.n .L080151f4
 .L08014c56:
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 .L08014c60:
 	movs r2, #0x45
@@ -946,10 +946,10 @@
 	movw r9, #:lower16:d_0804c180
 	movt r9, #:upper16:d_0804c180
 	ldrh.w r0, [r9, r0, lsl #1]
-	movw r2, #:lower16:d_080bbc36+1
+	movw r2, #:lower16:t_080bbc37
 	movs r1, #1
 	movw r8, #0x1114
-	movt r2, #:upper16:d_080bbc36+1
+	movt r2, #:upper16:t_080bbc37
 	movt r8, #0x2000
 	str r2, [sp]
 	strd r0, r1, [sp, #8]
@@ -966,8 +966,8 @@
 	ldrb.w r0, [r1, #0xf6b]
 	cmp r0, #1
 	bne.n .L08014ce0
-	movw r0, #:lower16:d_080bc498+1
-	movt r0, #:upper16:d_080bc498+1
+	movw r0, #:lower16:t_080bc499
+	movt r0, #:upper16:t_080bc499
 	movs r1, #0x79
 	movs r2, #0x61
 	bl decode_image_file_with_offset
@@ -976,8 +976,8 @@
 	ldrb.w r0, [r0, #0x3c]
 	cmp r0, #1
 	bne.w .L08014e32
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 	b.n .L08014e3c
 .L08014ce0:
@@ -1127,16 +1127,16 @@
 	movs r2, #0x6b
 	cmp r0, #1
 	ittee ne
-	movwne r0, #:lower16:d_080bc5ce+1
-	movtne r0, #:upper16:d_080bc5ce+1
-	movweq r0, #:lower16:d_080bc4f2
-	movteq r0, #:upper16:d_080bc4f2
+	movwne r0, #:lower16:t_080bc5cf
+	movtne r0, #:upper16:t_080bc5cf
+	movweq r0, #:lower16:t_080bc4f2
+	movteq r0, #:upper16:t_080bc4f2
 	bl decode_image_file_with_offset
 	movs r0, #1
 	b.n .L08014e44
 .L08014e32:
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 	movs r1, #0xa5
 .L08014e3c:
 	movs r2, #0x69
@@ -1144,9 +1144,9 @@
 	movs r0, #2
 .L08014e44:
 	ldrh.w r0, [r9, r0, lsl #1]
-	movw r2, #:lower16:d_080bbc86
+	movw r2, #:lower16:t_080bbc86
 	movs r1, #1
-	movt r2, #:upper16:d_080bbc86
+	movt r2, #:upper16:t_080bbc86
 	str r2, [sp]
 	strd r0, r1, [sp, #8]
 	movs r0, #0xb6
@@ -1162,8 +1162,8 @@
 	ldrb.w r0, [r1, #0xf6b]
 	cmp r0, #2
 	bne.n .L08014eac
-	movw r0, #:lower16:d_080bc498+1
-	movt r0, #:upper16:d_080bc498+1
+	movw r0, #:lower16:t_080bc499
+	movt r0, #:upper16:t_080bc499
 	movs r1, #0x79
 	movs r2, #0x85
 	bl decode_image_file_with_offset
@@ -1172,8 +1172,8 @@
 	ldrb.w r0, [r0, #0x3c]
 	cmp r0, #2
 	bne.w .L08014ffe
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 	b.n .L08015008
 .L08014eac:
@@ -1323,16 +1323,16 @@
 	movs r2, #0x8f
 	cmp r0, #2
 	ittee ne
-	movwne r0, #:lower16:d_080bc5ce+1
-	movtne r0, #:upper16:d_080bc5ce+1
-	movweq r0, #:lower16:d_080bc4f2
-	movteq r0, #:upper16:d_080bc4f2
+	movwne r0, #:lower16:t_080bc5cf
+	movtne r0, #:upper16:t_080bc5cf
+	movweq r0, #:lower16:t_080bc4f2
+	movteq r0, #:upper16:t_080bc4f2
 	bl decode_image_file_with_offset
 	movs r0, #1
 	b.n .L08015010
 .L08014ffe:
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 	movs r1, #0xa5
 .L08015008:
 	movs r2, #0x8d
@@ -1340,9 +1340,9 @@
 	movs r0, #2
 .L08015010:
 	ldrh.w r0, [r9, r0, lsl #1]
-	movw r2, #:lower16:d_080bbc6c+1
+	movw r2, #:lower16:t_080bbc6d
 	movs r1, #1
-	movt r2, #:upper16:d_080bbc6c+1
+	movt r2, #:upper16:t_080bbc6d
 	str r2, [sp]
 	strd r0, r1, [sp, #8]
 	movs r0, #0xb6
@@ -1358,8 +1358,8 @@
 	ldrb.w r0, [r3, #0xf6b]
 	cmp r0, #3
 	bne.n .L08015072
-	movw r0, #:lower16:d_080bc498+1
-	movt r0, #:upper16:d_080bc498+1
+	movw r0, #:lower16:t_080bc499
+	movt r0, #:upper16:t_080bc499
 	movs r1, #0x79
 	movs r2, #0xa9
 	mov r4, r3
@@ -1367,8 +1367,8 @@
 	ldrb.w r0, [r4, #0x3c]
 	cmp r0, #3
 	bne.w .L080151ce
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xa6
 	b.n .L080151d8
 .L08015072:
@@ -1522,16 +1522,16 @@
 	movs r2, #0xb3
 	cmp r0, #3
 	ittee ne
-	movwne r0, #:lower16:d_080bc5ce+1
-	movtne r0, #:upper16:d_080bc5ce+1
-	movweq r0, #:lower16:d_080bc4f2
-	movteq r0, #:upper16:d_080bc4f2
+	movwne r0, #:lower16:t_080bc5cf
+	movtne r0, #:upper16:t_080bc5cf
+	movweq r0, #:lower16:t_080bc4f2
+	movteq r0, #:upper16:t_080bc4f2
 	bl decode_image_file_with_offset
 	movs r0, #1
 	b.n .L080151e0
 .L080151ce:
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 	movs r1, #0xa5
 .L080151d8:
 	movs r2, #0xb1
@@ -1554,8 +1554,8 @@
 	add sp, #0x1c
 	pop.w {r4, r5, r6, r7, r8, r9, r10, r11, pc}
 .L08015204:
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	movs r1, #0xb3
 .L0801520e:
 	movs r2, #0x37
@@ -1566,9 +1566,9 @@
 	movt r1, #:upper16:d_0804c180
 	ldrh.w r0, [r1, r0, lsl #1]
 	movw r2, #0x1114
-	movw r1, #:lower16:d_080bbc36+1
+	movw r1, #:lower16:t_080bbc37
 	movt r2, #0x2000
-	movt r1, #:upper16:d_080bbc36+1
+	movt r1, #:upper16:t_080bbc37
 	movs r6, #1
 	strd r1, r2, [sp]
 	str r0, [sp, #8]
@@ -1605,10 +1605,10 @@
 	uxth r1, r0
 	uxth r2, r2
 	ittee ne
-	movwne r0, #:lower16:d_080bc5ce+1
-	movtne r0, #:upper16:d_080bc5ce+1
-	movweq r0, #:lower16:d_080bc4f2
-	movteq r0, #:upper16:d_080bc4f2
+	movwne r0, #:lower16:t_080bc5cf
+	movtne r0, #:upper16:t_080bc5cf
+	movweq r0, #:lower16:t_080bc4f2
+	movteq r0, #:upper16:t_080bc4f2
 	bl decode_image_file_with_offset
 	movs r0, #1
 .L080152b4:

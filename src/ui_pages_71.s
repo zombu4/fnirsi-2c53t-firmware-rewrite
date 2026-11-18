@@ -226,13 +226,13 @@ fn_08011e84:
 	cmp r0, #0xb
 	bne.w .L080120f8
 	movw r4, #0x8360
-	movw r9, #:lower16:d_080bcad2
-	movw r10, #:lower16:d_080bc858+1
+	movw r9, #:lower16:t_080bcad2
+	movw r10, #:lower16:t_080bc859
 	addw r7, r8, #0xe2a
 	mvn r5, #0x7
 	movt r4, #0x2000
-	movt r9, #:upper16:d_080bcad2
-	movt r10, #:upper16:d_080bc858+1
+	movt r9, #:upper16:t_080bcad2
+	movt r10, #:upper16:t_080bc859
 	b.n .L08011fe6
 	.byte 0x00, 0xbf	@ padding
 .L08011fdc:
@@ -351,21 +351,21 @@ fn_08011e84:
 	movw r4, #0x8360
 	ldrb r2, [r5, r0]
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bcad2
-	movt r1, #:upper16:d_080bcad2
+	movw r1, #:lower16:t_080bcad2
+	movt r1, #:upper16:t_080bcad2
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	bl path_delete
 	ldrb.w r0, [r8, #0xe1d]
-	movw r1, #:lower16:d_080bc858+1
+	movw r1, #:lower16:t_080bc859
 	ldrb r2, [r5, r0]
-	movt r1, #:upper16:d_080bc858+1
+	movt r1, #:upper16:t_080bc859
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	bl path_delete
 .L08012134:
-	movw r0, #:lower16:d_080bc18a+1
-	movt r0, #:upper16:d_080bc18a+1
+	movw r0, #:lower16:t_080bc18b
+	movt r0, #:upper16:t_080bc18b
 	bl scan_capture_files
 	strb.w r0, [r8, #0xe1b]
 	movs r0, #0x0
@@ -1166,9 +1166,9 @@ fn_08012778:
 	movw r4, #0x8360
 	smlabb r0, r0, r2, r1
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add.w r2, r0, #0x17
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -1253,15 +1253,15 @@ fn_08012844:
 	movt r0, #0x2000
 	ldrb.w r0, [r0, #0xf67]
 	cmp r0, #0xa
-	movw r0, #:lower16:d_080bc51e
-	movt r0, #:upper16:d_080bc51e
+	movw r0, #:lower16:t_080bc51e
+	movt r0, #:upper16:t_080bc51e
 	bhi.n .L080128a4
 	movw r1, #0x1008
 	movt r1, #0x4001
 	ldr r1, [r1, #0x0]
 	lsls r1, r1, #0x18
-	movw r1, #:lower16:d_080bc576
-	movt r1, #:upper16:d_080bc576
+	movw r1, #:lower16:t_080bc576
+	movt r1, #:upper16:t_080bc576
 	it mi
 	movmi r0, r1
 .L080128a4:
@@ -1354,8 +1354,8 @@ fn_08012ce8:
 	movs r0, #0x7
 	uxtab r2, r0, r1
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
-	movt r1, #:upper16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -1422,8 +1422,8 @@ fn_08012d2c:
 fn_08012d84:
 	push {r7, lr}
 	sub sp, #0x10
-	movw r0, #:lower16:d_080bc456
-	movt r0, #:upper16:d_080bc456
+	movw r0, #:lower16:t_080bc456
+	movt r0, #:upper16:t_080bc456
 	movs r1, #0x0
 	movs r2, #0x0
 	bl decode_image_file_with_offset
@@ -1479,12 +1479,12 @@ fn_08012de0:
 	sub.w r1, r1, r0, lsr #4
 	uxtb r5, r1
 	movs r1, #0x3f
-	movw r6, #:lower16:d_080bc680+1
+	movw r6, #:lower16:t_080bc681
 	cmp r5, #0x0
 	it eq
 	moveq r1, #0x37
 	movt r4, #0x2000
-	movt r6, #:upper16:d_080bc680+1
+	movt r6, #:upper16:t_080bc681
 	lsrs r7, r0, #4
 	add.w r2, r1, r0, lsr #4
 	mov r0, r4

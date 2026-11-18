@@ -26,8 +26,8 @@
 screenshot_file_find_name:
 	push	{r7, lr}
 	sub	sp, #0x20
-	movw	r0, #:lower16:d_080bc1b4	@ "2:/Screenshot file"
-	movt	r0, #:upper16:d_080bc1b4
+	movw	r0, #:lower16:t_080bc1b4	@ "2:/Screenshot file"
+	movt	r0, #:upper16:t_080bc1b4
 	str	r0, [sp, #0x18]
 	movw	r0, #0x8360	@ name string at 0x20008360
 	movt	r0, #0x2000
@@ -170,8 +170,8 @@ read_numbered_bin_file:
 	ldrb.w	r2, [sp, #0xe]
 	movw	r4, #0x8360
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bc858+1	@ format string "2:/Screenshot simple file/%d.bin"
-	movt	r1, #:upper16:d_080bc858+1
+	movw	r1, #:lower16:t_080bc859	@ format string "2:/Screenshot simple file/%d.bin"
+	movt	r1, #:upper16:t_080bc859
 	mov	r0, r4
 	bl	format_to_buffer_08007370
 	ldr	r0, [sp, #0x8]
@@ -338,8 +338,8 @@ scan_capture_files:
 	ldrb.w	r2, [sp, #0x3]
 	movw	r0, #0x8360
 	movt	r0, #0x2000
-	movw	r1, #:lower16:d_080bcae4+1	@ format string "%d.bmp"
-	movt	r1, #:upper16:d_080bcae4+1
+	movw	r1, #:lower16:t_080bcae5	@ format string "%d.bmp"
+	movt	r1, #:upper16:t_080bcae5
 	bl	format_to_buffer_08007370
 	bl	screenshot_file_find_name
 	cbnz	r0, .L0803b93c
@@ -359,8 +359,8 @@ scan_capture_files:
 	ldrb.w	r2, [sp, #0x3]
 	movw	r0, #0x8360
 	movt	r0, #0x2000
-	movw	r1, #:lower16:d_080bc858+1	@ format string "2:/Screenshot simple file/%d.bin"
-	movt	r1, #:upper16:d_080bc858+1
+	movw	r1, #:lower16:t_080bc859	@ format string "2:/Screenshot simple file/%d.bin"
+	movt	r1, #:upper16:t_080bc859
 	bl	format_to_buffer_08007370
 	bl	path_delete	@ delete the .bin without a .bmp
 	b.n	.L0803b95a
@@ -445,8 +445,8 @@ write_numbered_bin_file:
 	ldrb.w	r2, [r0, #0xe11]	@ byte 0x20000f09 = file number
 	movw	r4, #0x8360
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bc858+1	@ format string "2:/Screenshot simple file/%d.bin"
-	movt	r1, #:upper16:d_080bc858+1
+	movw	r1, #:lower16:t_080bc859	@ format string "2:/Screenshot simple file/%d.bin"
+	movt	r1, #:upper16:t_080bc859
 	mov	r0, r4
 	bl	format_to_buffer_08007370
 	ldr	r0, [sp, #0x18]

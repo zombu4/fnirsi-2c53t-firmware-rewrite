@@ -169,8 +169,8 @@ fn_08010f68:
 	ldr r0, [r4, #8]
 	cmp r0, #0
 	beq.n .L08011036
-	movw r0, #:lower16:d_080bc456	@ "3:/System file/71.jpg"
-	movt r0, #:upper16:d_080bc456
+	movw r0, #:lower16:t_080bc456	@ "3:/System file/71.jpg"
+	movt r0, #:upper16:t_080bc456
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
@@ -851,8 +851,8 @@ fn_080114c4:
 	movne r1, #0
 	strhne r1, [r0, #4]
 .L0801154a:
-	movw r0, #:lower16:d_080bc532+1	@ "3:/System file/145.jpg"
-	movt r0, #:upper16:d_080bc532+1
+	movw r0, #:lower16:t_080bc533	@ "3:/System file/145.jpg"
+	movt r0, #:upper16:t_080bc533
 	movs r1, #0x46
 	movs r2, #0x43
 	bl decode_image_file_with_offset
@@ -893,9 +893,9 @@ fn_080114c4:
 	ldrb.w r0, [r4, #0xf66]	@ [0x2000105e]
 	movw r4, #0x8360
 	movt r4, #0x2000	@ r4 = text buffer 0x20008360
-	movw r1, #:lower16:d_080bcc3e+1	@ "%ds"
+	movw r1, #:lower16:t_080bcc3f	@ "%ds"
 	rsb.w r2, r0, #0xe	@ 0xe - [0x2000105e]
-	movt r1, #:upper16:d_080bcc3e+1
+	movt r1, #:upper16:t_080bcc3f
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	movw r0, #0x1174
@@ -971,9 +971,9 @@ fn_08011660:
 	cmp r2, #0xff
 	beq.n .L08011698
 	movw r0, #0x8360
-	movw r1, #:lower16:d_080bcad2	@ "2:/Screenshot file/%d.bmp"
+	movw r1, #:lower16:t_080bcad2	@ "2:/Screenshot file/%d.bmp"
 	movt r0, #0x2000
-	movt r1, #:upper16:d_080bcad2
+	movt r1, #:upper16:t_080bcad2
 	bl format_to_buffer_080073b4
 	bl save_screen_bmp
 	cbz r0, .L080116a0
@@ -992,9 +992,9 @@ fn_08011660:
 	ldrb.w r2, [r4, #0xe11]	@ [0x20000f09]
 	strb.w r0, [r4, #0xe10]	@ [0x20000f08] = 3
 	movw r0, #0x8360
-	movw r1, #:lower16:d_080bcad2
+	movw r1, #:lower16:t_080bcad2
 	movt r0, #0x2000
-	movt r1, #:upper16:d_080bcad2
+	movt r1, #:upper16:t_080bcad2
 	bl format_to_buffer_080073b4
 	bl path_delete
 	b.n .L080116e4
@@ -1058,8 +1058,8 @@ fn_080116ec:
 	ldr r0, [r4, #8]
 	cmp r0, #0
 	beq.n .L080117ba
-	movw r0, #:lower16:d_080bc456	@ "3:/System file/71.jpg"
-	movt r0, #:upper16:d_080bc456
+	movw r0, #:lower16:t_080bc456	@ "3:/System file/71.jpg"
+	movt r0, #:upper16:t_080bc456
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
@@ -1146,9 +1146,9 @@ fn_080117cc:
 	movw r4, #0x8360
 	str r1, [r5, #0]	@ [0x20036b80] = write_pixel_window_to_port
 	movt r4, #0x2000	@ r4 = text buffer 0x20008360
-	movw r1, #:lower16:d_080bc680+1	@ "3:/System file/%d.jpg"
+	movw r1, #:lower16:t_080bc681	@ "3:/System file/%d.jpg"
 	add.w r2, r0, #0x92
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -1762,8 +1762,8 @@ fn_08011d08:
 	add r0, r6
 	ldrb.w r2, [r0, #0xe25]	@ byte at 0x20000f1d + [0x20000f15]
 	movt r4, #0x2000	@ r4 = text buffer 0x20008360
-	movw r1, #:lower16:d_080bcad2	@ "2:/Screenshot file/%d.bmp"
-	movt r1, #:upper16:d_080bcad2
+	movw r1, #:lower16:t_080bcad2	@ "2:/Screenshot file/%d.bmp"
+	movt r1, #:upper16:t_080bcad2
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	bl show_bmp_file_fullscreen
@@ -1787,10 +1787,10 @@ fn_08011d08:
 	beq.n .L08011dec
 	bl fn_080097e8
 	ldrb.w r0, [r6, #0xe1d]	@ [0x20000f15]
-	movw r1, #:lower16:d_080bc040	@ "%d"
+	movw r1, #:lower16:t_080bc040	@ "%d"
 	add r0, r6
 	ldrb.w r2, [r0, #0xe25]	@ byte at 0x20000f1d + [0x20000f15]
-	movt r1, #:upper16:d_080bc040
+	movt r1, #:upper16:t_080bc040
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	movw r1, #0x1144

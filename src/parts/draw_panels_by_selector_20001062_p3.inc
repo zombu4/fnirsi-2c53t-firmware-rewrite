@@ -135,8 +135,8 @@
 	add.w r1, r2, #0x37
 	uxth r2, r1
 	uxth r1, r0
-	movw r0, #:lower16:d_080bc54a
-	movt r0, #:upper16:d_080bc54a
+	movw r0, #:lower16:t_080bc54a
+	movt r0, #:upper16:t_080bc54a
 	b.n .L08015530
 	.byte 0x00, 0xbf                @ padding
 .L08015478:
@@ -223,8 +223,8 @@
 	add.w r1, r2, #0x37
 	uxth r2, r1
 	uxth r1, r0
-	movw r0, #:lower16:d_080bc5fc
-	movt r0, #:upper16:d_080bc5fc
+	movw r0, #:lower16:t_080bc5fc
+	movt r0, #:upper16:t_080bc5fc
 .L08015530:
 	bl decode_image_file_with_offset
 	movs r0, #2
@@ -413,14 +413,14 @@
 	.asciz "3:/System file/76.jpg"
 	.short 0x0000                   @ padding
 .L08015714:
-	.word 0x080bb9cc
-	.word 0x080bb9d4
-	.word 0x080bb9c4
-	.word 0x080bb9dc
-	.word 0x080bb974
-	.word 0x080bb9d7
-	.word 0x080bcf1a
-	.word 0x080bcf20
+	.word t_080bb9cc                @ "CH1+CH2"
+	.word t_080bb9d4                @ "CH1-CH2"
+	.word t_080bb9c4                @ "CH1*CH2"
+	.word t_080bb9dc                @ "CH1/CH2"
+	.word t_080bb974                @ "-CH1"
+	.word t_080bb9d7                @ "-CH2"
+	.word t_080bcf1a                @ "|CH1|"
+	.word t_080bcf20                @ "|CH2|"
 .L08015734:
 	.byte 0xe2, 0x88, 0x9e, 0x00    @ UTF-8 infinity sign, NUL
 .L08015738:

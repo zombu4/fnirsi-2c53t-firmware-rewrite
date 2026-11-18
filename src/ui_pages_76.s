@@ -24,8 +24,8 @@
 fn_08015740:
 	push	{r7, lr}
 	sub	sp, #0x10
-	movw	r0, #:lower16:d_080bc612		@ image path string
-	movt	r0, #:upper16:d_080bc612
+	movw	r0, #:lower16:t_080bc612		@ image path string
+	movt	r0, #:upper16:t_080bc612
 	movs	r1, #0x34
 	movs	r2, #0
 	bl	decode_image_file_with_offset
@@ -81,8 +81,8 @@ draw_six_row_list_from_first_index:
 	ldrb.w	r7, [r4, #0xf6a]			@ first = byte 0x20001062
 	cmp	r7, r6
 	bne.n	.L080157c8
-	movw	r0, #:lower16:d_080bc654+1		@ "3:/System file/89.jpg"
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655		@ "3:/System file/89.jpg"
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x18
 	bl	decode_image_file_with_offset
@@ -114,8 +114,8 @@ draw_six_row_list_from_first_index:
 	adds	r5, r7, #1
 	cmp	r5, r6
 	bne.n	.L08015826
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x3c
 	bl	decode_image_file_with_offset
@@ -142,8 +142,8 @@ draw_six_row_list_from_first_index:
 	adds	r5, r7, #2
 	cmp	r5, r6
 	bne.n	.L08015870
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x60
 	bl	decode_image_file_with_offset
@@ -170,8 +170,8 @@ draw_six_row_list_from_first_index:
 	adds	r5, r7, #3
 	cmp	r5, r6
 	bne.n	.L080158ba
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x84
 	bl	decode_image_file_with_offset
@@ -198,8 +198,8 @@ draw_six_row_list_from_first_index:
 	adds	r5, r7, #4
 	cmp	r5, r6
 	bne.n	.L08015904
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0xa8
 	bl	decode_image_file_with_offset
@@ -226,8 +226,8 @@ draw_six_row_list_from_first_index:
 	adds	r5, r7, #5
 	cmp	r5, r6
 	bne.n	.L0801594e
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0xcc
 	bl	decode_image_file_with_offset
@@ -486,9 +486,9 @@ draw_three_value_rows:
 	.asciz	"3:/System file/117.jpg"
 	.byte	0x00					@ padding
 .L08015be0:
-	.word	0x080bcee6				@ unit string pointer, row 0
-	.word	0x080bb5ef				@ unit string pointer, row 1
-	.word	0x080bbd2e				@ unit string pointer, row 2
+	.word	t_080bcee6				@ unit string pointer, row 0: "Hz"
+	.word	t_080bb5ef				@ unit string pointer, row 1: "%"
+	.word	t_080bbd2e				@ unit string pointer, row 2: "V"
 .L08015bec:
 	.asciz	"%d.%d"
 	.short	0x0000					@ padding
@@ -516,8 +516,8 @@ draw_three_value_rows:
 draw_header_image_120:
 	push	{r7, lr}
 	sub	sp, #0x10
-	movw	r0, #:lower16:d_080bc3fa+1		@ image path string
-	movt	r0, #:upper16:d_080bc3fa+1
+	movw	r0, #:lower16:t_080bc3fb		@ image path string
+	movt	r0, #:upper16:t_080bc3fb
 	movs	r1, #0x34
 	movs	r2, #0
 	bl	decode_image_file_with_offset
@@ -786,8 +786,8 @@ draw_value_panel:
 fn_0801ccfc:
 	push	{r7, lr}
 	sub	sp, #0x10
-	movw	r0, #:lower16:d_080bc456		@ image path string
-	movt	r0, #:upper16:d_080bc456
+	movw	r0, #:lower16:t_080bc456		@ image path string
+	movt	r0, #:upper16:t_080bc456
 	movs	r1, #0
 	movs	r2, #0
 	bl	decode_image_file_with_offset
@@ -849,8 +849,8 @@ draw_six_row_list:
 	bl	draw_gradient_bar
 	b.n	.L0801cd94
 .L0801cd84:
-	movw	r0, #:lower16:d_080bc654+1		@ "3:/System file/89.jpg"
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655		@ "3:/System file/89.jpg"
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x18
 	bl	decode_image_file_with_offset
@@ -876,8 +876,8 @@ draw_six_row_list:
 	bl	draw_wrapped_text_in_box
 	cmp	r7, #1
 	bne.n	.L0801cdea
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x3c
 	bl	decode_image_file_with_offset
@@ -903,8 +903,8 @@ draw_six_row_list:
 	bl	draw_wrapped_text_in_box
 	cmp	r7, #2
 	bne.n	.L0801ce34
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x60
 	bl	decode_image_file_with_offset
@@ -930,8 +930,8 @@ draw_six_row_list:
 	bl	draw_wrapped_text_in_box
 	cmp	r7, #3
 	bne.n	.L0801ce7e
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0x84
 	bl	decode_image_file_with_offset
@@ -957,8 +957,8 @@ draw_six_row_list:
 	bl	draw_wrapped_text_in_box
 	cmp	r7, #4
 	bne.n	.L0801cec8
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0xa8
 	bl	decode_image_file_with_offset
@@ -984,8 +984,8 @@ draw_six_row_list:
 	bl	draw_wrapped_text_in_box
 	cmp	r7, #5
 	bne.n	.L0801cf12
-	movw	r0, #:lower16:d_080bc654+1
-	movt	r0, #:upper16:d_080bc654+1
+	movw	r0, #:lower16:t_080bc655
+	movt	r0, #:upper16:t_080bc655
 	movs	r1, #0
 	movs	r2, #0xcc
 	bl	decode_image_file_with_offset

@@ -3,7 +3,8 @@
  * starts at 0x08007000 and never covers them.  RAM addresses are absolute in the code
  * (0x20000000..0x20036F8F: initial values unpacked at reset, the rest zeroed; stack top 0x20036F90).
  * Layout: vector table at 0x08007000 (the only fixed address), then the original functions in their
- * original order, then the data of src/rodata.s, then code added by this rewrite; each section follows
+ * original order, then the data of src/rodata.s and the texts of src/text.s, then code added by this
+ * rewrite; each section follows
  * the one before it.  Code and data refer to each other only through symbols, so they may move.  The
  * address comments of the KEEP lines name each unit's address in V1.2.0's layout, not a required one.
  * FLASH ends at APP_END 0x080E7000: above it are the record pages and the bootloader slots of the
@@ -540,7 +541,11 @@ SECTIONS
     KEEP(*(.text.double_to_u64_special_case))                  /* 0x08046146 */
     KEEP(*(.text.double_scale_by_pow2))                        /* 0x080461c8 */
   } > FLASH
-  .rodata : { KEEP(*(.rodata.fixed)) } > FLASH                     /* data of src/rodata.s, right after the code */
+  .rodata :
+  {
+    KEEP(*(.rodata.fixed))                                         /* data of src/rodata.s, right after the code */
+    KEEP(*(.rodata.text))                                          /* texts of src/text.s (English, UTF-8) */
+  } > FLASH
   .text_added :                                                    /* code added by this rewrite, right after the data */
   {
     KEEP(*(.text.boot_dump))

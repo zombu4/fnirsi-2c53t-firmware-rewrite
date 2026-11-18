@@ -97,8 +97,8 @@ fn_0800fef0:
 	movs r0, #7
 	uxtab r2, r0, r1
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
-	movt r1, #:upper16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -172,9 +172,9 @@ fn_0800ffb8:
 	movw r4, #0x8360
 	str r1, [r5, #0]
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add.w r2, r0, #0x27
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -360,9 +360,9 @@ fn_08010158:
 	movt r5, #0x2003
 	movt r0, #:upper16:write_pixel_window_to_port
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	str r0, [r5, #0]
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	movs r2, #0x25
 	bl format_to_buffer_080073b4
@@ -402,9 +402,9 @@ fn_080101ac:
 	movt r5, #0x2003
 	movt r0, #:upper16:write_pixel_window_to_port
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	str r0, [r5, #0]
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	movs r2, #0x26
 	bl format_to_buffer_080073b4
@@ -447,9 +447,9 @@ fn_08010200:
 	movw r4, #0x8360
 	str r1, [r5, #0]
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add.w r2, r0, #0x33
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -492,9 +492,9 @@ fn_0801025c:
 	movw r4, #0x8360
 	str r1, [r5, #0]
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add.w r2, r0, #0x2b
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -537,9 +537,9 @@ fn_080102b8:
 	movw r4, #0x8360
 	str r1, [r5, #0]
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add.w r2, r0, #0x2f
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -596,8 +596,8 @@ fn_08010314:
 	ldr r0, [r4, #8]
 	cmp r0, #0
 	beq.n .L080103e2
-	movw r0, #:lower16:d_080bc456
-	movt r0, #:upper16:d_080bc456
+	movw r0, #:lower16:t_080bc456
+	movt r0, #:upper16:t_080bc456
 	movs r1, #0
 	movs r2, #0
 	bl decode_image_file_with_offset
@@ -1062,8 +1062,8 @@ fn_080106e8:
 	ldr r0, [r4, #8]
 	cmp r0, #0
 	beq.n .L080107b6
-	movw r0, #:lower16:d_080bc612
-	movt r0, #:upper16:d_080bc612
+	movw r0, #:lower16:t_080bc612
+	movt r0, #:upper16:t_080bc612
 	movs r1, #0x34
 	movs r2, #0
 	bl decode_image_file_with_offset
@@ -1274,9 +1274,9 @@ fn_080108c0:
 	it eq
 	moveq r2, #0x67
 	movt r4, #0x2000
-	movw r1, #:lower16:d_080bc680+1
+	movw r1, #:lower16:t_080bc681
 	add r2, r0
-	movt r1, #:upper16:d_080bc680+1
+	movt r1, #:upper16:t_080bc681
 	mov r0, r4
 	bl format_to_buffer_080073b4
 	mov r0, r4
@@ -1499,8 +1499,8 @@ fn_08010a94:
 	ldr r0, [r4, #8]
 	cmp r0, #0
 	beq.n .L08010b6e
-	movw r0, #:lower16:d_080bc3fa+1
-	movt r0, #:upper16:d_080bc3fa+1
+	movw r0, #:lower16:t_080bc3fb
+	movt r0, #:upper16:t_080bc3fb
 	movs r1, #0x34
 	movs r2, #0
 	bl decode_image_file_with_offset

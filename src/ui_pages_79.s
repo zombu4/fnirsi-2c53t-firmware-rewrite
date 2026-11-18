@@ -26,8 +26,8 @@
 draw_image_two_texts_and_s_value:
 	push	{r4, r5, r6, r7, lr}
 	sub	sp, #0x14
-	movw	r0, #:lower16:d_080bc532+1
-	movt	r0, #:upper16:d_080bc532+1
+	movw	r0, #:lower16:t_080bc533
+	movt	r0, #:upper16:t_080bc533
 	movs	r1, #0x46
 	movs	r2, #0x43
 	bl	decode_image_file_with_offset
@@ -67,9 +67,9 @@ draw_image_two_texts_and_s_value:
 	ldrb.w	r0, [r4, #0xf66]
 	movw	r4, #0x8360
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bcc3e+1
+	movw	r1, #:lower16:t_080bcc3f
 	rsb.w	r2, r0, #0xe
-	movt	r1, #:upper16:d_080bcc3e+1
+	movt	r1, #:upper16:t_080bcc3f
 	mov	r0, r4
 	bl	format_to_buffer_080073b4
 	movw	r0, #0x1174
@@ -102,8 +102,8 @@ draw_image_two_texts_and_s_value:
 fn_0801e514:
 	push	{r7, lr}
 	sub	sp, #0x10
-	movw	r0, #:lower16:d_080bc456
-	movt	r0, #:upper16:d_080bc456
+	movw	r0, #:lower16:t_080bc456
+	movt	r0, #:upper16:t_080bc456
 	movs	r1, #0x0
 	movs	r2, #0x0
 	bl	decode_image_file_with_offset
@@ -1337,9 +1337,9 @@ draw_thumbnail_grid:
 	add	r0, r6
 	ldrb.w	r2, [r0, #0xe25]
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bcae4+1
+	movw	r1, #:lower16:t_080bcae5
 	mov	r0, r4
-	movt	r1, #:upper16:d_080bcae4+1
+	movt	r1, #:upper16:t_080bcae5
 	bl	format_to_buffer_080073b4
 	movw	r1, #0x1144
 	add.w	r0, r9, #0x5e
@@ -1412,9 +1412,9 @@ draw_image_and_three_texts:
 	ldrb.w	r0, [r5, #0xe1c]
 	movw	r4, #0x8360
 	movt	r4, #0x2000
-	movw	r1, #:lower16:d_080bc680+1
+	movw	r1, #:lower16:t_080bc681
 	add.w	r2, r0, #0x94
-	movt	r1, #:upper16:d_080bc680+1
+	movt	r1, #:upper16:t_080bc681
 	mov	r0, r4
 	bl	format_to_buffer_080073b4
 	mov	r0, r4
@@ -1474,32 +1474,33 @@ draw_image_and_three_texts:
 	pop	{r4, r5, r6, r7, pc}
 	.byte	0x00, 0xbf	@ padding
 .L0801f264:
-	.word	0x080bbbf7
-	.word	0x080bc25e
-	.word	0x080bd27f
-	.word	0x080bd818
-	.word	0x080bcb26
-	.word	0x080bcb7b
-	.word	0x080bc805
-	.word	0x080bd6cb
+	@ dialog texts, one word per language slot each: all English now
+	.word	t_080bc25e	@ "Delete"
+	.word	t_080bc25e
+	.word	t_080bc25e
+	.word	t_080bc25e
+	.word	t_080bc25e
+	.word	t_080bc25e
+	.word	t_080bc25e
+	.word	t_080bc25e
 .L0801f284:
-	.word	0x080bd692
-	.word	0x080bc767
-	.word	0x080bd241
-	.word	0x080bd298
-	.word	0x080bcb1c
-	.word	0x080bcb1c
-	.word	0x080bc787
-	.word	0x080bdd4d
+	.word	t_080bc767	@ "Confirm"
+	.word	t_080bc767
+	.word	t_080bc767
+	.word	t_080bc767
+	.word	t_080bc767
+	.word	t_080bc767
+	.word	t_080bc767
+	.word	t_080bc767
 .L0801f2a4:
-	.word	0x080bd0af
-	.word	0x080bc70e
-	.word	0x080bdba4
-	.word	0x080bd8e7
-	.word	0x080bcb13
-	.word	0x080bcb13
-	.word	0x080bc7fb
-	.word	0x080bd1af
+	.word	t_080bc70e	@ "Cancel"
+	.word	t_080bc70e
+	.word	t_080bc70e
+	.word	t_080bc70e
+	.word	t_080bc70e
+	.word	t_080bc70e
+	.word	t_080bc70e
+	.word	t_080bc70e
 
 @ ----------------------------------------------------------------------------
 @ draw_bitmap_and_text - no parameters, no return value.
