@@ -50,8 +50,16 @@
 @ 0x40011014 = 0x200; 0x40021018 |= 4, |= 8, |= 0x10, |= 0x40; setups
 @ 0x0802ab04..0x0802ab5e; 0x40021018 |= 0x20, |= 0x40, |= 1; 0x40021014
 @ |= 0x100; 0x40010030 |= 0x8000000; setups 0x0802abc2..0x0802abfe;
-@ 0xa0000000 = 0x5010, 0xa0000004 = 0x2020424, 0xa0000104 = 0x202,
+@ 0xa0000000 = 0x5010, 0xa0000004 = 0x20f5a2f, 0xa0000104 = 0x202,
 @ 0xa0000220 = (old & ~0xff00) then low byte = 8, 0xa0000000 |= 1;
+@ Read timing 0xa0000004 (this rewrite; V1.2.0 wrote 0x2020424): the core clock is 240 MHz
+@ (init_system_clock: 8 MHz / 2 x 60), so V1.2.0's data phase of 4 cycles held the read strobe
+@ low for about 17 ns, while the ST7789 frame-memory read needs at least 355 ns low, 90 ns
+@ high and a 450 ns cycle (Sitronix ST7789V datasheet, 8080 read timing). The screen
+@ read-back (fn_080097e8, USB screenshots) then returned wrong values, above all the first
+@ pixel of each rectangle. Now: data phase 0x5a = 90 cycles (375 ns low), address setup 15
+@ + bus turnaround 15 = 30 cycles (125 ns high), 120 cycles = 500 ns per read. With
+@ 0xa0000000 bit 14 set, writes use 0xa0000104 (0x202, unchanged).
 @ 0x40011410 = 0x40, delay 10 units, 0x40011414 = 0x40, delay 20 units,
 @ 0x40011410 = 0x40, delay 20 units.
 @
@@ -503,10 +511,10 @@ system_bring_up:
 	str	r1, [r0]
 	movw	r1, #0xfde4
 	movw	r2, #0x220
-	movw	r3, #0x424
-	movt	r1, #0xffff
-	movt	r2, #0xa000
-	movt	r3, #0x202
+	movw	r3, #0x5a2f			@ read timing (bank 1 timing register 0xa0000004, used for reads
+	movt	r1, #0xffff			@ because 0xa0000000 bit 14 selects separate write timing):
+	movt	r2, #0xa000			@ address setup 15, hold 2, data 0x5a, bus turnaround 15,
+	movt	r3, #0x20f			@ data latency 2 = 0x020f5a2f
 	str	r3, [r2, r1]
 	movw	r1, #0xfee4
 	movt	r1, #0xffff
