@@ -237,11 +237,30 @@ free_units_of_32_bytes:
 @ stored at 0x20001078 plus index*0x20, index = lowest entry of the run
 @ (0x0803aeec..0x0803aef0).
 @ ----------------------------------------------------------------------------
+@ This rewrite: the allocation runs with interrupts masked (PRIMASK saved and restored), so a task
+@ switch cannot fall between the scan for a free run and the writing of its unit counts. V1.2.0 had
+@ no lock although several tasks allocate and free (display, measurement, acquisition, keys, and the
+@ USB file commands of this rewrite): two tasks could take the same run, and a later free then
+@ cleared past its block (the table ends at 0x20036B7F, directly below the pixel-writer pointer
+@ 0x20036B80: a null call from image_rect_callback, fault record 2026-11-18). The clears of the
+@ table (every free, also the copies inlined in the callers) are masked in zero_bytes
+@ (src/runtime_lib_41.s).
 	.section .text.alloc_units_of_32_bytes,"ax",%progbits
 	.global alloc_units_of_32_bytes
 	.thumb_func
 	.type alloc_units_of_32_bytes, %function
 alloc_units_of_32_bytes:
+	push	{r4, lr}
+	mrs	r4, primask
+	cpsid	i
+	bl	alloc_units_body
+	msr	primask, r4
+	pop	{r4, pc}
+	.size	alloc_units_of_32_bytes, . - alloc_units_of_32_bytes
+
+	.thumb_func
+	.type alloc_units_body, %function
+alloc_units_body:
 	push.w	{r4, r5, r6, r7, r8, lr}
 	movw	r8, #0x1070
 	movt	r8, #0x2000

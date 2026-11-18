@@ -218,7 +218,10 @@ t_080bce3a:	.asciz "Large DC current"
 t_080bce18:	.asciz "Large AC current"
 
 @ ----------------------------------------------------------------------------
-@ Signal generator: value names (d_0804c5bc) and waveform names (d_0804c61c)
+@ Signal generator: value names (d_0804c5bc) and waveform names (d_0804c61c). The waveform names say
+@ what the generator puts out (fill_output_waveform_table, src/siggen_55.s; tables waves.bin): V1.2.0
+@ called the duty-shaped triangle "Sawtooth wave", the exponentials "Index Up / Decrease", the sum of
+@ harmonics "Multi-audio" and the sinc pulse "Sink Pulse"; all fit the list's 100-pixel box.
 @ ----------------------------------------------------------------------------
 	.global t_080bcecc
 t_080bcecc:	.asciz "Frequency"
@@ -227,35 +230,36 @@ t_080bc179:	.asciz "Duty Cycle"
 	.global t_080bc117
 t_080bc117:	.asciz "Amplitude"
 	.global t_080bc2ab
-t_080bc2ab:	.asciz "Sine Wave"
+t_080bc2ab:	.asciz "Sine"
 	.global t_080bc2b5
-t_080bc2b5:	.asciz "Square Wave"
+t_080bc2b5:	.asciz "Square"
 	.global t_080bc2dd
-t_080bc2dd:	.asciz "Sawtooth wave"
+t_080bc2dd:	.asciz "Ramp"
 	.global t_080bc2eb
-t_080bc2eb:	.asciz "Half-wave"
+t_080bc2eb:	.asciz "Half Wave"
 	.global t_080bc2c1
 t_080bc2c1:	.asciz "Full Wave"
 	.global t_080bc2d3
-t_080bc2d3:	.asciz "Step Wave"
+t_080bc2d3:	.asciz "Step Up"
 	.global t_080bc2cb
-t_080bc2cb:	.asciz "Reverse Step Wave"
+t_080bc2cb:	.asciz "Step Down"
 	.global t_080bcac9
-t_080bcac9:	.asciz "Index Up"
+t_080bcac9:	.asciz "Exp Rise"
 	.global t_080bc244
-t_080bc244:	.asciz "Index Decrease"
+t_080bc244:	.asciz "Exp Fall"
 	.global t_080bce5c
-t_080bce5c:	.asciz "Direct current"
+t_080bce5c:	.asciz "DC"
 	.global t_080bc9b5
-t_080bc9b5:	.asciz "Multi-audio"
+t_080bc9b5:	.asciz "Harmonics"
 	.global t_080bc253
-t_080bc253:	.asciz "Sink Pulse"
+t_080bc253:	.asciz "Sinc Pulse"
 	.global t_080bccc0
-t_080bccc0:	.asciz "Lorentz waves"
+t_080bccc0:	.asciz "Lorentz"
 
 @ ----------------------------------------------------------------------------
 @ Oscilloscope: probe / coupling (d_0804c7bc), trigger labels (d_0804c7cc) and modes
-@ (d_0804c7e4), channels (d_0804c7fc), settings items (d_0804c804)
+@ (d_0804c7e4), channels (d_0804c7fc), settings items (d_0804c804; short names: the list box is
+@ 0x4c pixels wide and the text is wrapped by characters, V1.2.0's long names broke inside words)
 @ ----------------------------------------------------------------------------
 	.global t_080bb979
 t_080bb979:	.asciz "X1"
@@ -282,21 +286,21 @@ t_080bb975:	.asciz "CH1"
 	.global t_080bb9e0
 t_080bb9e0:	.asciz "CH2"
 	.global t_080bc104
-t_080bc104:	.asciz "Display Mode"
+t_080bc104:	.asciz "Display"
 	.global t_080bce05
-t_080bce05:	.asciz "Cursor Measurement"
+t_080bce05:	.asciz "Cursors"
 	.global t_080bcdef
-t_080bcdef:	.asciz "Parameter Measurement"
+t_080bcdef:	.asciz "Measure"
 	.global t_080bccce
-t_080bccce:	.asciz "CH1 Settings"
+t_080bccce:	.asciz "Channel 1"
 	.global t_080bccdb
-t_080bccdb:	.asciz "CH2 Settings"
+t_080bccdb:	.asciz "Channel 2"
 	.global t_080bcd0e
-t_080bcd0e:	.asciz "Trigger Settings"
+t_080bcd0e:	.asciz "Trigger"
 	.global t_080bc0e1
 t_080bc0e1:	.asciz "Persistence"
 	.global t_080bcc33
-t_080bcc33:	.asciz "Mathematics"
+t_080bcc33:	.asciz "Math"
 
 @ ----------------------------------------------------------------------------
 @ Volts per division (d_0804c954)
@@ -490,7 +494,7 @@ t_080bcc3f:	.asciz "%ds"
 	.global t_080bc8a6
 t_080bc8a6:	.asciz "Caution"
 	.global t_080bb479
-t_080bb479:	.asciz "Factory reset will undo all previous changes!"
+t_080bb479:	.asciz "Settings return to defaults."	@ one line in the 190-pixel box: the drawn text breaks inside words (V1.2.0's "Factory reset will undo all previous changes!" showed "previ / ous" with this rewrite's fonts, 1.4.3)
 	.global t_080bc8d7
 t_080bc8d7:	.asciz "Return"
 	.global t_080bc25e

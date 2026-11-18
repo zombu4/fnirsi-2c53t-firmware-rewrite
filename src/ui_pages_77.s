@@ -56,7 +56,7 @@
 @   0x33354332, halfword 0x54) and draws the text from 0x20008364 ("2C53T") at
 @   (0xdc,0xc4,0x5a,0x14).
 @ Case 5 (Factory Reset): 142.jpg at (0x70,0x30), "Caution" at (0xd2,0x35,0x5a,0x14),
-@   "Factory reset will undo all previous changes!" at (0x75,0x4c,0xbe,0x50,flag
+@   "Settings return to defaults." at (0x75,0x4c,0xbe,0x50,flag
 @   0x81); two button rows: fill
 @   (x 0x72..0x135, y 0x9c..0xb9, and y 0xc0..0xdd) when not highlighted
 @   (sel!=0 / sel!=1 or edit==0), otherwise 143.jpg at (0x70,0x9a) / (0x70,0xbe);
@@ -504,7 +504,7 @@ draw_page_by_selector_nibble:
 	movs	r3, #0x14
 	str	r5, [sp, #8]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #:lower16:t_080bb479	@ "Factory reset will undo all previous changes!"
+	movw	r0, #:lower16:t_080bb479	@ "Settings return to defaults."
 	movt	r0, #:upper16:t_080bb479
 	movs	r1, #0x81
 	str	r0, [sp, #0]

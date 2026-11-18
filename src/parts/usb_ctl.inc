@@ -28,7 +28,7 @@
 						@ 15 SCREENSHOT, 16 FILE_*, 17 events, 18 FLASH_READ
 
 @ RAM: 0x20036F90..0x20037FDF (above the application's stack top 0x20036F90, below the bootloader
-@ words at 0x20037FE0)
+@ words at 0x20037FE0); the top 48 bytes 0x20037FB0..0x20037FDF are the fault record (src/fault.s)
 	.equ	CTL,		0x20036F90
 	.equ	RX_RING,	CTL + 0x000	@ 1024 bytes
 	.equ	TX_RING,	CTL + 0x400	@ 1024 bytes
@@ -85,4 +85,7 @@
 
 	.equ	REMOTE_CODE,	0x80		@ queue code that runs the posted job in the key or display task
 	.equ	LOCK_VARS,	V + V_END	@ 8 bytes: storage lock owner, count (src/storage.s)
-	.equ	JOB_STACK_TOP,	0x20037FD8	@ private stack of the jobs, down to LOCK_VARS + 8
+	.equ	JOB_STACK_TOP,	0x20037FB0	@ private stack of the jobs, down to LOCK_VARS + 8 (752 bytes;
+						@ deepest use measured 488 bytes, 2026-11-18, NOTES.md); above
+						@ it the fault record FAULT_ADDR (48 bytes, src/fault.s) and 8
+						@ bytes unused

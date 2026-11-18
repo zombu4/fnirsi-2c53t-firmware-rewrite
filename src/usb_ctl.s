@@ -1706,8 +1706,8 @@ cmd_fw_install:
 	pop	{r4, pc}
 
 @ MEM_READ: address (u32), length (u16, at most 256). Read-only, allowed for the internal flash
-@ 0x08000000..0x080FFFFF and the bootloader words 0x20037FE0..0x20037FFF (diagnostics: records, slot
-@ headers and images, request / hand-over words); anything else: status 6.
+@ 0x08000000..0x080FFFFF and the RAM words 0x20037FB0..0x20037FFF (fault record, src/fault.s; request /
+@ hand-over words; diagnostics); anything else: status 6.
 	.thumb_func
 cmd_mem_read:
 	push	{r4, r5, r6, lr}
@@ -1725,7 +1725,7 @@ cmd_mem_read:
 	ldr	r1, =0x08100000
 	cmp	r0, r1
 	bls	2f
-1:	ldr	r1, =0x20037FE0
+1:	ldr	r1, =FAULT_ADDR
 	cmp	r4, r1
 	blo	7f
 	ldr	r1, =0x20038000

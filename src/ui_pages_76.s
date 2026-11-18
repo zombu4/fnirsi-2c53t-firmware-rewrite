@@ -242,7 +242,7 @@ draw_six_row_list_from_first_index:
 @ 0xffff, 0x055f, 0x0000 for idx 0..3); the unit colour uses idx with 3
 @ replaced by 1.
 @ Label: draw_wrapped_text_in_box (0800f154)(0x7a, y, 0x36, 0x16, word i of
-@ the English label table d_0804c5bc, font 0x20001114, label colour,
+@ the English label table d_0804c5bc, font 0x200010b4 (15 px; V1.2.0: 0x20001114), label colour,
 @ flag 1); unit: 0800f154(0x10e, y, 0x14, 0x16, word at 0x08015be0 + i*4 ("Hz",
 @ "%", "V"), font 0x20001114, unit colour, flag 1).
 @ Value text into 0x20008360 via format_to_buffer_080073b4: i=0 "%02d %03d" of
@@ -338,7 +338,9 @@ draw_three_value_rows:
 	movt	r11, #0x2000
 	sxth.w	r10, r4
 	str	r0, [sp]
-	strd	r11, r1, [sp, #4]
+	movw	r12, #0x10b4			@ label in the 15 px font (object 0x200010b4): "Frequency",
+	movt	r12, #0x2000			@ "Duty Cycle", "Amplitude" fit the 0x36-wide box; units and
+	strd	r12, r1, [sp, #4]		@ values keep the 18 px font (r11)
 	movs	r0, #0x7a
 	mov	r1, r10
 	movs	r2, #0x36

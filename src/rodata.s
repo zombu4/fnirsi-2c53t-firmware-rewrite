@@ -670,10 +670,10 @@ d_0804c5bc:
 @ V1.2.0: 8 language blocks of 13 words.
 	.global d_0804c61c
 d_0804c61c:
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ Sine Wave, Square Wave, Sawtooth wave, Half-wave
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9   @ Full Wave, Step Wave, Reverse Step Wave, Index Up
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253   @ Index Decrease, Direct current, Multi-audio, Sink Pulse
-	.word t_080bccc0                                       @ Lorentz waves
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ Sine, Square, Ramp, Half Wave
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9   @ Full Wave, Step Up, Step Down, Exp Rise
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253   @ Exp Fall, DC, Harmonics, Sinc Pulse
+	.word t_080bccc0                                       @ Lorentz
 @ DATA_0804c7bc: probe ratio texts; ldr.w r0,[r1,r0,lsl #0x2] at 0x0801e92a and 0x0801ea7a in
 @ draw_bottom_strip, and in draw_panels_by_selector_20001062
 	.global DATA_0804c7bc
@@ -708,12 +708,12 @@ DATA_0804c7fc:
 d_0804c7fc:
 	.word t_080bb975, t_080bb9e0                           @ CH1 CH2
 @ d_0804c804: oscilloscope settings items, word k = name of item k (fn_08012de0). Items:
-@ Display Mode, Cursor Measurement, Parameter Measurement, CH1 Settings, CH2 Settings, Trigger
-@ Settings, Persistence, Mathematics. V1.2.0: 8 language blocks of 8 words.
+@ Display, Cursors, Measure, Channel 1, Channel 2, Trigger, Persistence, Math (V1.2.0: Display Mode,
+@ Cursor Measurement, ..., Mathematics; 8 language blocks of 8 words).
 	.global d_0804c804
 d_0804c804:
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ Display Mode .. CH1 Settings
-	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33   @ CH2 Settings .. Mathematics
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ Display, Cursors, Measure, Channel 1
+	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33   @ Channel 2, Trigger, Persistence, Math
 @ (V1.2.0's title row 0x0804c904, "Oscilloscope Settings", is gone: the code names the text)
 @ d_0804c924: help box texts, word i = text for [0x20001061] = i (0..3), read by fn_08010014
 @ and fn_08012d2c. V1.2.0: four addresses of 8-word language rows.
@@ -829,8 +829,8 @@ UNREF_0804d841:
 d_0804d848:
 @ Our own tables, from tools/make_tables.py (project folder) waves(): 8 x 100 u16, values 0..4095,
 @ in the order the cases reach them: T0 sine (case 0), T1 half wave (3), T2 full wave (4),
-@ T3 exponential rise "Index Up" (7), T4 1 - exponential "Index Decrease" (8), T5 sum of
-@ harmonics 1..5 "Multi-audio" (10), T6 sin(x)/x "Sink Pulse" (11), T7 1/(1+x^2) "Lorentz waves" (12).
+@ T3 exponential rise "Exp Rise" (7), T4 1 - exponential "Exp Fall" (8), T5 sum of
+@ harmonics 1..5 "Harmonics" (10), T6 sin(x)/x "Sinc Pulse" (11), T7 1/(1+x^2) "Lorentz" (12).
 	.incbin "assets/tables/waves.bin"
 @ d_0804de88: lower value panel frame (own picture, tools/make_pictures.py): 300 x 52 4 bpp coverage
 @ mask, rows packed without padding (300 is even), 7800 bytes, a frame with rounded corners and

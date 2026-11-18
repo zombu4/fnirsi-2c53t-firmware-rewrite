@@ -96,6 +96,9 @@
 @ 0x20036F90; the bootloader's RAM ends at 0x20001A08, the starter's stack is below that); inside the
 @ 224 KB the application needs (EOPB0 = FE); they survive a system reset (CONTROL_DESIGN.md revision 2,
 @ items 3 and 4)
+	.equ	FAULT_ADDR,	0x20037FB0	@ fault record (48 bytes, src/fault.s): the top of the USB control
+						@ area (src/parts/usb_ctl.inc), above the job stack
+	.equ	FAULT_MAGIC,	0xFA017EC0
 	.equ	REQ_ADDR,	0x20037FE0	@ update request, written by the application before its reset:
 	.equ	REQ_MAGIC,	0xB0075AFE	@   +0 magic, +4 image CRC-32, +8 image length, +12 ~magic
 	.equ	HANDOVER_ADDR,	0x20037FF0	@ hand-over, written by the bootloader before it starts the

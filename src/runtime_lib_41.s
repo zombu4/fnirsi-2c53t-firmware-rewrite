@@ -282,12 +282,31 @@ fn_0800788e:
 @ stmia of four words), 16/8/4 byte word stores and 2/1 byte tails. Returns
 @ the pointer after the last byte written in r0.
 @ ----------------------------------------------------------------------------
+@ This rewrite: when the destination lies in the table of the 32-unit allocator (0x2BC0 bytes from
+@ the word at 0x2000107C, src/heap_15.s) the bytes are cleared with interrupts masked: every free
+@ clears its block's entries through zero_bytes (free_units_of_32_bytes and the copies the compiler
+@ inlined in about 60 callers), and the allocation itself is masked, so a clear and an allocation
+@ never interleave. Other destinations: unchanged (same registers: r0 = end, r1..r3, ip, flags
+@ clobbered).
 	.section .text.zero_bytes,"ax",%progbits
 	.global zero_bytes
 	.thumb_func
 	.type zero_bytes, %function
 zero_bytes:
-	mov.w	r2, #0x0
+	movw	r2, #0x107c
+	movt	r2, #0x2000
+	ldr	r2, [r2]			@ r2 = allocator table (word 0x2000107C)
+	subs	r3, r0, r2
+	cmp	r3, #0x2bc0
+	bhs	1f				@ not in the table: plain clear
+	push	{r4, lr}
+	mrs	r4, primask
+	cpsid	i
+	movs	r2, #0
+	bl	fill_bytes_body
+	msr	primask, r4
+	pop	{r4, pc}
+1:	mov.w	r2, #0x0			@ falls through into fill_bytes_body
 
 @ ----------------------------------------------------------------------------
 @ fill_bytes_body - r0 = destination (any alignment), r1 = byte count,

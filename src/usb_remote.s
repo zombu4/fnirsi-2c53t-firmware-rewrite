@@ -1840,7 +1840,10 @@ send_event:
 
 	.ltorg
 
-	.if	JOB_STACK_TOP - (LOCK_VARS + 8) < 768
-	.error	"job stack below 768 bytes"
+	.if	JOB_STACK_TOP - (LOCK_VARS + 8) < 752		@ deepest use measured: 488 bytes (NOTES.md)
+	.error	"job stack below 752 bytes"
+	.endif
+	.if	JOB_STACK_TOP > FAULT_ADDR
+	.error	"job stack overlaps the fault record"
 	.endif
 

@@ -150,6 +150,14 @@ drive, read the volume with `dd`, add the file with `mcopy` (mtools, `MTOOLS_SKI
 the macOS entries, and write back only the changed 2048-byte sectors with `dd`. The new bootloader
 ignores "._" files by their content.
 
+### User-interface pictures
+
+The menus, buttons and dialogs are JPEG pictures that the firmware loads from the meter's own drive
+`3:/System file/NNN.jpg`; the meter keeps them there, they are not part of the application image.
+`assets/ui/` holds our own set (160 pictures, the numbers and sizes the firmware draws). With
+application 1.4.0 or later each one can be written over USB with FILE_WRITE to
+`3:/System file/NNN.jpg` and read back with FILE_READ to check it (`PROTOCOL.md` 4.10).
+
 ---
 
 ## Repository layout
@@ -162,6 +170,7 @@ ignores "._" files by their content.
 | `assets/fonts/` | application fonts: DejaVu Sans Condensed 2.37 rendered at 4 bpp (`LICENSE-DejaVu.txt`), own 7-segment font |
 | `assets/pictures/` | own boot logo, boot animation sprites, trigger icons, value panel and message box frames |
 | `assets/tables/` | computed tables (sine, FFT twiddles and swap order, JPEG IDCT scale and clamp, signal generator waveforms) and the FatFs code page / case tables (`LICENSE-FatFs.txt`) |
+| `assets/ui/` | own user-interface pictures for the meter's drive 3: (`3:/System file/NNN.jpg`) |
 | `assets/vendor_kept/` | `fpga.bin` (FPGA configuration stream) and `filter_bank.bin` (filter coefficients): the vendor's data, kept for now |
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
@@ -184,7 +193,8 @@ SIL Open Font License 1.1 (`bootloader/assets/OFL.txt`).
 
 The application's text fonts (`assets/fonts/`) are rendered from DejaVu Sans Condensed 2.37: Bitstream
 Vera Fonts Copyright (c) 2003 by Bitstream, Inc., Arev Fonts Copyright (c) 2006 by Tavmjong Bah,
-DejaVu changes in the public domain; license text in `assets/fonts/LICENSE-DejaVu.txt`.
+DejaVu changes in the public domain; license text in `assets/fonts/LICENSE-DejaVu.txt`. The words drawn
+into the user-interface pictures (`assets/ui/`) use the same fonts.
 
 The file system code page and case conversion tables (`assets/tables/fat_*.bin`) are data of FatFs
 R0.15, Copyright (C) ChaN, under the FatFs license (`assets/tables/LICENSE-FatFs.txt`).

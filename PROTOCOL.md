@@ -223,5 +223,11 @@ The host confirms the result afterwards with INFO (new firmware version, last up
 
 | cmd | Name | Request | Answer data |
 |---|---|---|---|
-| 0xF0 | MEM_READ | address (u32), length (u16, at most 256) | bytes; read-only, only internal flash 0x08000000..0x080FFFFF and the bootloader words 0x20037FE0..0x20037FFF (status 6 otherwise) |
+| 0xF0 | MEM_READ | address (u32), length (u16, at most 256) | bytes; read-only, only internal flash 0x08000000..0x080FFFFF and the RAM words 0x20037FB0..0x20037FFF (fault record, then the bootloader words) (status 6 otherwise) |
 | 0xF2 | FLASH_READ | address (u32), length (u16, 1..256), address + length at most 16 MB | bytes of the external SPI flash (drive 3: from 0, drive 2: from 0x200000); read-only |
+
+Fault record (MEM_READ 0x20037FB0, 48 bytes, little-endian words; `src/fault.s`): +0 magic 0xFA017EC0
+when valid, +4 exception number (3 hard fault, 4 memory management, 5 bus, 6 usage fault), +8 stacked
+PC, +12 stacked LR, +16 stacked xPSR, +20 CFSR, +24 HFSR, +28 MMFAR, +32 BFAR, +36 stack pointer of the
+frame, +40 current task record, +44 faults since the record was first written. The meter restarts right
+after writing it; the record survives restarts, not power-off.

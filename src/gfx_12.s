@@ -16,8 +16,10 @@
 @ metrics callback returns 0. Then allocates 4*n bytes and 12*n bytes with
 @ alloc_units_of_32_bytes (0803acfc; returns at once if the first allocation
 @ fails) and fills the code point array and the metric record array.
-@ Word wrap inside the width: the line breaks at a space (0x20); a trailing
-@ space is dropped.
+@ Word wrap inside the width: the counting pass backs up to a space (0x20,
+@ .L0800f26c); a trailing space is dropped. The drawing passes break where the
+@ width is reached, inside a word (on the meter, 2026-11-18: "Parameter M /
+@ easurement", "previ / ous"): texts are chosen to fit their boxes.
 @ Flags: bit 7 set = lines start at y with no vertical centring and the low
 @ nibble selects the alignment (1 = centre each line horizontally, 2 = right
 @ align, other = left). Bit 7 clear = the whole flags word is compared (== 1
