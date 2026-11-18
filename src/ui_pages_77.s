@@ -42,7 +42,14 @@
 @ Case 3 (USB Sharing): one row, fill y 0x70..0x8f when edit==0 with 77.jpg at (0xa6,0x79),
 @   else 72.jpg (0x79,0x6f) and 78.jpg (0xa5,0x77); label "ON" at
 @   (0xb6,0x6f,0x5c,0x22).
-@ Case 4 (About): 141.jpg at (0x72,0x30); texts "Version:" (d_0804c218 word 0) at
+@ Case 4 (About): no vendor file (V1.2.0 drew 3:/System file/141.jpg at (0x72,0x30)).
+@   The panel buffer (x 0x72, y 0x18, 0xce x 0xd8) is zero-filled (colour 0x0000) by the
+@   callers fn_08011140 / save_screen_bmp before this function runs. draw_4bpp_bitmap
+@   draws our logo d_0804ca24 (194 x 35) at (0x78,0x50) in 0x4d3f, sprite 0 d_0804d767
+@   (10 x 10, the dot of the final i) at (0x131,0x4f) in 0xfd88 (the colours of the boot
+@   colour sweep, table 0x0802c0ac in system_bring_up_p2.inc) and the message-box frame
+@   d_0804fd00 (198 x 83) at (0x76,0x93) in 0x055f (as draw_bitmap_and_text); then the
+@   texts "Version:" (d_0804c218 word 0) at
 @   (0x82,0xa0,0x5a,0x14) and " Model:" (word 1) at (0x82,0xc4,0x5a,0x14)
 @   (colour 0xffff, flag 0); "V%s" of firmware_version_text at (0xdc,0xa0,0x5a,0x14); writes
 @   "APP_2C53T" plus zero into 0x20008360..0x20008369 (word 0x5f505041, word
@@ -395,12 +402,35 @@ draw_page_by_selector_nibble:
 	movs	r0, #2
 	b.w	.L0801dbf0
 .L0801d300:
-	movw	r0, #:lower16:t_080bc43f
-	movt	r0, #:upper16:t_080bc43f
-	movs	r1, #0x72
-	movs	r2, #0x30
-	mov	r5, r3
-	bl	decode_image_file_with_offset
+	@ The panel (x 0x72..0x13f, y 0x18..0xef) arrives zero-filled (colour 0x0000) from
+	@ fn_08011140 / save_screen_bmp; only our own pictures are drawn on it.
+	movw	r0, #:lower16:d_0804ca24	@ logo "F***NIRS" + dotless i, 194 x 35
+	movt	r0, #:upper16:d_0804ca24
+	movw	r1, #0x4d3f			@ logo colour of the boot colour sweep (table 0x0802c0ac, k 0)
+	strd	r0, r1, [sp, #0]		@ [sp] bitmap, [sp+4] colour
+	movs	r0, #0x78			@ x 120: (206 - 194) / 2 from the panel's left edge 0x72
+	movs	r1, #0x50			@ y 80: centred between y 0x30 and the frame top 0x93
+	movs	r2, #0xc2			@ width 194
+	movs	r3, #0x23			@ height 35
+	bl	draw_4bpp_bitmap
+	movw	r0, #:lower16:d_0804d767	@ sprite 0, 10 x 10: the dot of the final i
+	movt	r0, #:upper16:d_0804d767
+	movw	r1, #0xfd88			@ sprite 0's sweep colour (table 0x0802c0ac, k 1)
+	strd	r0, r1, [sp, #0]
+	movw	r0, #0x131			@ logo x + 185 (boot animation: logo x 55, sprite x 240)
+	movs	r1, #0x4f			@ logo y - 1 (boot animation: logo y 103, sprite y 102)
+	movs	r2, #0xa
+	movs	r3, #0xa
+	bl	draw_4bpp_bitmap
+	movw	r0, #:lower16:d_0804fd00	@ message-box frame, 198 x 83
+	movt	r0, #:upper16:d_0804fd00
+	movw	r1, #0x55f			@ frame colour of draw_bitmap_and_text
+	strd	r0, r1, [sp, #0]
+	movs	r0, #0x76			@ x 118..315: (206 - 198) / 2 from 0x72
+	movs	r1, #0x93			@ y 147..229: around the texts at y 0xa0..0xd7
+	movs	r2, #0xc6			@ width 198
+	movs	r3, #0x53			@ height 83
+	bl	draw_4bpp_bitmap
 	movw	r4, #:lower16:d_0804c218	@ About labels "Version:", " Model:"
 	movt	r4, #:upper16:d_0804c218
 	ldr	r0, [r4, #0]			@ "Version:"

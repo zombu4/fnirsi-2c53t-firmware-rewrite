@@ -582,8 +582,6 @@ t_080bc5e5:	.asciz "3:/System file/138.jpg"
 t_080bc628:	.asciz "3:/System file/139.jpg"
 	.global t_080bc412
 t_080bc412:	.asciz "3:/System file/140.jpg"
-	.global t_080bc43f
-t_080bc43f:	.asciz "3:/System file/141.jpg"
 	.global t_080bc4c5
 t_080bc4c5:	.asciz "3:/System file/143.jpg"
 	.global t_080bc533
