@@ -28,9 +28,8 @@
 @ case 1: same two panels, 74/75 chosen by bit0 of [0x20000332] (panel 1) and bit1
 @ (panel 2) (77/78 when the bit is clear), labels "X1-X2" and "Y1-Y2".
 @
-@ case 2: image at (0x72,0x1b): when [0x20001058]==1: 81.jpg if [0x20001061]==0, else
-@ 85.jpg (83.jpg when [0x20001063]&0xf==0); otherwise 82.jpg / 86.jpg / 84.jpg
-@ likewise. Boxes 08020ce8(x,y,0x36,0x12,0x2965,colour) with colour = halfword at
+@ case 2: image at (0x72,0x1b): 82.jpg if [0x20001061]==0, else 86.jpg (84.jpg when
+@ [0x20001063]&0xf==0) (V1.2.0 drew 81 / 85 / 83 for language byte 1). Boxes 08020ce8(x,y,0x36,0x12,0x2965,colour) with colour = halfword at
 @ 0x080bb40c (or 0x080bb40e for the second group)+4*[0x20001058+3].
 @ If [0x20001063]&0xf==0: box (0xbb,0x26) when [0x20000144]&0xfff==0xfff, box
 @ (0xf9,0x26) when it is 0, boxes for each set bit i of [0x20000144] bits 0..11 at
@@ -50,24 +49,24 @@
 @ fill unless ([0x20001061]!=0 and i==[0x20001063]) which draws 72.jpg at
 @ (0x79,0x24*i+0x3d); colour index 2 when i==[0x20001063], else 1 when
 @ (([0x20001062]&0xf)-2)&[0x2000010c]!=0, else 0; label pointer from the array
-@ 0x08014198 at index i (+5 when [0x20001058]!=1) drawn at (0x80,0x24*i+0x3e,100,0x20)
+@ .L08014198 at index i drawn at (0x80,0x24*i+0x3e,100,0x20)
 @ flag 0; image path from the array 0x080141c0[colour index] (79.jpg, 79.jpg, 80.jpg)
 @ at (0xe4,0x24*i+0x45); value text at (0xe4,0x24*i+0x44,0x42,0x14) flag 1: m=1
 @ (case 3) or 2 (case 4): i=0 "ON"/"OFF" by [0x2000010c]&m, i=1 pointer array
 @ 0x0804c7bc[byte 0x200000fd+m], i=2 0x0804c7c4[byte 0x200000f7+m], i=3
 @ 0x080141cc[byte 0x20000101+m].
 @
-@ case 5: three panels, k=0 when [0x20001058]==1 else 3: panel 1 rows 0x4c..0x6b
+@ case 5: three panels (labels d_0804c7cc words 0..2, English): panel 1 rows 0x4c..0x6b
 @ (selected when [0x20001061]!=0 and [0x20001063]==0 draws 72.jpg at (0x79,0x4b)):
-@ label word 0x0804c7cc+4k at (0x80,0x4c,100,0x20) flag 0, image 80.jpg if
+@ label "Mode:" at (0x80,0x4c,100,0x20) flag 0, image 80.jpg if
 @ [0x20001063]==0 else 79.jpg at (0xe4,0x53), value word
-@ 0x0804c7e4+4k+4*[0x2000010f] at (0xe4,0x52,0x42,0x14) flag 1.
+@ d_0804c7e4+4*[0x2000010f] at (0xe4,0x52,0x42,0x14) flag 1.
 @ panel 2 rows 0x70..0x8f (selected with [0x20001063]==1, 72.jpg at (0x79,0x6f)):
-@ label word 0x0804c7d0+4k at (0x80,0x70,100,0x20), image 80/79.jpg at (0xe4,0x77), a
+@ label "Edge:" at (0x80,0x70,100,0x20), image 80/79.jpg at (0xe4,0x77), a
 @ 16x16 one-bit bitmap from the table at 0x0804d7d3+0x20*[0x20000110] (32 bytes, MSB
 @ first) drawn in the label colour at x 0xfd..0x10c, y 0x78..0x87.
 @ panel 3 rows 0x94..0xb3 (selected with [0x20001063]==2, 72.jpg at (0x79,0x93)):
-@ label word 0x0804c7d4+4k at (0x80,0x94,100,0x20), image 80/79.jpg at (0xe4,0x9b),
+@ label "Channel:" at (0x80,0x94,100,0x20), image 80/79.jpg at (0xe4,0x9b),
 @ value word 0x0804c7fc+4*[0x2000010e] at (0xe4,0x9a,0x42,0x14) flag 1.
 @
 @ case 6: four panels, rows 0x3e..0x5d, 0x62..0x81, 0x86..0xa5, 0xaa..0xc9, panel j
@@ -253,14 +252,8 @@ draw_panels_by_selector_20001062:
 	it	ne
 	movne	r6, #1
 .L080134d2:
-	ldrb.w	r0, [r12, #0xf60]
-	adr.w	r1, .L08014198
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #2
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, r10, lsl #2]
+	adr.w	r1, .L08014198		@ English channel panel labels
+	ldr.w	r0, [r1, r10, lsl #2]
 	movw	r1, #:lower16:d_0804c180
 	movt	r1, #:upper16:d_0804c180
 	ldr	r4, [sp, #0x14]
@@ -381,21 +374,22 @@ draw_panels_by_selector_20001062:
 	movs	r1, #0xa5
 	b.w	.L08014312
 .L08013642:
-	ldrb.w	r1, [r12, #0xf60]
+	@ case 2: picture 82.jpg ([0x20001061] == 0), else 86.jpg, or 84.jpg when the low
+	@ nibble of [0x20001063] is 0 (the English pictures; V1.2.0 drew 81 / 85 / 83 for
+	@ language byte 1)
 	ldrb.w	r0, [r12, #0xf69]
-	cmp	r1, #1
-	bne.w	.L08013c3a
 	cmp	r0, #0
-	beq.w	.L080144fa
+	beq.w	.L08014504
 	ldrb.w	r0, [r12, #0xf6b]
-	movw	r1, #:lower16:t_080bc4dc
+	movw	r1, #:lower16:t_080bc508
 	lsls	r0, r0, #0x1c
-	movw	r0, #:lower16:t_080bc560
-	movt	r0, #:upper16:t_080bc560
-	movt	r1, #:upper16:t_080bc4dc
+	movw	r0, #:lower16:t_080bc5a2
+	movt	r0, #:upper16:t_080bc5a2
+	mov	r4, r12
+	movt	r1, #:upper16:t_080bc508
 	it	eq
 	moveq	r0, r1
-	b.w	.L0801450c
+	b.w	.L0801450e
 .L08013674:
 	ldrb.w	r0, [r12, #0xf69]
 	cmp	r0, #0
@@ -412,19 +406,14 @@ draw_panels_by_selector_20001062:
 	movw	r4, #0xf8
 	movt	r4, #0x2000
 	ldrb.w	r7, [r4, #0xf6b]
-	ldrb.w	r0, [r4, #0xf60]
 	movs	r1, #2
 	cmp	r7, #0
 	it	eq
 	moveq	r1, #4
-	subs	r0, #1
-	movw	r10, #:lower16:d_0804c7cc
-	it	ne
-	movne	r0, #1
-	orr.w	r6, r0, r0, lsl #1
+	movw	r10, #:lower16:d_0804c7cc	@ English trigger labels Mode: Edge: Channel:
 	movt	r10, #:upper16:d_0804c7cc
 	movw	r2, #:lower16:d_0804c180
-	ldr.w	r0, [r10, r6, lsl #2]
+	ldr.w	r0, [r10]			@ "Mode:"
 	movt	r2, #:upper16:d_0804c180
 	movw	r11, #0x1114
 	ldrh	r5, [r2, r1]
@@ -449,10 +438,9 @@ draw_panels_by_selector_20001062:
 	movs	r1, #0xe4
 	movs	r2, #0x53
 	bl	decode_image_file_with_offset
-	movw	r1, #:lower16:d_0804c7e4
-	ldrb	r0, [r4, #0x17]
+	movw	r1, #:lower16:d_0804c7e4	@ English trigger modes
+	ldrb	r0, [r4, #0x17]			@ mode byte 0x2000010f
 	movt	r1, #:upper16:d_0804c7e4
-	add.w	r1, r1, r6, lsl #2
 	ldr.w	r0, [r1, r0, lsl #2]
 	movs	r1, #1
 	str	r0, [sp, #0]
@@ -478,18 +466,12 @@ draw_panels_by_selector_20001062:
 	movw	r5, #0xf8
 	movt	r5, #0x2000
 	ldrb.w	r4, [r5, #0xf6b]
-	ldrb.w	r0, [r5, #0xf60]
 	movs	r1, #2
 	cmp	r4, #1
 	it	eq
 	moveq	r1, #4
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #1
-	add.w	r0, r10, r0, lsl #2
 	movw	r2, #:lower16:d_0804c180
-	ldr	r0, [r0, #4]
+	ldr.w	r0, [r10, #4]			@ "Edge:" (r10 = d_0804c7cc)
 	movt	r2, #:upper16:d_0804c180
 	ldrh.w	r9, [r2, r1]
 	movs	r7, #0
@@ -675,18 +657,12 @@ draw_panels_by_selector_20001062:
 	movw	r6, #0xf8
 	movt	r6, #0x2000
 	ldrb.w	r4, [r6, #0xf6b]
-	ldrb.w	r0, [r6, #0xf60]
 	movs	r1, #2
 	cmp	r4, #2
 	it	eq
 	moveq	r1, #4
-	subs	r0, #1
-	it	ne
-	movne	r0, #1
-	orr.w	r0, r0, r0, lsl #1
-	add.w	r0, r10, r0, lsl #2
 	movw	r2, #:lower16:d_0804c180
-	ldr	r0, [r0, #8]
+	ldr.w	r0, [r10, #8]			@ "Channel:" (r10 = d_0804c7cc)
 	movt	r2, #:upper16:d_0804c180
 	ldrh	r5, [r2, r1]
 	movs	r1, #0
@@ -998,19 +974,6 @@ draw_panels_by_selector_20001062:
 	add	r1, r5
 	strh.w	r12, [r8, r1, lsl #1]
 	b.n	.L08013bbc
-.L08013c3a:
-	cmp	r0, #0
-	beq.w	.L08014504
-	ldrb.w	r0, [r12, #0xf6b]
-	movw	r1, #:lower16:t_080bc508
-	lsls	r0, r0, #0x1c
-	movw	r0, #:lower16:t_080bc5a2
-	movt	r0, #:upper16:t_080bc5a2
-	mov	r4, r12
-	movt	r1, #:upper16:t_080bc508
-	it	eq
-	moveq	r0, r1
-	b.w	.L0801450e
 .L08013c60:
 	movw	r2, #0x8350
 	movs	r0, #0x4c
@@ -1648,13 +1611,8 @@ draw_panels_by_selector_20001062:
 	movs	r5, #0x7b
 	b.n	.L080141da
 .L08014198:
-	@ channel panel labels, two sets of 5 (V1.2.0: Chinese, then English), chosen by the
-	@ language byte: both sets English now
-	.word	t_080bba5a	@ "Channel:"
-	.word	t_080bba2a	@ "Probe:"
-	.word	t_080bba3d	@ "Coupling:"
-	.word	t_080bba25	@ "FFT:"
-	.word	t_080bbaac	@ "20M Limit:"
+	@ channel panel labels, one word per row (English; V1.2.0 held a Chinese set of 5 in
+	@ front, chosen by the language byte)
 	.word	t_080bba5a	@ "Channel:"
 	.word	t_080bba2a	@ "Probe:"
 	.word	t_080bba3d	@ "Coupling:"

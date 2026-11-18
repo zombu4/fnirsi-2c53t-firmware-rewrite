@@ -811,7 +811,7 @@ fn_0800e630:
 @ case 5: 0,0x25,9,0x26,0x27,0x28 (0x40011008 read, unused)
 @ case 6: 0x29
 @ case 7: 0x15
-@ case 8: 0,0x2c
+@ case 8: nothing (V1.2.0: 0,0x2c, the language page, which is removed)
 @ case 9: 0,0x12,0x13,0x14,9,X
 @ X is 7 when bit7 of the word at 0x40011008 is set, otherwise 10 (cases
 @ 1,2,3,9). Other values send nothing.
@@ -843,7 +843,7 @@ send_state_message_sequence:
 	.short (.L08012bbe - .L0801292a)/2
 	.short (.L08012c2a - .L0801292a)/2
 	.short (.L08012c2e - .L0801292a)/2
-	.short (.L08012ca6 - .L0801292a)/2
+	.short (.L08012cce - .L0801292a)/2	@ state 8: nothing (V1.2.0: 0, 0x2c for the language page)
 	.short (.L08012c32 - .L0801292a)/2
 .L0801293e:
 	movs r1, #0
@@ -1149,15 +1149,6 @@ send_state_message_sequence:
 	mov.w r0, #7
 	it pl
 	movpl r0, #0xa
-	b.n .L08012cbc
-.L08012ca6:
-	movs r1, #0
-	ldr r0, [r5, #0x0]
-	strb.w r1, [sp, #7]
-	add.w r1, sp, #7
-	mov.w r2, #0xffffffff
-	bl queue_send_timeout
-	movs r0, #0x2c
 .L08012cbc:
 	strb.w r0, [sp, #7]
 	ldr r0, [r5, #0x0]

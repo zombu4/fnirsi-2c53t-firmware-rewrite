@@ -8,15 +8,15 @@
 @ ----------------------------------------------------------------------------
 @ draw_image_two_texts_and_s_value - no parameters, no return value.
 @ Calls decode_image_file_with_offset("3:/System file/145.jpg", 0x46, 0x43).
-@ Then draw_wrapped_text_in_box(0x48, 0x48, 0xb0, 0x14, word at 0x0804c1c4 +
-@ byte(0x20001058)*4, font block 0x200010e4, colour 0, flag 1) and
-@ draw_wrapped_text_in_box(0x48, 0x7a, 0xb0, 0x28, word at 0x0804c1e4 +
-@ byte(0x20001058)*4, font 0x200010e4, colour 0xf800, flag 0x81).
+@ Then draw_wrapped_text_in_box(0x48, 0x48, 0xb0, 0x14, "Battery low, charge
+@ now", font block 0x200010e4, colour 0, flag 1) and
+@ draw_wrapped_text_in_box(0x48, 0x7a, 0xb0, 0x28, "Auto shutdown soon", font
+@ 0x200010e4, colour 0xf800, flag 0x81).
 @ Formats "%ds" of (0xe - byte 0x2000105e) with format_to_buffer_080073b4 into
 @ 0x20008360 and draws it with draw_wrapped_text_in_box(0x48, 0x61, 0xb0, 0x19,
 @ 0x20008360, font 0x20001174, colour 0xf800, flag 0x81).
-@ Purpose: draws an image, two language-indexed texts and the text "%ds" of
-@ (0xe - byte 0x2000105e); what they are for is not determined from the code.
+@ Purpose: draws an image, the two warning texts and the text "%ds" of
+@ (0xe - byte 0x2000105e); what the count is for is not determined from the code.
 @ ----------------------------------------------------------------------------
 	.section .text.draw_image_two_texts_and_s_value,"ax",%progbits
 	.p2align 2
@@ -33,11 +33,8 @@ draw_image_two_texts_and_s_value:
 	bl	decode_image_file_with_offset
 	movw	r4, #0xf8
 	movt	r4, #0x2000
-	ldrb.w	r0, [r4, #0xf60]
-	movw	r1, #:lower16:d_0804c1c8
-	movt	r1, #:upper16:d_0804c1c8
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bceb4	@ "Battery low, charge now"
+	movt	r0, #:upper16:t_080bceb4
 	movs	r1, #0x1
 	movs	r2, #0x0
 	movw	r6, #0x10e4
@@ -50,11 +47,8 @@ draw_image_two_texts_and_s_value:
 	movs	r3, #0x14
 	str	r6, [sp, #0x4]
 	bl	draw_wrapped_text_in_box
-	ldrb.w	r0, [r4, #0xf60]
-	movw	r1, #:lower16:d_0804c1e8
-	movt	r1, #:upper16:d_0804c1e8
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bc8ae	@ "Auto shutdown soon"
+	movt	r0, #:upper16:t_080bc8ae
 	movs	r5, #0x81
 	mov.w	r7, #0xf800
 	stm.w	sp, {r0, r6, r7}
@@ -89,10 +83,10 @@ draw_image_two_texts_and_s_value:
 @ ----------------------------------------------------------------------------
 @ fn_0801e514 - no parameters, no return value.
 @ Calls decode_image_file_with_offset("3:/System file/71.jpg", 0, 0), then
-@ draw_wrapped_text_in_box(0x34, 0, 0xd8, 0x14, word at 0x0804c1a4 +
-@ byte(0x20001058)*4, font block 0x20001144, colour 0xffff, flag 1).
-@ Purpose: draws an image file and a language-indexed text at the top of the
-@ screen; the screen it belongs to is not determined from the code.
+@ draw_wrapped_text_in_box(0x34, 0, 0xd8, 0x14, "Image Viewer", font block
+@ 0x20001144, colour 0xffff, flag 1).
+@ Purpose: draws an image file and the title "Image Viewer" at the top of the
+@ screen.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0801e514,"ax",%progbits
 	.p2align 2
@@ -107,13 +101,8 @@ fn_0801e514:
 	movs	r1, #0x0
 	movs	r2, #0x0
 	bl	decode_image_file_with_offset
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	movw	r1, #:lower16:d_0804c1a8
-	movt	r1, #:upper16:d_0804c1a8
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bcb6e	@ "Image Viewer"
+	movt	r0, #:upper16:t_080bcb6e
 	movw	r2, #0x1144
 	movw	r1, #0xffff
 	movt	r2, #0x2000
@@ -387,7 +376,7 @@ draw_page_position_bar:
 @ 0x0804c7c4+byte(0x200000f8)*4), colour 0xffff, flag 1, and the word
 @ 0x0804c7c4+byte(0x200000f8)*4 right-aligned (flag 2) over the whole cell;
 @ right cell identically with bytes 0x200000ff, 0x200000f9 and x+0xe3.
-@ Centre: word at 0x0804c7e4+(byte 0x2000010f + 3*(byte 0x20001058 != 1))*4 at
+@ Centre: word byte(0x2000010f) of the English mode table d_0804c7e4 at
 @ (0x7f, 0xdd, 0x56, 0x13, colour 0xffff, flag 0); then a 16x16 1-bit bitmap at
 @ 0x0804d7d3+byte(0x20000110)*0x20 (2 bytes per row, most significant bit
 @ first, rows y=0xdf..0xee) is plotted pixel by pixel (set bits only, clipped
@@ -726,15 +715,9 @@ draw_bottom_strip:
 	str.w	r8, [sp, #0xc]
 	str.w	r9, [sp, #8]
 	bl	draw_wrapped_text_in_box
-	ldrb.w	r0, [r7, #0xf60]
-	movw	r2, #:lower16:d_0804c7e4
-	subs.w	r8, r0, #1
-	it	ne
-	movne.w	r8, #1
-	ldrb	r0, [r7, #0x17]
-	orr.w	r1, r8, r8, lsl #1
-	movt	r2, #:upper16:d_0804c7e4
-	add.w	r5, r2, r1, lsl #2
+	movw	r5, #:lower16:d_0804c7e4	@ English trigger mode names
+	ldrb	r0, [r7, #0x17]			@ mode byte 0x2000010f
+	movt	r5, #:upper16:d_0804c7e4
 	ldr.w	r0, [r5, r0, lsl #2]
 	movs	r1, #0xdd
 	stm.w	sp, {r0, r6, r9}
@@ -778,10 +761,8 @@ draw_bottom_strip:
 	movt	r0, #0x2000
 	movw	r2, #:lower16:d_0804c7e4
 	ldrb	r0, [r0, #0x17]
-	add.w	r1, r8, r8, lsl #1
 	movt	r2, #:upper16:d_0804c7e4
-	add.w	r1, r2, r1, lsl #2
-	ldr.w	r5, [r1, r0, lsl #2]
+	ldr.w	r5, [r2, r0, lsl #2]
 	movs	r4, #0x0
 	add.w	r10, sp, #0x1c
 	add.w	r11, sp, #0x20
@@ -1389,12 +1370,11 @@ draw_thumbnail_grid:
 @ (format_to_buffer_080073b4) and draws it with decode_image_file_with_offset
 @ at (0x3d, 0x32).
 @ Three texts with draw_wrapped_text_in_box(0x3f, y, 0xc2, 0x14, word, font
-@ block 0x20001144, colour, 1): y=0x30 word at 0x0801f260+byte(0x20001058)*4
-@ colour 0; y=0x5c word at 0x0801f280+lang*4 colour 0x55f when byte 0x20000f14
-@ == 1 else 0xffff; y=0x83 word at 0x0801f2a0+lang*4 colour 0xffff when byte
-@ 0x20000f14 == 1 else 0x55f. (The three word tables are the literal data
-@ after the code, at 0x0801f264, 0x0801f284 and 0x0801f2a4, entry lang-1.)
-@ Purpose: draws image (0x94 + byte 0x20000f14).jpg and three language-indexed
+@ block 0x20001144, colour, 1): y=0x30 "Delete" colour 0; y=0x5c "Confirm"
+@ colour 0x55f when byte 0x20000f14 == 1 else 0xffff; y=0x83 "Cancel" colour
+@ 0xffff when byte 0x20000f14 == 1 else 0x55f. (V1.2.0 took the three texts
+@ from 8-word language tables after the code.)
+@ Purpose: draws image (0x94 + byte 0x20000f14).jpg and the three dialog
 @ texts; with byte 0x20000f14 == 1 the second text uses colour 0x55f and the
 @ third 0xffff, otherwise the reverse; what they are for is not determined from
 @ the code.
@@ -1421,10 +1401,8 @@ draw_image_and_three_texts:
 	movs	r1, #0x3d
 	movs	r2, #0x32
 	bl	decode_image_file_with_offset
-	ldrb.w	r0, [r5, #0xf60]
-	adr	r1, .L0801f264
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bc25e	@ "Delete"
+	movt	r0, #:upper16:t_080bc25e
 	movw	r6, #0x1144
 	movs	r1, #0x0
 	movt	r6, #0x2000
@@ -1437,11 +1415,9 @@ draw_image_and_three_texts:
 	movs	r3, #0x14
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	ldrb.w	r0, [r5, #0xf60]
-	adr	r1, .L0801f284
+	movw	r0, #:lower16:t_080bc767	@ "Confirm"
 	ldrb.w	r7, [r5, #0xe1c]
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movt	r0, #:upper16:t_080bc767
 	movw	r1, #0xffff
 	cmp	r7, #1
 	it	eq
@@ -1454,10 +1430,8 @@ draw_image_and_three_texts:
 	movs	r3, #0x14
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	ldrb.w	r0, [r5, #0xf60]
-	adr	r1, .L0801f2a4
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r5, [r0, #-4]
+	movw	r5, #:lower16:t_080bc70e	@ "Cancel"
+	movt	r5, #:upper16:t_080bc70e
 	movw	r0, #0x55f
 	cmp	r7, #1
 	it	eq
@@ -1472,45 +1446,13 @@ draw_image_and_three_texts:
 	bl	draw_wrapped_text_in_box
 	add	sp, #0x14
 	pop	{r4, r5, r6, r7, pc}
-	.byte	0x00, 0xbf	@ padding
-.L0801f264:
-	@ dialog texts, one word per language slot each: all English now
-	.word	t_080bc25e	@ "Delete"
-	.word	t_080bc25e
-	.word	t_080bc25e
-	.word	t_080bc25e
-	.word	t_080bc25e
-	.word	t_080bc25e
-	.word	t_080bc25e
-	.word	t_080bc25e
-.L0801f284:
-	.word	t_080bc767	@ "Confirm"
-	.word	t_080bc767
-	.word	t_080bc767
-	.word	t_080bc767
-	.word	t_080bc767
-	.word	t_080bc767
-	.word	t_080bc767
-	.word	t_080bc767
-.L0801f2a4:
-	.word	t_080bc70e	@ "Cancel"
-	.word	t_080bc70e
-	.word	t_080bc70e
-	.word	t_080bc70e
-	.word	t_080bc70e
-	.word	t_080bc70e
-	.word	t_080bc70e
-	.word	t_080bc70e
 
 @ ----------------------------------------------------------------------------
 @ draw_bitmap_and_text - no parameters, no return value.
 @ Calls draw_4bpp_bitmap 0801ffcc(0x3d, 0x50, 0xc6, 0x53, bitmap 0x0804fd00,
-@ colour 0x55f), then draw_wrapped_text_in_box(0x3f, 0x6d, 0xc2, 0x14, word at
-@ 0x0804c184+byte(0x20001058)*4 (code: base 0x0804c188, entry lang-1; entry
-@ 0x0804c184 itself is the value 0x55f, not a pointer), font block 0x20001144,
-@ colour 0x55f, flag 1).
-@ Purpose: draws the 4bpp bitmap 0x0804fd00 and a language-indexed text over it;
-@ what they are for is not determined from the code.
+@ colour 0x55f), then draw_wrapped_text_in_box(0x3f, 0x6d, 0xc2, 0x14,
+@ "Deleting...", font block 0x20001144, colour 0x55f, flag 1).
+@ Purpose: draws the 4bpp message box bitmap 0x0804fd00 and "Deleting..." over it.
 @ ----------------------------------------------------------------------------
 	.section .text.draw_bitmap_and_text,"ax",%progbits
 	.p2align 2
@@ -1530,13 +1472,8 @@ draw_bitmap_and_text:
 	movs	r3, #0x53
 	str	r4, [sp, #4]
 	bl	draw_4bpp_bitmap
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	movw	r1, #:lower16:d_0804c188
-	movt	r1, #:upper16:d_0804c188
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bb682	@ "Deleting..."
+	movt	r0, #:upper16:t_080bb682
 	movw	r1, #0x1144
 	movt	r1, #0x2000
 	mov.w	r12, #0x1

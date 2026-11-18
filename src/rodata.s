@@ -391,24 +391,20 @@ d_0804be74:
 .Lsw_0804bf20:
 	.word fn_08011e84                                  @ 0x0804bf20 = 0x08011e85
 .Lsw_0804bf24:
-	.word fn_0801215c                                  @ 0x0804bf24 = 0x0801215d
+	.word return_void_2                                @ display code 0x2c: nothing (V1.2.0: fn_0801215c, the language page; no code sends 0x2c any more)
 @ ----------------------------------------------------------------------------
-@ Text pointer tables. Each word is the address of a string of src/text.s (or 0, or the
-@ address of another table). V1.2.0 held one string per language in each row / block; here
-@ every language slot names the English string, in the same layout (same word count, order
-@ and row / block structure), so the readers are unchanged.
+@ Text pointer tables, English only: one word per item (the address of a string of
+@ src/text.s, or 0). V1.2.0 held one string per language in each row / block and the code
+@ picked the slot by the language byte 0x20001058; the code now indexes these tables by item
+@ only, and texts that had a whole language row to themselves (status messages, page titles)
+@ are named directly by the code, so those rows are gone.
 @ ----------------------------------------------------------------------------
-@ d_0804bf28: measurement labels, 24 words: English 12 then (V1.2.0: Chinese) 12; the code
-@ takes one half or the other by the language byte (draw_waveform_display_p6.inc); both are
-@ English now
+@ d_0804bf28: measurement labels, word i = label of measurement i (draw_waveform_display_p6.inc)
 	.global d_0804bf28
 d_0804bf28:
 	.word t_080bbaa0, t_080bba4c, t_080bb9f8, t_080bba05   @ Freq: Peri: Duty+: Duty-:
 	.word t_080bb9f2, t_080bb9ff, t_080bbab7, t_080bba6b   @ Wid+: Wid-: Vmax: Vmin:
 	.word t_080bba95, t_080bba9b, t_080bbaa6, t_080bba47   @ Vp-p: Amp: Vrms: Avg:
-	.word t_080bbaa0, t_080bba4c, t_080bb9f8, t_080bba05   @ second half: the same 12
-	.word t_080bb9f2, t_080bb9ff, t_080bbab7, t_080bba6b
-	.word t_080bba95, t_080bba9b, t_080bbaa6, t_080bba47
 @ d_0804bf88: 16-byte row table of unit texts, 3 rows of 4 words (row 0 frequency, row 1
 @ time, row 2 voltage), read by ldr.w r7,[r0,r3,lsl #2] at 0x0801bd7e in draw_waveform_display
 @ (r0 = 0x0804bf88 + 16*byte, movw/movt at 0x0801bd6a/0x0801bd72, lsl #4 at 0x0801bd76)
@@ -434,46 +430,8 @@ d_0804bfb8:
 	.global d_0804bfc0
 d_0804bfc0:
 	.word t_080bcd62, t_080bcda8, t_080bcd4a, t_080bcda9   @ ns us ms s
-@ Status message rows, 8 words each (one per language byte 1..8, read as
-@ [row + 4*byte - 4]); every word names the English text
-	.global d_0804bfd0
-d_0804bfd0:
-	.word t_080bb68e, t_080bb68e, t_080bb68e, t_080bb68e   @ Saving...
-	.word t_080bb68e, t_080bb68e, t_080bb68e, t_080bb68e
-	.global d_0804bff0
-d_0804bff0:
-	.word t_080bc05b, t_080bc05b, t_080bc05b, t_080bc05b   @ Saved
-	.word t_080bc05b, t_080bc05b, t_080bc05b, t_080bc05b
-	.global d_0804c010
-d_0804c010:
-	.word t_080bc04f, t_080bc04f, t_080bc04f, t_080bc04f   @ Save failed
-	.word t_080bc04f, t_080bc04f, t_080bc04f, t_080bc04f
-	.global d_0804c030
-d_0804c030:
-	.word t_080bb712, t_080bb712, t_080bb712, t_080bb712   @ Await Trigger...
-	.word t_080bb712, t_080bb712, t_080bb712, t_080bb712
-	.global d_0804c050
-d_0804c050:
-	.word t_080bb779, t_080bb779, t_080bb779, t_080bb779   @ Awaiting Auto Measurement...
-	.word t_080bb779, t_080bb779, t_080bb779, t_080bb779
-	.global d_0804c070
-d_0804c070:
-	.word t_080bb6c7, t_080bb6c7, t_080bb6c7, t_080bb6c7   @ Awaiting auto-correction...
-	.word t_080bb6c7, t_080bb6c7, t_080bb6c7, t_080bb6c7
-@ d_0804c090: read by ldr.w r0,[r0,#-4] at 0x0801c9a0 with r0 = 0x0804c090 + 4*idx
-@ (movw/movt at 0x0801c994/0x0801c998, add.w at 0x0801c99c); idx = the byte at 0x20001058
-	.global d_0804c090
-d_0804c090:
-	.word t_080bcde0, t_080bcde0, t_080bcde0, t_080bcde0   @ Exceeded Limit
-	.word t_080bcde0, t_080bcde0
-@ UNREF_0804c0a8: words 7 and 8 of the row d_0804c090
-	.global UNREF_0804c0a8
-UNREF_0804c0a8:
-	.word t_080bcde0, t_080bcde0
-	.global d_0804c0b0
-d_0804c0b0:
-	.word t_080bc87a, t_080bc87a, t_080bc87a, t_080bc87a   @ Waiting for automatic amplitude calibration
-	.word t_080bc87a, t_080bc87a, t_080bc87a, t_080bc87a
+@ (V1.2.0's status message rows 0x0804bfd0..0x0804c0cf are gone: draw_waveform_display
+@ names its English pop-up texts directly)
 	.global d_0804c0d0
 d_0804c0d0:
 .Lsw_0804c0d0:
@@ -566,7 +524,7 @@ UNREF_0804c124:
 .Lsw_0804c178:
 	.word draw_bitmap_and_text                         @ 0x0804c178 = 0x0801f2c5
 .Lsw_0804c17c:
-	.word draw_language_list                           @ 0x0804c17c = 0x0801f325
+	.word return_void_2                                @ 0x0804c17c: unused entry (V1.2.0: draw_language_list, removed)
 @ DATA_0804c180: 2 bytes 73 8c = halfword 0x8c73, element 0 of the halfword array 0x0804c180: 0x8c73, 0xffff, 0x055f, 0x0000 | ldrh.w r5,[r1,r6,lsl #0x1] at 0x080134f6 with r1 = 0x0804c180 (movw/movt at 0x080134ec/0x080134f0) | draw_panels_by_selector_20001062: menu-panel drawing routine
 	.global DATA_0804c180
 DATA_0804c180:
@@ -577,126 +535,30 @@ d_0804c180:
 	.global UNREF_0804c186
 UNREF_0804c186:
 	.incbin "assets/rodata.bin", 0x5f32, 2
-@ Status message rows 9..12 (8 words each, [row + 4*byte - 4], byte = 0x20001058)
-	.global d_0804c188
-d_0804c188:
-	.word t_080bb682, t_080bb682, t_080bb682, t_080bb682   @ Deleting...
-	.word t_080bb682, t_080bb682, t_080bb682, t_080bb682
-	.global d_0804c1a8
-d_0804c1a8:
-	.word t_080bcb6e, t_080bcb6e, t_080bcb6e, t_080bcb6e   @ Image Viewer
-	.word t_080bcb6e, t_080bcb6e, t_080bcb6e, t_080bcb6e
-@ d_0804c1c8: read by ldr.w r0,[r0,#-4] at 0x08011572 and 0x0801e484 with r0 = 0x0804c1c8 + 4*idx
-@ (add.w at 0x0801156e and 0x0801e480), idx = the byte at 0x20001058
-	.global d_0804c1c8
-d_0804c1c8:
-	.word t_080bceb4, t_080bceb4, t_080bceb4, t_080bceb4   @ Battery low, charge now
-@ UNREF_0804c1d8: words 5..8 of the row d_0804c1c8
-	.global UNREF_0804c1d8
-UNREF_0804c1d8:
-	.word t_080bceb4, t_080bceb4, t_080bceb4, t_080bceb4
-	.global d_0804c1e8
-d_0804c1e8:
-	.word t_080bc8ae, t_080bc8ae, t_080bc8ae, t_080bc8ae   @ Auto shutdown soon
-	.word t_080bc8ae, t_080bc8ae, t_080bc8ae, t_080bc8ae
-@ DATA_0804c208: four-element table of row addresses (rows .L0804c338, .L0804c358, .L0804c378,
-@ d_0804c398), read by ldr.w r1,[r2,r1,lsl #2] at 0x0801d244 in draw_page_by_selector_nibble
-@ (r2 = 0x0804c208 from movw/movt at 0x0801d230/0x0801d23c, r1 = the low 7 bits of r6 after
-@ and.w r1,r6,#127 / cmp r1,#3 / bhi at 0x0801d226..0x0801d22c, so 0..3)
-	.global DATA_0804c208
-DATA_0804c208:
+@ (V1.2.0's status message rows 0x0804c188..0x0804c207 are gone: the page routines name
+@ their English texts directly)
+@ d_0804c208: Startup on Boot choices, word i = text of choice i ([0x2000105c] = 0..3), read by
+@ draw_page_by_selector_nibble (case 1). V1.2.0: four addresses of 8-word language rows.
 	.global d_0804c208
 d_0804c208:
-	.word .L0804c338, .L0804c358
-@ DATA_0804c210: elements 2 and 3 of the table DATA_0804c208
-	.global DATA_0804c210
-DATA_0804c210:
-	.word .L0804c378, d_0804c398
-@ d_0804c218: About page labels, 8 language blocks of 2 words (block = language byte - 1)
+	.word t_080bc220, t_080bcb54, t_080bc225, t_080bcbab   @ None, Multimeter, Oscilloscope, Signal Generator
+@ d_0804c218: About page labels (draw_page_by_selector_nibble case 4). V1.2.0: 8 language
+@ blocks of 2 words.
 	.global d_0804c218
 d_0804c218:
-	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52   @ "Version:", " Model:"
-	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
-	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
-	.word t_080bba71, t_080bba52, t_080bba71, t_080bba52
-@ d_0804c258: system settings menu items, 8 language blocks of 7 words, read by
-@ ldr.w r0,[r0,#-28] at 0x0801cdac with r0 = 0x0804c258 + 28*idx + 4*r5 (movw/movt at
-@ 0x0801cd98/0x0801cda0, rsb r0,r0,r0,lsl #3 at 0x0801cd9c), idx = the byte at 0x20001058
-@ (ldrb.w r0,[r4,#3936] at 0x0801cd94). Items: Language, Sound and light, Startup on Boot,
-@ Auto Shutdown, USB Sharing, About, Factory Reset. The labels UNREF_* below are pieces of it.
+	.word t_080bba71, t_080bba52                           @ "Version:", " Model:"
+@ d_0804c258: system settings menu, word n = name of item n (draw_six_row_list). Items:
+@ 0 Sound and light, 1 Startup on Boot, 2 Auto Shutdown, 3 USB Sharing, 4 About, 5 Factory
+@ Reset. V1.2.0: 8 language blocks of 7 words with the item Language in front (removed).
 	.global d_0804c258
 d_0804c258:
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 1
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 2 (items 0..3)
-	.global UNREF_0804c284
-UNREF_0804c284:
-	.word t_080bc35e, t_080bce87, t_080bcdab               @ block 2 (items 4..6)
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 3
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 4
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.global UNREF_0804c2c8
-UNREF_0804c2c8:
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 5
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.global UNREF_0804c2e4
-UNREF_0804c2e4:
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 6
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 7
-	.word t_080bc35e, t_080bce87, t_080bcdab
-	.word t_080bc168, t_080bcdd0, t_080bce6b, t_080bc8de   @ block 8
-	.word t_080bc35e, t_080bce87, t_080bcdab
-@ Page title rows (8 words each, [row + 4*byte - 4]); .L0804c338 .. d_0804c398 are also named
-@ by the row table DATA_0804c208, .L0804c358 .. .L0804c378 by d_0804c924
-.L0804c338:
-	.word t_080bc220, t_080bc220, t_080bc220, t_080bc220   @ None
-	.global UNREF_0804c348
-UNREF_0804c348:
-	.word t_080bc220, t_080bc220, t_080bc220, t_080bc220
-.L0804c358:
-	.word t_080bcb54, t_080bcb54, t_080bcb54, t_080bcb54   @ Multimeter
-	.word t_080bcb54, t_080bcb54, t_080bcb54, t_080bcb54
-.L0804c378:
-	.word t_080bc225, t_080bc225, t_080bc225, t_080bc225   @ Oscilloscope
-	.word t_080bc225, t_080bc225, t_080bc225
-@ DATA_0804c394: word 8 of the row .L0804c378; ldr.w r0,[r0,#-0x4] at 0x08010748 in
-@ fn_080106e8 and at 0x0801576c in fn_08015740 (base d_0804c398, so language byte 0 would read it)
-	.global DATA_0804c394
-DATA_0804c394:
-	.word t_080bc225
-@ d_0804c398: read by ldr.w r0,[r0,#-4] at 0x08010748 and 0x0801576c with r0 = 0x0804c398 + 4*idx
-	.global d_0804c398
-d_0804c398:
-	.word t_080bcbab, t_080bcbab, t_080bcbab, t_080bcbab   @ Signal Generator
-	.global UNREF_0804c3a8
-UNREF_0804c3a8:
-	.word t_080bcbab, t_080bcbab, t_080bcbab
-@ DATA_0804c3b4: word 8 of the row d_0804c398; ldr.w r0,[r0,#-0x4] at 0x0801cd28 in fn_0801ccfc
-@ and at 0x08010fc8 in fn_08010f68 (base d_0804c3b8)
-	.global DATA_0804c3b4
-DATA_0804c3b4:
-	.word t_080bcbab
-	.global d_0804c3b8
-d_0804c3b8:
-	.word t_080bccfe, t_080bccfe, t_080bccfe, t_080bccfe   @ System Settings
-	.word t_080bccfe, t_080bccfe, t_080bccfe, t_080bccfe
-@ DATA_0804c3d8: value panel labels, two sets of 3 words (V1.2.0: Chinese, then English), chosen
-@ by the language byte in draw_value_panel; ldr.w r0,[r8,r0,lsl #0x2] at 0x0801caf8
-	.global DATA_0804c3d8
-DATA_0804c3d8:
+	.word t_080bcdd0, t_080bce6b, t_080bc8de               @ Sound and light, Startup on Boot, Auto Shutdown
+	.word t_080bc35e, t_080bce87, t_080bcdab               @ USB Sharing, About, Factory Reset
+@ (V1.2.0's page title rows 0x0804c338..0x0804c3d7 are gone: the titles are named directly)
+@ d_0804c3d8: value panel labels, word c = label of column c (draw_value_panel). V1.2.0: a
+@ Chinese set of 3, then the English set, chosen by the language byte.
 	.global d_0804c3d8
 d_0804c3d8:
-	.word t_080bbd30                                       @ MAX
-@ DATA_0804c3dc: ldr r0,[r0,#0x4] at 0x0801cbb8
-	.global DATA_0804c3dc
-DATA_0804c3dc:
-	.word t_080bbc4c                                       @ MEAN
-@ DATA_0804c3e0: ldr r0,[r0,#0x8] at 0x0801cc64; then the second set
-	.global DATA_0804c3e0
-DATA_0804c3e0:
-	.word t_080bbc51                                       @ MIN
 	.word t_080bbd30, t_080bbc4c, t_080bbc51               @ MAX MEAN MIN
 @ d_0804c3f0: number formats with 0..4 decimals
 	.global d_0804c3f0
@@ -713,102 +575,26 @@ d_0804c404:
 	.word t_080bd8c6, t_080bbc3e, t_080bbc41, t_080bbc3b   @ MΩ nF uF mF
 	.word t_080bbc42, t_080bd03d, t_080bbc02, t_080bbbff   @ F ℃ uA mA
 	.word t_080bbc03, t_080bd0d6                           @ A ℉
-@ d_0804c43c: multimeter function names, 8 language blocks of 12 words, read by
-@ ldr.w r0,[r0,#-48] at 0x08010b00 and 0x08015c40 with r0 = 0x0804c43c + 48*idx + 4*col
-@ (idx = the byte at 0x20001058). Items: Automatic, DC Voltage, AC Voltage, Continuity, Diode,
-@ Resistance, Capacitance, Temperature, Small DC current, Small AC current, Large DC current,
-@ Large AC current.
+@ d_0804c43c: multimeter function names, word f = name of function f (byte 0x20001026), read by
+@ fn_08010a94 and draw_header_image_120. V1.2.0: 8 language blocks of 12 words.
 	.global d_0804c43c
 d_0804c43c:
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 1
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 2
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 3
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 4 (items 0..9)
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29
-	.global UNREF_0804c4f4
-UNREF_0804c4f4:
-	.word t_080bce3a, t_080bce18                           @ block 4 (items 10, 11)
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 5
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 6
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 7 (items 0..7)
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.global UNREF_0804c57c
-UNREF_0804c57c:
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18   @ block 7 (items 8..11)
-	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ block 8
-	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238
-	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18
-@ d_0804c5bc: signal generator value names, 8 language blocks of 3 words, read by
-@ ldr.w r0,[r0,#-12] at 0x08015a5e with r0 = 0x0804c5bc + 12*idx + 4*r8
+	.word t_080bc02e, t_080bc15d, t_080bc152, t_080bced6   @ Automatic, DC Voltage, AC Voltage, Continuity
+	.word t_080bc111, t_080bc0d6, t_080bc0ca, t_080bc238   @ Diode, Resistance, Capacitance, Temperature
+	.word t_080bce4b, t_080bce29, t_080bce3a, t_080bce18   @ Small DC / AC current, Large DC / AC current
+@ d_0804c5bc: signal generator value names, word i = label of row i (draw_three_value_rows).
+@ V1.2.0: 8 language blocks of 3 words.
 	.global d_0804c5bc
 d_0804c5bc:
 	.word t_080bcecc, t_080bc179, t_080bc117               @ Frequency, Duty Cycle, Amplitude
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.global UNREF_0804c5ec
-UNREF_0804c5ec:
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.word t_080bcecc, t_080bc179, t_080bc117
-	.word t_080bcecc, t_080bc179, t_080bc117
-@ d_0804c61c: waveform names, 8 language blocks of 13 words, read by ldr.w r0,[r0,#-52] at
-@ 0x080157e6 with r0 = 0x0804c61c + 52*idx + 4*r7 (smlabb at 0x080157dc). Items: Sine Wave,
-@ Square Wave, Sawtooth wave, Half-wave, Full Wave, Step Wave, Reverse Step Wave, Index Up,
-@ Index Decrease, Direct current, Multi-audio, Sink Pulse, Lorentz waves.
+@ d_0804c61c: waveform names, word w = name of waveform w (draw_six_row_list_from_first_index).
+@ V1.2.0: 8 language blocks of 13 words.
 	.global d_0804c61c
 d_0804c61c:
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 1
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.word t_080bccc0
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 2 (items 0..11)
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.global UNREF_0804c680
-UNREF_0804c680:
-	.word t_080bccc0                                       @ block 2 (item 12)
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 3
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.word t_080bccc0
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 4
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.word t_080bccc0
-	.global UNREF_0804c6ec
-UNREF_0804c6ec:
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 5
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.word t_080bccc0
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 6 (items 0..10)
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5
-	.global UNREF_0804c74c
-UNREF_0804c74c:
-	.word t_080bc253, t_080bccc0                           @ block 6 (items 11, 12)
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 7 (items 0..7)
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.global UNREF_0804c774
-UNREF_0804c774:
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253   @ block 7 (items 8..12)
-	.word t_080bccc0
-	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ block 8
-	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9
-	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253
-	.word t_080bccc0
+	.word t_080bc2ab, t_080bc2b5, t_080bc2dd, t_080bc2eb   @ Sine Wave, Square Wave, Sawtooth wave, Half-wave
+	.word t_080bc2c1, t_080bc2d3, t_080bc2cb, t_080bcac9   @ Full Wave, Step Wave, Reverse Step Wave, Index Up
+	.word t_080bc244, t_080bce5c, t_080bc9b5, t_080bc253   @ Index Decrease, Direct current, Multi-audio, Sink Pulse
+	.word t_080bccc0                                       @ Lorentz waves
 @ DATA_0804c7bc: probe ratio texts; ldr.w r0,[r1,r0,lsl #0x2] at 0x0801e92a and 0x0801ea7a in
 @ draw_bottom_strip, and in draw_panels_by_selector_20001062
 	.global DATA_0804c7bc
@@ -823,37 +609,17 @@ DATA_0804c7c4:
 	.global d_0804c7c4
 d_0804c7c4:
 	.word t_080bbc28, t_080bbc2b                           @ AC DC
-@ DATA_0804c7cc: trigger labels, two sets of 3 words (V1.2.0: Chinese, then English), chosen by
-@ the language byte in draw_panels_by_selector_20001062; ldr.w r0,[r10,r6,lsl #0x2] at 0x080136c6
-	.global DATA_0804c7cc
-DATA_0804c7cc:
+@ d_0804c7cc: trigger panel labels, words 0..2 (draw_panels_by_selector_20001062 case 5).
+@ V1.2.0: a Chinese set of 3, then the English set, chosen by the language byte.
 	.global d_0804c7cc
 d_0804c7cc:
-	.word t_080bba31                                       @ Mode:
-@ DATA_0804c7d0: ldr r0,[r0,#0x4] at 0x08013786
-	.global DATA_0804c7d0
-DATA_0804c7d0:
-	.word t_080bba37                                       @ Edge:
-@ DATA_0804c7d4: ldr r0,[r0,#0x8] at 0x08013994; then the second set
-	.global DATA_0804c7d4
-DATA_0804c7d4:
-	.word t_080bba5a                                       @ Channel:
 	.word t_080bba31, t_080bba37, t_080bba5a               @ Mode: Edge: Channel:
-@ DATA_0804c7e4: trigger modes, two sets of 3 words (V1.2.0: Chinese, then English); read with
-@ r5 = 0x0804c7e4 + 12*r8 (r8 = 0 or 1) by ldr.w r0,[r5,r0,lsl #2] at 0x0801eb06 and
-@ ldr.w r5,[r1,r0,lsl #2] at 0x0801eb7e in draw_bottom_strip
-	.global DATA_0804c7e4
-DATA_0804c7e4:
+@ d_0804c7e4: trigger modes, word m = name of mode m (byte 0x2000010f), read by
+@ draw_panels_by_selector_20001062 and draw_bottom_strip. V1.2.0: a Chinese set of 3, then
+@ the English set, chosen by the language byte.
 	.global d_0804c7e4
 d_0804c7e4:
-	.word t_080bc707                                       @ Normal
-	.global DATA_0804c7e8
-DATA_0804c7e8:
-	.word t_080bca92, t_080bc184                           @ Auto Single
-	.word t_080bc707, t_080bca92                           @ Normal Auto
-	.global UNREF_0804c7f8
-UNREF_0804c7f8:
-	.word t_080bc184                                       @ Single
+	.word t_080bc707, t_080bca92, t_080bc184               @ Normal Auto Single
 @ DATA_0804c7fc: channel names; ldr.w r5,[r1,r0,lsl #0x2] at 0x0801ebde and
 @ ldr.w r0,[r0,r1,lsl #0x2] at 0x0801eda4 in draw_bottom_strip, and in
 @ draw_panels_by_selector_20001062
@@ -862,74 +628,19 @@ DATA_0804c7fc:
 	.global d_0804c7fc
 d_0804c7fc:
 	.word t_080bb975, t_080bb9e0                           @ CH1 CH2
-@ d_0804c804: oscilloscope settings items, 8 language blocks of 8 words, read by
-@ ldr.w r0,[r0,#-32] at 0x08012e44 with r0 = 0x0804c804 + 32*idx + 4*r7 (idx = the byte at
-@ 0x20001058, ldrb.w r0,[r9,#3936] at 0x08012e30). Items: Display Mode, Cursor Measurement,
-@ Parameter Measurement, CH1 Settings, CH2 Settings, Trigger Settings, Persistence, Mathematics.
+@ d_0804c804: oscilloscope settings items, word k = name of item k (fn_08012de0). Items:
+@ Display Mode, Cursor Measurement, Parameter Measurement, CH1 Settings, CH2 Settings, Trigger
+@ Settings, Persistence, Mathematics. V1.2.0: 8 language blocks of 8 words.
 	.global d_0804c804
 d_0804c804:
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 1 (items 0..6)
-	.word t_080bccdb, t_080bcd0e, t_080bc0e1
-	.global UNREF_0804c820
-UNREF_0804c820:
-	.word t_080bcc33                                       @ block 1 (item 7)
-	.word t_080bc104, t_080bce05, t_080bcdef               @ block 2 (items 0..2)
-	.global UNREF_0804c830
-UNREF_0804c830:
-	.word t_080bccce, t_080bccdb, t_080bcd0e, t_080bc0e1   @ block 2 (items 3..7)
-	.word t_080bcc33
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 3
-	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 4
-	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 5 (items 0..5)
-	.word t_080bccdb, t_080bcd0e
-	.global UNREF_0804c89c
-UNREF_0804c89c:
-	.word t_080bc0e1, t_080bcc33                           @ block 5 (items 6, 7)
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 6 (items 0..5)
-	.word t_080bccdb, t_080bcd0e
-	.global UNREF_0804c8bc
-UNREF_0804c8bc:
-	.word t_080bc0e1, t_080bcc33                           @ block 6 (items 6, 7)
-	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ block 7 (items 0..5)
-	.word t_080bccdb, t_080bcd0e
-	.global UNREF_0804c8dc
-UNREF_0804c8dc:
-	.word t_080bc0e1, t_080bcc33                           @ block 7 (items 6, 7)
-	.word t_080bc104, t_080bce05, t_080bcdef               @ block 8 (items 0..2)
-	.global UNREF_0804c8f0
-UNREF_0804c8f0:
-	.word t_080bccce, t_080bccdb, t_080bcd0e, t_080bc0e1   @ block 8 (items 3..6)
-@ DATA_0804c900: block 8 item 7; also read as [d_0804c904 + 4*byte - 4] with byte 0 by
-@ ldr.w r0,[r0,#-0x4] at 0x08012db0 in fn_08012d84 and at 0x08010374 in fn_08010314
-	.global DATA_0804c900
-DATA_0804c900:
-	.word t_080bcc33
-@ d_0804c904: title row (8 words), read by ldr.w r0,[r0,#-4] at 0x08010374 and 0x08012db0
-@ with r0 = 0x0804c904 + 4*idx, idx = the byte at 0x20001058
-	.global d_0804c904
-d_0804c904:
-	.word t_080bcce8, t_080bcce8, t_080bcce8, t_080bcce8   @ Oscilloscope Settings
-	.word t_080bcce8, t_080bcce8, t_080bcce8
-	.global UNREF_0804c920
-UNREF_0804c920:
-	.word t_080bcce8
-@ d_0804c924: four row addresses, read by ldr.w r0,[r1,r0,lsl #2] at 0x080100c2 with
-@ r1 = 0x0804c924 (movw/movt at 0x080100ba/0x080100be) and r0 = ldrsb.w [r5,#3945] at
-@ 0x080100b2, cmp r0,#3 / bhi at 0x080100b6 / 0x080100b8 (0..3); then the row word by the
-@ language byte. The fifth word starts the row .L0804c934.
+	.word t_080bc104, t_080bce05, t_080bcdef, t_080bccce   @ Display Mode .. CH1 Settings
+	.word t_080bccdb, t_080bcd0e, t_080bc0e1, t_080bcc33   @ CH2 Settings .. Mathematics
+@ (V1.2.0's title row 0x0804c904, "Oscilloscope Settings", is gone: the code names the text)
+@ d_0804c924: help box texts, word i = text for [0x20001061] = i (0..3), read by fn_08010014
+@ and fn_08012d2c. V1.2.0: four addresses of 8-word language rows.
 	.global d_0804c924
 d_0804c924:
-	.word .L0804c358, .L0804c378, d_0804c398, .L0804c934
-.L0804c934:
-	.word t_080bcd16                                       @ Settings
-	.global UNREF_0804c938
-UNREF_0804c938:
-	.word t_080bcd16, t_080bcd16, t_080bcd16, t_080bcd16, t_080bcd16
-	.global UNREF_0804c94c
-UNREF_0804c94c:
-	.word t_080bcd16, t_080bcd16
+	.word t_080bcb54, t_080bc225, t_080bcbab, t_080bcd16   @ Multimeter, Oscilloscope, Signal Generator, Settings
 @ DATA_0804c954: volts per division texts (13 words); draw_bottom_strip, display_task_dispatch
 	.global DATA_0804c954
 DATA_0804c954:

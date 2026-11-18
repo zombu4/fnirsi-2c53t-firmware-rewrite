@@ -48,11 +48,14 @@
 @  0: returns when [0x20000f51]==0, else decrements it, lowers [0x20001062] to
 @     it when above, sends 8,0x17,0x18,0x19 and tail-calls 08029e14.
 @  Sub-states 1 and 2 then send 0x19.
-@ State 4: edits [0x20001062]/[0x20001063] downward with codes 0x20,0x21.
+@ State 4 (system settings menu, items 0..5): sub 0 moves the item
+@   [0x20001062] up to 0, sub 1 lowers the value [0x20001063] to 0; codes
+@   0x20,0x21.
 @ State 5: [0x20000f14]==0 lowers [0x20000f15] by 3 (min 0), sends 0x27,0x28;
 @   ==2 sets [0x20000f14]=1, sends 0x2a.
 @ State 6: [0x20000f14]==2 sets 1, sends 0x2a.
-@ State 8: decrements byte [0x20001058] (min 1), sends 0x2c.
+@ State 8: returns (V1.2.0: the language page, decremented byte [0x20001058]
+@   (min 1) and sent 0x2c; there is no language page any more).
 @ State 9: edits [0x20001061..63] downward with codes 0x13,0x14.
 @ Other states return. Purpose not determined from the code.
 @ ----------------------------------------------------------------------------
@@ -80,7 +83,7 @@ fn_0800a148:
 	.short	(.L0800a2d6 - .L0800a168)/2	@ state 5
 	.short	(.L0800a31a - .L0800a168)/2	@ state 6
 	.short	(.L0800a8ca - .L0800a168)/2	@ state 7: return
-	.short	(.L0800a340 - .L0800a168)/2	@ state 8
+	.short	(.L0800a8ca - .L0800a168)/2	@ state 8: return (no such page; V1.2.0: language page)
 	.short	(.L0800a366 - .L0800a168)/2	@ state 9
 .L0800a17a:
 	ldrb.w	r0, [r5, #0xf2d]
@@ -242,19 +245,6 @@ fn_0800a148:
 	ldr	r0, [r0, #0]
 	movt	r1, #0x2000
 	movs	r3, #0x2a
-	b.n	.L0800a616
-.L0800a340:
-	ldrb.w	r0, [r5, #0xf60]
-	cmp	r0, #2
-	bcc.w	.L0800a8ca
-	subs	r0, #1
-	strb.w	r0, [r5, #0xf60]
-	movw	r0, #0x2d6c
-	movt	r0, #0x2000
-	movw	r1, #0x2d53
-	ldr	r0, [r0, #0]
-	movt	r1, #0x2000
-	movs	r3, #0x2c
 	b.n	.L0800a616
 .L0800a366:
 	ldrb.w	r0, [r5, #0xf69]

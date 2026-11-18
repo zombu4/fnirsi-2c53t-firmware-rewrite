@@ -216,7 +216,7 @@
 @ 0x20002d7c, 0); 0x080423a8(word 0x20002d84, 0).
 @
 @ Load from 0x08006000: when the low byte of word 0x08006000 is 0x55 or 0xaa
-@ (0xaa first sets byte 0x20001060 = 8) copies word 0x08006000: byte 1 to
+@ (0xaa first sets byte 0x20001060 = 0; V1.2.0: 8, the removed language page) copies word 0x08006000: byte 1 to
 @ 0x200000f8, byte 2 to 0x200000f9, byte 3 to 0x200000fa; word 0x08006004 to
 @ word 0x200000fb; word 0x08006008: byte 0 to 0x200000ff, byte 1 to
 @ 0x2000010c, byte 2 to 0x2000010e, byte 3 to 0x2000010f; word 0x0800600c:
@@ -233,7 +233,8 @@
 @ half to u16 0x20000358 + 2k, high half to u16 0x200003d0 + 2k (so
 @ 0x20000446 comes from the high half of word 0x08006124); word 0x08006128
 @ low half to u16 0x20000448; word 0x0800612c low half to u16 0x2000044a; for
-@ any other marker: byte 0x20001060 = 8, low byte of word 0x20001058 = 1, and
+@ any other marker (first start): byte 0x20001060 = 0, low byte of word
+@ 0x20001058 = 2 (English; V1.2.0: state 8, the language page, and 1), and
 @ the RAM halfword 0x20000446 is tested.
 @
 @ Default values: when the halfword just loaded into 0x20000446 (or the RAM

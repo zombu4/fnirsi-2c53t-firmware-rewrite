@@ -1,4 +1,6 @@
-@ startup_56.s - reset entry glue, scatter loader, region handlers (word copy, zero fill, the unused V1.2.0 unpacker), printf conversion dispatcher, C runtime start-up and idle loops.
+@ startup_56.s - reset entry glue, scatter loader, region handlers (zero fill, word copy copy_words), printf conversion dispatcher, C runtime start-up and idle loops.
+@ V1.2.0's token-stream unpacker (unpack_token_stream, for its packed initial RAM image) is removed:
+@ the image is typed source (src/ram_init.s) and nothing referred to the unpacker any more.
 @ Part of the FNIRSI 2C53T firmware rewrite (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m
@@ -60,70 +62,6 @@ scatter_load_regions:
 .L080071b8:
 	.word	d_080be314 - .L080071b8	@ scatter-load region table start, distance from here (V1.2.0: 0x000B715C)
 	.word	d_080be334 - .L080071b8	@ scatter-load region table end (V1.2.0: 0x000B717C); both follow the table when code or data move
-
-@ ----------------------------------------------------------------------------
-@ unpack_token_stream - token-stream unpacker (group 1).
-@ r0=source, r1=destination, r2=length; unpacks until destination reaches r1+r2.
-@ Token byte: low 3 bits = literal count (0 means the next byte is the count),
-@ high nibble = run length (0 means the next byte is the length). Copies
-@ (count-1) literal bytes, then if token bit3 is clear writes run zero bytes,
-@ else copies run+2 bytes from destination minus the next source byte (back
-@ reference).
-@ unpack_token_stream_addr is a plain global label on the same address: the
-@ scatter-load region table of V1.2.0 held this address as an even value.
-@ Not used since the initial RAM image is typed source (src/ram_init.s, copied
-@ by copy_words): no table entry, call or pointer names it. It is kept in place
-@ for now so that this step moves no code (the functions after it keep their
-@ addresses); it can be removed when code is allowed to move.
-@ ----------------------------------------------------------------------------
-	.section .text.unpack_token_stream,"ax",%progbits
-	.global unpack_token_stream
-	.thumb_func
-	.type unpack_token_stream, %function
-	.global unpack_token_stream_addr
-unpack_token_stream:
-unpack_token_stream_addr:		@ plain label after the function label (.thumb_func applies to the first)
-	add	r2, r1
-	mov.w	r12, #0
-.L080071c6:
-	ldrb.w	r3, [r0], #1
-	ands.w	r4, r3, #7
-	it	eq
-	ldrbeq.w	r4, [r0], #1
-	asrs	r5, r3, #4
-	it	eq
-	ldrbeq.w	r5, [r0], #1
-	.inst.n	0x1e64	@ subs r4, r4, #1
-	beq.n	.L080071ec
-.L080071e0:
-	ldrb.w	r6, [r0], #1
-	.inst.n	0x1e64	@ subs r4, r4, #1
-	strb.w	r6, [r1], #1
-	bne.n	.L080071e0
-.L080071ec:
-	tst.w	r3, #8
-	ittt	ne
-	ldrbne.w	r4, [r0], #1
-	.inst.n	0x1cad	@ adds r5, r5, #2 (inside the IT block)
-	subne	r4, r1, r4
-	bne.n	.L08007210
-.L080071fc:
-	.inst.n	0x1e6d	@ subs r5, r5, #1
-	it	pl
-	strbpl.w	r12, [r1], #1
-	bpl.n	.L080071fc
-	b.n	.L08007214
-.L08007208:
-	ldrb.w	r6, [r4], #1
-	strb.w	r6, [r1], #1
-.L08007210:
-	.inst.n	0x1e6d	@ subs r5, r5, #1
-	bpl.n	.L08007208
-.L08007214:
-	cmp	r1, r2
-	bcc.n	.L080071c6
-	bx	lr
-	.short	0x0000	@ padding
 
 @ ----------------------------------------------------------------------------
 @ zero_fill_words - zero fill by words (group 2).

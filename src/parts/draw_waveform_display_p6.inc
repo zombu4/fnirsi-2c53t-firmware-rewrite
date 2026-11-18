@@ -375,12 +375,7 @@
 	uxtb	r7, r1
 	movt	r2, #0xaaaa
 	umull	r2, r3, r7, r2
-	ldrb.w	r2, [r9, #0xf60]
 	movw	lr, #0x423f
-	subs	r2, #1
-	clz	r2, r2
-	lsrs	r2, r2, #5
-	str	r2, [sp, #0x1c]
 	mov.w	r2, #0xffffffff
 	uxtab	r1, r2, r1
 	movw	r2, #0x5556
@@ -549,13 +544,10 @@
 	vmovlt.f32	s4, s0
 	vmovlt.f32	s20, s2
 	addge	r4, #1
-	ldr	r0, [sp, #0x1c]
-	uxtb	r6, r1
-	movw	r1, #:lower16:d_0804bf28
-	orr.w	r0, r0, r0, lsl #1
+	uxtb	r6, r1				@ measurement number
+	movw	r1, #:lower16:d_0804bf28	@ English measurement labels, one word each
 	movt	r1, #:upper16:d_0804bf28
-	add.w	r0, r1, r0, lsl #4
-	ldr.w	r5, [r0, r6, lsl #2]
+	ldr.w	r5, [r1, r6, lsl #2]
 	vmov	r0, s4
 	mov	r8, r10
 	mov	r10, lr

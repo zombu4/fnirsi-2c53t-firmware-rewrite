@@ -6,10 +6,16 @@
 	.thumb
 
 @ ----------------------------------------------------------------------------
-@ draw_page_by_selector_nibble - no parameters, no return value. Switch on
-@ (byte 0x20001062 & 0xf); values 7..15 return immediately.
-@ Common items: sel = byte 0x20001063, edit = byte 0x20001061, lang = byte
-@ 0x20001058. A row is highlighted when edit != 0 and sel == row. An unselected
+@ draw_page_by_selector_nibble - no parameters, no return value. Draws the right
+@ half of the system settings page for the selected menu item: switch on
+@ (byte 0x20001062 & 0xf) = item 0..5 (the menu of draw_six_row_list: 0 Sound
+@ and light, 1 Startup on Boot, 2 Auto Shutdown, 3 USB Sharing, 4 About,
+@ 5 Factory Reset); values 6..15 return immediately. V1.2.0 had a language item
+@ in front (its case 0, two rows "中文" / "English"); it is removed and the
+@ other cases are numbered one lower. All texts are the English ones (V1.2.0
+@ chose them by the language byte 0x20001058, which is no longer read here).
+@ Common items: sel = byte 0x20001063, edit = byte 0x20001061. A row is
+@ highlighted when edit != 0 and sel == row. An unselected
 @ row is a solid fill of colour 0x18c3 over x 0x7a..0x12f (pixel pairs, clipped
 @ to the halfwords 0x20008350/52/54/56, buffer word 0x20008358); a highlighted
 @ row has no fill. With top = first fill row of the row: radio image 74.jpg (on)
@@ -17,46 +23,38 @@
 @ 72.jpg at (0x79, top-1) and radio 75.jpg (on, x 0xa6) or 78.jpg (off, x 0xa5)
 @ at y top+7. Label colour = halfword at 0x0804c180 + idx*2 (idx 1 normal =
 @ 0xffff, idx 2 highlighted = 0x055f).
-@ Case 0: row y=0x3e (fill y 0x3e..0x5d, highlighted when sel==0) with radio on
-@   when lang==1 and label word 0x080bd09b ("中文") at (0xb6,0x3d,0x5c,0x22);
-@   row y=0x86 (fill 0x86..0xa5, sel==1) radio on when lang==2, label "English"
-@   at (0xb6,0x85,0x5c,0x22).
-@ Case 1: 136.jpg at (0x9d,0x54), 137.jpg at (0x7c,0x4f) (or 139.jpg at
+@ Case 0 (Sound and light): 136.jpg at (0x9d,0x54), 137.jpg at (0x7c,0x4f) (or 139.jpg at
 @   (0x7a,0x4d) when edit!=0 and sel==0), then 08020ce8(0x9d,0x54,
 @   int(byte 0x2000105a*15.5),0xf,0x861,colour); 136.jpg at (0x9d,0x9c),
 @   138.jpg at (0x7c,0x95) (or 140.jpg at (0x7b,0x94) when sel==1),
 @   08020ce8(0x9d,0x9c,int((byte 0x20001059-0x19)*3.12),0xf,0x861,colour)
 @   (080455da, 0804550a, 0804577c, 08045450).
-@ Case 2: four rows i=0..3 (fill y 0x3e+0x24*i, 32 rows) with radio on when
+@ Case 1 (Startup on Boot): four rows i=0..3 (fill y 0x3e+0x24*i, 32 rows) with radio on when
 @   byte 0x2000105c==i; the radio images 74/77/75/78 (not 72.jpg and not the
-@   label) are shifted left by 0x18 in x when lang!=1; label 0800f154(0xa2,
-@   i*0x24+0x3d,0x82,0x22, word at (word 0x0804c208+i*4)+lang*4-4 (arrays
-@   0x0804c338,0x0804c358,0x0804c378,0x0804c398), font 0x20001114, colour, 1).
-@ Case 3: four rows "OFF" (y 0x3d), "15min" (0x61), "30min" (0x85), "1hour"
+@   label) are at x 0x8e / 0x8d (V1.2.0: 0xa6 / 0xa5 for language byte 1, 0x18
+@   less for the others); label 0800f154(0xa2, i*0x24+0x3d,0x82,0x22, word i of
+@   d_0804c208 (None, Multimeter, Oscilloscope, Signal Generator), font
+@   0x20001114, colour, 1).
+@ Case 2 (Auto Shutdown): four rows "OFF" (y 0x3d), "15min" (0x61), "30min" (0x85), "1hour"
 @   (0xa9) with fills at 0x3e, 0x62, 0x86, 0xaa and radio on when byte
 @   0x2000105d==0,1,2,3, highlighted when sel==0..3, labels at
 @   (0xb6,y,0x5c,0x22,flag 1).
-@ Case 4: one row, fill y 0x70..0x8f when edit==0 with 77.jpg at (0xa6,0x79),
+@ Case 3 (USB Sharing): one row, fill y 0x70..0x8f when edit==0 with 77.jpg at (0xa6,0x79),
 @   else 72.jpg (0x79,0x6f) and 78.jpg (0xa5,0x77); label "ON" at
 @   (0xb6,0x6f,0x5c,0x22).
-@ Case 5: 141.jpg at (0x72,0x30); texts word at 0x0804c210+lang*8 at
-@   (0x82,0xa0,0x5a,0x14) and word at 0x0804c214+lang*8 at (0x82,0xc4,0x5a,0x14)
-@   (colour 0xffff, flag 0); "V%s" of "1.2.0" at (0xdc,0xa0,0x5a,0x14); writes
+@ Case 4 (About): 141.jpg at (0x72,0x30); texts "Version:" (d_0804c218 word 0) at
+@   (0x82,0xa0,0x5a,0x14) and " Model:" (word 1) at (0x82,0xc4,0x5a,0x14)
+@   (colour 0xffff, flag 0); "V%s" of firmware_version_text at (0xdc,0xa0,0x5a,0x14); writes
 @   "APP_2C53T" plus zero into 0x20008360..0x20008369 (word 0x5f505041, word
 @   0x33354332, halfword 0x54) and draws the text from 0x20008364 ("2C53T") at
 @   (0xdc,0xc4,0x5a,0x14).
-@ Case 6: 142.jpg at (0x70,0x30), text from a pointer table in the code (entry
-@   lang-1, base 0x0801e13c) at (0xd2,0x35,0x5a,0x14), text word
-@   0x0801e158+lang*4 at (0x75,0x4c,0xbe,0x50,flag 0x81); two button rows: fill
+@ Case 5 (Factory Reset): 142.jpg at (0x70,0x30), "Caution" at (0xd2,0x35,0x5a,0x14),
+@   "Factory reset will undo all previous changes!" at (0x75,0x4c,0xbe,0x50,flag
+@   0x81); two button rows: fill
 @   (x 0x72..0x135, y 0x9c..0xb9, and y 0xc0..0xdd) when not highlighted
 @   (sel!=0 / sel!=1 or edit==0), otherwise 143.jpg at (0x70,0x9a) / (0x70,0xbe);
-@   labels word 0x0804c254+lang*28 at (0x78,0x9a,0xb8,0x22) and word at
-@   0x0801e41c+lang*4 at (0x78,0xbe,0xb8,0x22).
-@ Purpose: draws one of seven pages selected by the low nibble of byte
-@ 0x20001062 (cases 0..6 as listed: two text rows, two bars, four rows, four
-@ rows labelled OFF/15min/30min/1hour, one row labelled ON, a page with a
-@ version string text, a page with two button rows); what the pages are for is
-@ not determined from the code.
+@   labels "Factory Reset" at (0x78,0x9a,0xb8,0x22) and "Return" at
+@   (0x78,0xbe,0xb8,0x22).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_page_by_selector_nibble,"ax",%progbits
 	.p2align 2
@@ -69,39 +67,17 @@ draw_page_by_selector_nibble:
 	movw	r3, #0xf8
 	movt	r3, #0x2000
 	ldrb.w	r0, [r3, #0xf6a]	@ byte 0x20001062
-	and	r0, r0, #0xf
-	cmp	r0, #6
+	and	r0, r0, #0xf		@ system settings item 0..5
+	cmp	r0, #5
 	bhi.w	.L0801d28c
 	tbh	[pc, r0, lsl #1]
 .L0801cf70:
-	.short	(.L0801cf7e - .L0801cf70)/2
-	.short	(.L0801cfc2 - .L0801cf70)/2
-	.short	(.L0801d002 - .L0801cf70)/2
-	.short	(.L0801d292 - .L0801cf70)/2
-	.short	(.L0801d2d0 - .L0801cf70)/2
-	.short	(.L0801d300 - .L0801cf70)/2
-	.short	(.L0801d3ca - .L0801cf70)/2
-.L0801cf7e:
-	ldrb.w	r0, [r3, #0xf69]
-	cmp	r0, #0
-	beq.w	.L0801d480
-	ldrb.w	r0, [r3, #0xf6b]
-	cmp	r0, #0
-	bne.w	.L0801d480
-	movw	r0, #:lower16:t_080bc499
-	movt	r0, #:upper16:t_080bc499
-	movs	r1, #0x79
-	movs	r2, #0x3d
-	bl	decode_image_file_with_offset
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	cmp	r0, #1
-	bne.w	.L0801dc1c
-	movw	r0, #:lower16:t_080bc54a
-	movt	r0, #:upper16:t_080bc54a
-	movs	r1, #0xa6
-	b.w	.L0801dc26
+	.short	(.L0801cfc2 - .L0801cf70)/2	@ 0 Sound and light
+	.short	(.L0801d002 - .L0801cf70)/2	@ 1 Startup on Boot
+	.short	(.L0801d292 - .L0801cf70)/2	@ 2 Auto Shutdown
+	.short	(.L0801d2d0 - .L0801cf70)/2	@ 3 USB Sharing
+	.short	(.L0801d300 - .L0801cf70)/2	@ 4 About
+	.short	(.L0801d3ca - .L0801cf70)/2	@ 5 Factory Reset
 .L0801cfc2:
 	movw	r0, #:lower16:t_080bc58b
 	movt	r0, #:upper16:t_080bc58b
@@ -124,14 +100,10 @@ draw_page_by_selector_nibble:
 	movs	r5, #2
 	b.n	.L0801d5b8
 .L0801d002:
-	ldrb.w	r0, [r3, #0xf60]
 	movw	r4, #0x8350
-	subs	r0, #1
-	it	ne
-	movne	r0, #0x18
-	rsb.w	r1, r0, #0xa6
+	movs	r1, #0x8e			@ radio x: 0xa6 - 0x18 (the English layout)
 	str	r1, [sp, #0x18]
-	rsb.w	r1, r0, #0xa5
+	movs	r1, #0x8d			@ 0xa5 - 0x18
 	movs	r0, #0
 	movs	r2, #0x3e
 	mov.w	r9, #0x5e
@@ -360,16 +332,11 @@ draw_page_by_selector_nibble:
 	and	r1, r6, #0x7f
 	cmp	r1, #3
 	bhi.w	.L0801d03c
-	movw	r2, #:lower16:d_0804c208
-	movw	r3, #0xf8
+	movw	r2, #:lower16:d_0804c208	@ English choice texts None .. Signal Generator
 	sbfx	r1, r6, #0, #7
 	movt	r2, #:upper16:d_0804c208
-	movt	r3, #0x2000
-	ldr.w	r1, [r2, r1, lsl #2]
-	ldrb.w	r3, [r3, #0xf60]
+	ldr.w	r3, [r2, r1, lsl #2]		@ text of choice i
 	uxtb	r2, r6
-	add.w	r1, r1, r3, lsl #2
-	ldr.w	r3, [r1, #-4]
 	movw	r1, #:lower16:d_0804c180
 	lsls	r2, r2, #3
 	movt	r1, #:upper16:d_0804c180
@@ -434,11 +401,9 @@ draw_page_by_selector_nibble:
 	movs	r2, #0x30
 	mov	r5, r3
 	bl	decode_image_file_with_offset
-	ldrb.w	r0, [r5, #0xf60]
-	movw	r4, #:lower16:d_0804c218
+	movw	r4, #:lower16:d_0804c218	@ About labels "Version:", " Model:"
 	movt	r4, #:upper16:d_0804c218
-	add.w	r0, r4, r0, lsl #3
-	ldr.w	r0, [r0, #-8]
+	ldr	r0, [r4, #0]			@ "Version:"
 	movw	r7, #0x1114
 	movt	r7, #0x2000
 	mov.w	r8, #0
@@ -451,10 +416,8 @@ draw_page_by_selector_nibble:
 	str	r6, [sp, #8]
 	str.w	r8, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
-	ldrb.w	r0, [r5, #0xf60]
 	movs	r1, #0xc4
-	add.w	r0, r4, r0, lsl #3
-	ldr.w	r0, [r0, #-4]
+	ldr	r0, [r4, #4]			@ " Model:"
 	movs	r2, #0x5a
 	strd	r0, r7, [sp, #0]
 	movs	r0, #0x82
@@ -497,12 +460,8 @@ draw_page_by_selector_nibble:
 	movs	r1, #0x70
 	movs	r2, #0x30
 	bl	decode_image_file_with_offset
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	adr.w	r1, .L0801e13c
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bc8a6	@ "Caution"
+	movt	r0, #:upper16:t_080bc8a6
 	movw	r8, #0x1114
 	movs	r1, #0
 	movt	r8, #0x2000
@@ -515,12 +474,8 @@ draw_page_by_selector_nibble:
 	movs	r3, #0x14
 	str	r5, [sp, #8]
 	bl	draw_wrapped_text_in_box
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	adr.w	r1, .L0801e15c
-	add.w	r0, r1, r0, lsl #2
-	ldr.w	r0, [r0, #-4]
+	movw	r0, #:lower16:t_080bb479	@ "Factory reset will undo all previous changes!"
+	movt	r0, #:upper16:t_080bb479
 	movs	r1, #0x81
 	str	r0, [sp, #0]
 	strd	r5, r1, [sp, #8]
@@ -549,145 +504,6 @@ draw_page_by_selector_nibble:
 	movt	lr, #0x2000
 	movs	r0, #2
 	b.n	.L0801d91a
-.L0801d480:
-	movw	r2, #0x8350
-	movs	r0, #0x3e
-	mov.w	lr, #0x3f
-	movt	r2, #0x2000
-	movw	r3, #0x131
-	movw	r12, #0x18c3
-	b.n	.L0801d4a4
-.L0801d498:
-	adds	r0, #2
-	cmp	r0, #0x5e
-	add.w	lr, lr, #2
-	beq.w	.L0801d86e
-.L0801d4a4:
-	movs	r6, #0x7b
-	b.n	.L0801d4ae
-.L0801d4a8:
-	adds	r6, #2
-	cmp	r6, r3
-	beq.n	.L0801d520
-.L0801d4ae:
-	ldrh	r4, [r2, #0]
-	subs	r5, r6, #1
-	cmp	r5, r4
-	bcc.n	.L0801d4e8
-	ldrh	r4, [r2, #0]
-	ldrh	r7, [r2, #4]
-	add	r7, r4
-	cmp	r7, r5
-	bls.n	.L0801d4e8
-	ldrh	r7, [r2, #2]
-	cmp	r0, r7
-	bcc.n	.L0801d4e8
-	ldrh	r7, [r2, #2]
-	ldrh	r5, [r2, #6]
-	add	r7, r5
-	cmp	r7, r0
-	bls.n	.L0801d4e8
-	ldr	r7, [r2, #8]
-	ldrh	r5, [r2, #0]
-	ldrh	r4, [r2, #2]
-	ldrh	r1, [r2, #4]
-	subs	r4, r0, r4
-	muls	r1, r4, r1
-	subs	r1, r1, r5
-	add	r1, r6
-	add.w	r1, r7, r1, lsl #1
-	strh	r12, [r1, #-2]
-.L0801d4e8:
-	ldrh	r1, [r2, #0]
-	cmp	r6, r1
-	bcc.n	.L0801d4a8
-	ldrh	r1, [r2, #0]
-	ldrh	r4, [r2, #4]
-	add	r1, r4
-	cmp	r1, r6
-	bls.n	.L0801d4a8
-	ldrh	r1, [r2, #2]
-	cmp	r0, r1
-	bcc.n	.L0801d4a8
-	ldrh	r1, [r2, #2]
-	ldrh	r4, [r2, #6]
-	add	r1, r4
-	cmp	r1, r0
-	bls.n	.L0801d4a8
-	ldr	r1, [r2, #8]
-	ldrh	r4, [r2, #0]
-	ldrh	r5, [r2, #2]
-	ldrh	r7, [r2, #4]
-	subs	r5, r0, r5
-	muls	r5, r7, r5
-	subs	r4, r5, r4
-	add	r4, r6
-	strh.w	r12, [r1, r4, lsl #1]
-	b.n	.L0801d4a8
-	.short	0xbf00	@ padding
-.L0801d520:
-	orr	r6, r0, #1
-	movs	r5, #0x7b
-	b.n	.L0801d52e
-.L0801d528:
-	adds	r5, #2
-	cmp	r5, r3
-	beq.n	.L0801d498
-.L0801d52e:
-	ldrh	r1, [r2, #0]
-	subs	r4, r5, #1
-	cmp	r4, r1
-	bcc.n	.L0801d56c
-	ldrh	r1, [r2, #0]
-	ldrh	r7, [r2, #4]
-	add	r1, r7
-	cmp	r1, r4
-	bls.n	.L0801d56c
-	ldrh	r1, [r2, #2]
-	cmp	r6, r1
-	bcc.n	.L0801d56c
-	ldrh	r1, [r2, #2]
-	ldrh	r4, [r2, #6]
-	add	r1, r4
-	cmp	r1, r6
-	bls.n	.L0801d56c
-	ldr.w	r8, [r2, #8]
-	ldrh	r4, [r2, #0]
-	ldrh	r7, [r2, #2]
-	ldrh	r1, [r2, #4]
-	sub.w	r7, lr, r7
-	muls	r1, r7, r1
-	subs	r1, r1, r4
-	add	r1, r5
-	add.w	r1, r8, r1, lsl #1
-	strh	r12, [r1, #-2]
-.L0801d56c:
-	ldrh	r1, [r2, #0]
-	cmp	r5, r1
-	bcc.n	.L0801d528
-	ldrh	r1, [r2, #0]
-	ldrh	r4, [r2, #4]
-	add	r1, r4
-	cmp	r1, r5
-	bls.n	.L0801d528
-	ldrh	r1, [r2, #2]
-	cmp	r6, r1
-	bcc.n	.L0801d528
-	ldrh	r1, [r2, #2]
-	ldrh	r4, [r2, #6]
-	add	r1, r4
-	cmp	r1, r6
-	bls.n	.L0801d528
-	ldr.w	r8, [r2, #8]
-	ldrh	r4, [r2, #0]
-	ldrh	r7, [r2, #2]
-	ldrh	r1, [r2, #4]
-	sub.w	r7, lr, r7
-	muls	r1, r7, r1
-	subs	r1, r1, r4
-	add	r1, r5
-	strh.w	r12, [r8, r1, lsl #1]
-	b.n	.L0801d528
 .L0801d5a6:
 	movw	r0, #:lower16:t_080bc5b8
 	movt	r0, #:upper16:t_080bc5b8
@@ -749,6 +565,7 @@ draw_page_by_selector_nibble:
 .L0801d654:
 	movs	r6, #0x7b
 	b.n	.L0801d66e
+	.short	0xbf00	@ padding (the doubles below are read with vldr, which needs a word address)
 .L0801d658:
 	.word	0x00000000, 0x402f0000	@ 8-byte literal at 0801d658 (double 15.5)
 .L0801d660:
@@ -1006,21 +823,6 @@ draw_page_by_selector_nibble:
 	add	r7, r3
 	strh.w	r12, [r2, r7, lsl #1]
 	b.n	.L0801d780
-.L0801d86e:
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	movs	r1, #0xa6
-	movs	r2, #0x47
-	cmp	r0, #1
-	ittee	ne
-	movwne	r0, #:lower16:t_080bc5cf
-	movtne	r0, #:upper16:t_080bc5cf
-	movweq	r0, #:lower16:t_080bc4f2
-	movteq	r0, #:upper16:t_080bc4f2
-	bl	decode_image_file_with_offset
-	movs	r0, #1
-	b.n	.L0801dc2e
 .L0801d89a:
 	movw	r0, #:lower16:t_080bc5e5
 	movt	r0, #:upper16:t_080bc5e5
@@ -1067,14 +869,10 @@ draw_page_by_selector_nibble:
 .L0801d918:
 	movs	r0, #1
 .L0801d91a:
-	ldrb.w	r1, [lr, #0xf60]
-	movw	r2, #:lower16:d_0804c258
-	rsb	r1, r1, r1, lsl #3
-	movt	r2, #:upper16:d_0804c258
+	movw	r1, #:lower16:t_080bcdab	@ "Factory Reset" (first button)
+	movt	r1, #:upper16:t_080bcdab
 	movw	r9, #:lower16:d_0804c180
-	add.w	r1, r2, r1, lsl #2
 	movt	r9, #:upper16:d_0804c180
-	ldr.w	r1, [r1, #-4]
 	ldrh.w	r0, [r9, r0, lsl #1]
 	movs	r2, #1
 	str	r1, [sp, #0]
@@ -1234,10 +1032,8 @@ draw_page_by_selector_nibble:
 .L0801da8e:
 	movs	r0, #1
 .L0801da90:
-	ldrb.w	r1, [lr, #0xf60]
-	adr.w	r2, .L0801e420
-	add.w	r1, r2, r1, lsl #2
-	ldr.w	r1, [r1, #-4]
+	movw	r1, #:lower16:t_080bc8d7	@ "Return" (second button)
+	movt	r1, #:upper16:t_080bc8d7
 	ldrh.w	r0, [r9, r0, lsl #1]
 	movs	r7, #1
 	strd	r1, r8, [sp, #0]
@@ -1407,223 +1203,6 @@ draw_page_by_selector_nibble:
 	movs	r0, #0xb6
 	movs	r1, #0x6f
 	b.w	.L0801e40e
-.L0801dc1c:
-	movw	r0, #:lower16:t_080bc5fc
-	movt	r0, #:upper16:t_080bc5fc
-	movs	r1, #0xa5
-.L0801dc26:
-	movs	r2, #0x45
-	bl	decode_image_file_with_offset
-	movs	r0, #2
-.L0801dc2e:
-	movw	r9, #:lower16:d_0804c180
-	movt	r9, #:upper16:d_0804c180
-	ldrh.w	r0, [r9, r0, lsl #1]
-	movw	r2, #:lower16:t_080bd09b
-	movs	r1, #1
-	movw	r8, #0x1114
-	movt	r2, #:upper16:t_080bd09b
-	movt	r8, #0x2000
-	str	r2, [sp, #0]
-	strd	r0, r1, [sp, #8]
-	movs	r0, #0xb6
-	movs	r1, #0x3d
-	movs	r2, #0x5c
-	movs	r3, #0x22
-	str.w	r8, [sp, #4]
-	bl	draw_wrapped_text_in_box
-	movw	r3, #0xf8
-	movt	r3, #0x2000
-	ldrb.w	r0, [r3, #0xf69]
-	cbz	r0, .L0801dca0
-	ldrb.w	r0, [r3, #0xf6b]
-	cmp	r0, #1
-	bne.n	.L0801dca0
-	movw	r0, #:lower16:t_080bc499
-	movt	r0, #:upper16:t_080bc499
-	movs	r1, #0x79
-	movs	r2, #0x85
-	mov	r4, r3
-	bl	decode_image_file_with_offset
-	ldrb.w	r0, [r4, #0xf60]
-	cmp	r0, #2
-	bne.w	.L0801ddf2
-	movw	r0, #:lower16:t_080bc54a
-	movt	r0, #:upper16:t_080bc54a
-	movs	r1, #0xa6
-	b.n	.L0801ddfc
-.L0801dca0:
-	movw	r2, #0x8350
-	movs	r0, #0x86
-	mov.w	lr, #0x87
-	movt	r2, #0x2000
-	movw	r3, #0x131
-	movw	r12, #0x18c3
-	b.n	.L0801dcc4
-.L0801dcb8:
-	adds	r0, #2
-	cmp	r0, #0xa6
-	add.w	lr, lr, #2
-	beq.w	.L0801ddc6
-.L0801dcc4:
-	movs	r6, #0x7b
-	b.n	.L0801dcce
-.L0801dcc8:
-	adds	r6, #2
-	cmp	r6, r3
-	beq.n	.L0801dd40
-.L0801dcce:
-	ldrh	r5, [r2, #0]
-	subs	r4, r6, #1
-	cmp	r4, r5
-	bcc.n	.L0801dd08
-	ldrh	r5, [r2, #0]
-	ldrh	r7, [r2, #4]
-	add	r7, r5
-	cmp	r7, r4
-	bls.n	.L0801dd08
-	ldrh	r7, [r2, #2]
-	cmp	r0, r7
-	bcc.n	.L0801dd08
-	ldrh	r7, [r2, #2]
-	ldrh	r5, [r2, #6]
-	add	r7, r5
-	cmp	r7, r0
-	bls.n	.L0801dd08
-	ldr	r7, [r2, #8]
-	ldrh	r5, [r2, #0]
-	ldrh	r4, [r2, #2]
-	ldrh	r1, [r2, #4]
-	subs	r4, r0, r4
-	muls	r1, r4, r1
-	subs	r1, r1, r5
-	add	r1, r6
-	add.w	r1, r7, r1, lsl #1
-	strh	r12, [r1, #-2]
-.L0801dd08:
-	ldrh	r1, [r2, #0]
-	cmp	r6, r1
-	bcc.n	.L0801dcc8
-	ldrh	r1, [r2, #0]
-	ldrh	r4, [r2, #4]
-	add	r1, r4
-	cmp	r1, r6
-	bls.n	.L0801dcc8
-	ldrh	r1, [r2, #2]
-	cmp	r0, r1
-	bcc.n	.L0801dcc8
-	ldrh	r1, [r2, #2]
-	ldrh	r4, [r2, #6]
-	add	r1, r4
-	cmp	r1, r0
-	bls.n	.L0801dcc8
-	ldr	r1, [r2, #8]
-	ldrh	r4, [r2, #0]
-	ldrh	r5, [r2, #2]
-	ldrh	r7, [r2, #4]
-	subs	r5, r0, r5
-	muls	r5, r7, r5
-	subs	r4, r5, r4
-	add	r4, r6
-	strh.w	r12, [r1, r4, lsl #1]
-	b.n	.L0801dcc8
-	.short	0xbf00	@ padding
-.L0801dd40:
-	orr	r6, r0, #1
-	movs	r4, #0x7b
-	b.n	.L0801dd4e
-.L0801dd48:
-	adds	r4, #2
-	cmp	r4, r3
-	beq.n	.L0801dcb8
-.L0801dd4e:
-	ldrh	r1, [r2, #0]
-	subs	r5, r4, #1
-	cmp	r5, r1
-	bcc.n	.L0801dd8c
-	ldrh	r1, [r2, #0]
-	ldrh	r7, [r2, #4]
-	add	r1, r7
-	cmp	r1, r5
-	bls.n	.L0801dd8c
-	ldrh	r1, [r2, #2]
-	cmp	r6, r1
-	bcc.n	.L0801dd8c
-	ldrh	r1, [r2, #2]
-	ldrh	r5, [r2, #6]
-	add	r1, r5
-	cmp	r1, r6
-	bls.n	.L0801dd8c
-	ldr.w	r10, [r2, #8]
-	ldrh	r5, [r2, #0]
-	ldrh	r7, [r2, #2]
-	ldrh	r1, [r2, #4]
-	sub.w	r7, lr, r7
-	muls	r1, r7, r1
-	subs	r1, r1, r5
-	add	r1, r4
-	add.w	r1, r10, r1, lsl #1
-	strh	r12, [r1, #-2]
-.L0801dd8c:
-	ldrh	r1, [r2, #0]
-	cmp	r4, r1
-	bcc.n	.L0801dd48
-	ldrh	r1, [r2, #0]
-	ldrh	r5, [r2, #4]
-	add	r1, r5
-	cmp	r1, r4
-	bls.n	.L0801dd48
-	ldrh	r1, [r2, #2]
-	cmp	r6, r1
-	bcc.n	.L0801dd48
-	ldrh	r1, [r2, #2]
-	ldrh	r5, [r2, #6]
-	add	r1, r5
-	cmp	r1, r6
-	bls.n	.L0801dd48
-	ldr.w	r10, [r2, #8]
-	ldrh	r5, [r2, #0]
-	ldrh	r7, [r2, #2]
-	ldrh	r1, [r2, #4]
-	sub.w	r7, lr, r7
-	muls	r1, r7, r1
-	subs	r1, r1, r5
-	add	r1, r4
-	strh.w	r12, [r10, r1, lsl #1]
-	b.n	.L0801dd48
-.L0801ddc6:
-	movw	r0, #0xf8
-	movt	r0, #0x2000
-	ldrb.w	r0, [r0, #0xf60]
-	movs	r1, #0xa6
-	movs	r2, #0x8f
-	cmp	r0, #2
-	ittee	ne
-	movwne	r0, #:lower16:t_080bc5cf
-	movtne	r0, #:upper16:t_080bc5cf
-	movweq	r0, #:lower16:t_080bc4f2
-	movteq	r0, #:upper16:t_080bc4f2
-	bl	decode_image_file_with_offset
-	movs	r0, #1
-	b.n	.L0801de04
-.L0801ddf2:
-	movw	r0, #:lower16:t_080bc5fc
-	movt	r0, #:upper16:t_080bc5fc
-	movs	r1, #0xa5
-.L0801ddfc:
-	movs	r2, #0x8d
-	bl	decode_image_file_with_offset
-	movs	r0, #2
-.L0801de04:
-	ldrh.w	r0, [r9, r0, lsl #1]
-	movw	r1, #:lower16:t_080bc6ae
-	movt	r1, #:upper16:t_080bc6ae
-	movs	r7, #1
-	strd	r1, r8, [sp, #0]
-	str	r0, [sp, #8]
-	movs	r0, #0xb6
-	movs	r1, #0x85
-	b.n	.L0801e40e
 .L0801de1e:
 	movw	r0, #:lower16:t_080bc54a
 	movt	r0, #:upper16:t_080bc54a

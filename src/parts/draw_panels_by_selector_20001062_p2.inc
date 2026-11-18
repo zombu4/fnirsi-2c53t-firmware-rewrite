@@ -193,14 +193,9 @@
 	movs r7, #1
 	adr.w r1, .L08015338
 	b.n .L08014c4a
-.L080144fa:
-	movw r0, #:lower16:t_080bc46c
-	movt r0, #:upper16:t_080bc46c
-	b.n .L0801450c
 .L08014504:
-	movw r0, #:lower16:t_080bc4af
+	movw r0, #:lower16:t_080bc4af	@ "3:/System file/82.jpg"
 	movt r0, #:upper16:t_080bc4af
-.L0801450c:
 	mov r4, r12
 .L0801450e:
 	movs r1, #0x72

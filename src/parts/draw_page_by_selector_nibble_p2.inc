@@ -209,26 +209,6 @@ firmware_version_text:
 .L0801e124:
 	.asciz	"3:/System file/142.jpg"
 	.byte	0x00	@ string terminator padding (24 bytes in total)
-.L0801e13c:
-	@ title of the factory reset warning, one word per language slot: all English now
-	.word	t_080bc8a6	@ "Caution"
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-	.word	t_080bc8a6
-.L0801e15c:
-	@ the warning text, one word per language slot: all English now
-	.word	t_080bb479	@ "Factory reset will undo all previous changes!"
-	.word	t_080bb479
-	.word	t_080bb479
-	.word	t_080bb479
-	.word	t_080bb479
-	.word	t_080bb479
-	.word	t_080bb479
-	.word	t_080bb479
 .L0801e17c:
 	adds	r4, #2
 	cmp	r4, r3
@@ -525,16 +505,6 @@ firmware_version_text:
 	add	sp, #44
 	pop.w	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 	.byte	0x00, 0xbf	@ padding
-.L0801e420:
-	@ "Return" button text, one word per language slot: all English now
-	.word	t_080bc8d7	@ "Return"
-	.word	t_080bc8d7
-	.word	t_080bc8d7
-	.word	t_080bc8d7
-	.word	t_080bc8d7
-	.word	t_080bc8d7
-	.word	t_080bc8d7
-	.word	t_080bc8d7
 .L0801e440:
 	.asciz	"15min"
 	.short	0x0000	@ padding

@@ -284,7 +284,10 @@
 	beq.n	.L0802cdae
 	cmp	r1, #0xaa
 	bne.w	.L0802d198
-	movs	r1, #8
+	@ marker 0xaa (written by save_settings_to_flash with defaults, the factory reset):
+	@ V1.2.0 entered state 8 (the language page), whose OK led to state 0; there is no
+	@ language page, so state 0 directly (the loaded language byte is kept)
+	movs	r1, #0
 	strb.w	r1, [r10, #0xf68]
 .L0802cdae:
 	lsrs	r1, r0, #8
@@ -588,10 +591,13 @@
 	strh.w	r1, [r10, #0x352]
 	b.n	.L0802d1a8
 .L0802d198:
-	movs	r0, #8
+	@ settings marker invalid (first start): V1.2.0 entered state 8 (the language page)
+	@ with language byte 1; OK there led to state 0. There is no language page: state 0
+	@ directly and language byte 2 (English), which is still saved with the settings
+	movs	r0, #0
 	strb.w	r0, [r10, #0xf68]
 	ldrh.w	r0, [r10, #0x34e]
-	movs	r1, #1
+	movs	r1, #2
 	strb.w	r1, [r10, #0xf60]
 .L0802d1a8:
 	movw	r11, #0x1018
