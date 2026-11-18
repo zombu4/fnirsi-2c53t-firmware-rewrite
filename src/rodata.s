@@ -1,6 +1,6 @@
 @ rodata.s - fixed data (V1.2.0 0x08046254..0x080BE67F): format tables, number constants, function
-@ pointer tables, the text pointer tables, fonts and glyph bitmaps, pictures, the scatter-load region
-@ table (0x080BE314) and the packed initial RAM image (0x080BE480, unpacked to 0x20000000 at reset).
+@ pointer tables, the text pointer tables, fonts and glyph bitmaps, pictures and the scatter-load region
+@ table (0x080BE314). The initial RAM image it names is src/ram_init.s (typed source, copied at reset).
 @ The bytes come from assets/rodata.bin; words that hold code addresses are written as symbols, and so
 @ are the data addresses (font key array pointers, scatter-load table). The text pointer tables
 @ (0x0804bf28..0x0804c9fb) are typed as .word lists of the English strings of src/text.s; the
@@ -1345,109 +1345,185 @@ UNREF_0806eef6:
 DATA_0806ef34:
 	.global d_0806ef34
 d_0806ef34:
-	.incbin "assets/rodata.bin", 0x28ce0, 3500
+	.incbin "assets/rodata.bin", 0x28ce0, 1024
+@ d_0806f334: 12 px font glyph data base (context word +0 at 0x20001098 in src/ram_init.s)
+	.global d_0806f334
+d_0806f334:
+	.incbin "assets/rodata.bin", 0x290e0, 1700
+@ d_0806f9d8: 12 px font record table, 8 bytes per glyph (context word +4 at 0x2000109C)
+	.global d_0806f9d8
+d_0806f9d8:
+	.incbin "assets/rodata.bin", 0x29784, 768
+@ d_0806fcd8: 12 px font range descriptor (context word +8 at 0x200010A0)
+	.global d_0806fcd8
+d_0806fcd8:
+	.incbin "assets/rodata.bin", 0x29a84, 8
 @ 0x0806fce0: word +8 of the 12 px font range descriptor (0x0806fcd8): pointer to its sorted u16 key array, written as a symbol so it follows the array
 	.word d_0806fcec                                   @ 0x0806fce0 = 0x0806fcec
 	.incbin "assets/rodata.bin", 0x29a90, 8
 @ d_0806fcec: key array of the 12 px font (descriptor + 0x14)
 	.global d_0806fcec
 d_0806fcec:
-	.incbin "assets/rodata.bin", 0x29a98, 32300
+	.incbin "assets/rodata.bin", 0x29a98, 194
+@ d_0806fdae: 15 px font glyph data base (context word +0 at 0x200010C8 in src/ram_init.s)
+	.global d_0806fdae
+d_0806fdae:
+	.incbin "assets/rodata.bin", 0x29b5a, 27530
+@ d_08076938: 15 px font record table (context word +4 at 0x200010CC)
+	.global d_08076938
+d_08076938:
+	.incbin "assets/rodata.bin", 0x306e4, 4568
+@ d_08077b10: 15 px font range descriptor (context word +8 at 0x200010D0)
+	.global d_08077b10
+d_08077b10:
+	.incbin "assets/rodata.bin", 0x318bc, 8
 @ 0x08077b18: word +8 of the 15 px font range descriptor (0x08077b10): pointer to its key array
 	.word d_08077b24                                   @ 0x08077b18 = 0x08077b24
 	.incbin "assets/rodata.bin", 0x318c8, 8
 @ d_08077b24: key array of the 15 px font (descriptor + 0x14)
 	.global d_08077b24
 d_08077b24:
-	.incbin "assets/rodata.bin", 0x318d0, 36070
-@ UNREF_0808080a: 107066 bytes; the first 92 8-byte records are (u16, u8, u8, u8, u8, u16) = (0x0080, 8, 9, 0, 3, 0x0044), (0x0070, 8, 13, 0, 1, 0x0078), (0x00a0, 10, 10, 0, 2, 0x00aa), (0x0090, 10, 11, 0, 2, 0x00e1), (0x0030, 4, 4, 0, 9, 0x00e9), (0x0050, 6, 12, 0, 1, 0x010d) ... with the last halfword non-decreasing 68, 120, 170, 225, 233, 269, ... 3110 | READ: the record table of the glyph descriptor at 0x200010f8 (words 0x08077f9c data base, 0x080807f0 record table, 0x080819a8 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x200010e4 with callback words 0x0802f809 and 0x0802f429) continues here: the callback 0x0802f428 loads the 8-byte records with ldr.w r0,[r0,r4,lsl #3] (word 0 holds a 12-bit field in bits 20..31 and the glyph offset in bits 0..19; bytes 4..7 = columns, rows, two signed offsets, copied to the caller by the fields callback 0x0802f808); the range table of that descriptor (0x080819a8..0x08081e2b), the glyph data, record tables (0x0808b214, 0x08098fdc) and range tables (0x0808c3cc, 0x0809a194) of the descriptors at 0x20001128 (words 0x08081e2c, 0x0808b214, 0x0808c3cc) and 0x20001158 (words 0x0808c850, 0x08098fdc, 0x0809a194) and the first glyph bitmaps of the descriptor at 0x20001188 (data base 0x0809a618) lie inside this region; blend_glyph_into_region_buffer (0x0800fb90) reads bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48 after the pointer callback (blx r2 at 0x0800fba4); 1182 record offsets give bitmap start addresses inside this region (first 0x08081e2c, last 0x0809aa3f); the words 0x08080878 at 0x08008e20 and 0x0808f04f at 0x08040188 are bytes inside instructions and not pointers
+	.incbin "assets/rodata.bin", 0x318d0, 1144
+@ d_08077f9c: 16 px font glyph data base (context word +0 at 0x200010F8 in src/ram_init.s)
+	.global d_08077f9c
+d_08077f9c:
+	.incbin "assets/rodata.bin", 0x31d48, 34900
+@ d_080807f0: 16 px font record table (context word +4 at 0x200010FC); continues in UNREF_0808080a
+	.global d_080807f0
+d_080807f0:
+	.incbin "assets/rodata.bin", 0x3a59c, 26
+@ UNREF_0808080a: 107066 bytes; the first 92 8-byte records are (u16, u8, u8, u8, u8, u16) = (0x0080, 8, 9, 0, 3, 0x0044), (0x0070, 8, 13, 0, 1, 0x0078), (0x00a0, 10, 10, 0, 2, 0x00aa), (0x0090, 10, 11, 0, 2, 0x00e1), (0x0030, 4, 4, 0, 9, 0x00e9), (0x0050, 6, 12, 0, 1, 0x010d) ... with the last halfword non-decreasing 68, 120, 170, 225, 233, 269, ... 3110 | READ: the record table of the glyph descriptor at 0x200010f8 (words 0x08077f9c data base, 0x080807f0 record table, 0x080819a8 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x200010e4 with callback words 0x0802f809 and 0x0802f429) continues here: the callback 0x0802f428 loads the 8-byte records with ldr.w r0,[r0,r4,lsl #3] (word 0 holds a 12-bit field in bits 20..31 and the glyph offset in bits 0..19; bytes 4..7 = columns, rows, two signed offsets, copied to the caller by the fields callback 0x0802f808); the range table of that descriptor (0x080819a8..0x08081e2b), the glyph data, record tables (0x0808b214, 0x08098fdc) and range tables (0x0808c3cc, 0x0809a194) of the descriptors at 0x20001128 (words 0x08081e2c, 0x0808b214, 0x0808c3cc) and 0x20001158 (words 0x0808c850, 0x08098fdc, 0x0809a194) and the first glyph bitmaps of the descriptor at 0x20001188 (data base 0x0809a618) lie inside this region; blend_glyph_into_region_buffer (0x0800fb90) reads bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48 after the pointer callback (blx r2 at 0x0800fba4); 1182 record offsets give bitmap start addresses inside this region (first 0x08081e2c, last 0x0809aa3f); the words 0x08080878 at 0x08008e20 and 0x0808f04f at 0x08040188 are bytes inside instructions and not pointers
 	.global UNREF_0808080a
 UNREF_0808080a:
-	.incbin "assets/rodata.bin", 0x3a5b6, 4518
+	.incbin "assets/rodata.bin", 0x3a5b6, 4510
+@ d_080819a8: 16 px font range descriptor (context word +8 at 0x20001100 in src/ram_init.s)
+	.global d_080819a8
+d_080819a8:
+	.incbin "assets/rodata.bin", 0x3b754, 8
 @ 0x080819b0: word +8 of the 16 px font range descriptor (0x080819a8): pointer to its key array
 	.word d_080819bc                                   @ 0x080819b0 = 0x080819bc
 	.incbin "assets/rodata.bin", 0x3b760, 8
 @ d_080819bc: key array of the 16 px font (descriptor + 0x14)
 	.global d_080819bc
 d_080819bc:
-	.incbin "assets/rodata.bin", 0x3b768, 43544
+	.incbin "assets/rodata.bin", 0x3b768, 1136
+@ d_08081e2c: 18 px font glyph data base (context word +0 at 0x20001128 in src/ram_init.s)
+	.global d_08081e2c
+d_08081e2c:
+	.incbin "assets/rodata.bin", 0x3bbd8, 37864
+@ d_0808b214: 18 px font record table (context word +4 at 0x2000112C)
+	.global d_0808b214
+d_0808b214:
+	.incbin "assets/rodata.bin", 0x44fc0, 4536
+@ d_0808c3cc: 18 px font range descriptor (context word +8 at 0x20001130)
+	.global d_0808c3cc
+d_0808c3cc:
+	.incbin "assets/rodata.bin", 0x46178, 8
 @ 0x0808c3d4: word +8 of the 18 px font range descriptor (0x0808c3cc): pointer to its key array
 	.word d_0808c3e0                                   @ 0x0808c3d4 = 0x0808c3e0
 	.incbin "assets/rodata.bin", 0x46184, 8
 @ d_0808c3e0: key array of the 18 px font (descriptor + 0x14)
 	.global d_0808c3e0
 d_0808c3e0:
-	.incbin "assets/rodata.bin", 0x4618c, 56764
+	.incbin "assets/rodata.bin", 0x4618c, 1136
+@ d_0808c850: 20 px font glyph data base (context word +0 at 0x20001158 in src/ram_init.s)
+	.global d_0808c850
+d_0808c850:
+	.incbin "assets/rodata.bin", 0x465fc, 51084
+@ d_08098fdc: 20 px font record table (context word +4 at 0x2000115C)
+	.global d_08098fdc
+d_08098fdc:
+	.incbin "assets/rodata.bin", 0x52d88, 4536
+@ d_0809a194: 20 px font range descriptor (context word +8 at 0x20001160)
+	.global d_0809a194
+d_0809a194:
+	.incbin "assets/rodata.bin", 0x53f40, 8
 @ 0x0809a19c: word +8 of the 20 px font range descriptor (0x0809a194): pointer to its key array
 	.word d_0809a1a8                                   @ 0x0809a19c = 0x0809a1a8
 	.incbin "assets/rodata.bin", 0x53f4c, 8
 @ d_0809a1a8: key array of the 20 px font (descriptor + 0x14)
 	.global d_0809a1a8
 d_0809a1a8:
-	.incbin "assets/rodata.bin", 0x53f54, 2216
-@ UNREF_0809aa50: 44 bytes 1c 60 18 30 18 38 30 1f f0 0f c0 3f 00 3f c0 30 e0 30 60 30 60 30 60 30 e0 3f c0 3f 00 30 00 30 00 30 00 30 00 30 00 0f c0 1f f0 38 (even byte count) | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809aa5b, last 0x0809aa77)
+	.incbin "assets/rodata.bin", 0x53f54, 1136
+@ d_0809a618: 25 px font glyph data base (context word +0 at 0x20001188 in src/ram_init.s)
+	.global d_0809a618
+d_0809a618:
+	.incbin "assets/rodata.bin", 0x543c4, 1080
+@ UNREF_0809aa50: 44 bytes 1c 60 18 30 18 38 30 1f f0 0f c0 3f 00 3f c0 30 e0 30 60 30 60 30 60 30 e0 3f c0 3f 00 30 00 30 00 30 00 30 00 30 00 0f c0 1f f0 38 (even byte count) | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809aa5b, last 0x0809aa77)
 	.global UNREF_0809aa50
 UNREF_0809aa50:
 	.incbin "assets/rodata.bin", 0x547fc, 56
-@ UNREF_0809aa88: 540 bytes 1c 60 18 30 18 38 30 1f f0 0f e0 00 70 00 38 00 1e 3f 00 3f c0 30 e0 30 60 30 60 30 60 31 c0 3f c0 3f 80 31 80 30 c0 30 e0 30 60 30 30 1f 00 3f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 24 record offsets give bitmap start addresses inside this region (first 0x0809aa99, last 0x0809aca2)
+@ UNREF_0809aa88: 540 bytes 1c 60 18 30 18 38 30 1f f0 0f e0 00 70 00 38 00 1e 3f 00 3f c0 30 e0 30 60 30 60 30 60 31 c0 3f c0 3f 80 31 80 30 c0 30 e0 30 60 30 30 1f 00 3f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 24 record offsets give bitmap start addresses inside this region (first 0x0809aa99, last 0x0809aca2)
 	.global UNREF_0809aa88
 UNREF_0809aa88:
 	.incbin "assets/rodata.bin", 0x54834, 576
-@ UNREF_0809acc8: 20 bytes 00 60 00 61 c0 63 80 63 00 66 00 6e 00 7e 00 73 00 63 80 61 | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); no record offset starts inside this region; the record 75 (0x080a0468 + 8*75, word 0x00a006ab, width 16, height 14, 1 bit per pixel from the descriptor halfword at 0x2000119a) gives the start 0x0809acc3 and the next glyph starts at 0x0809acdf, so its 28 bytes 0x0809acc3..0x0809acde include this region
+@ UNREF_0809acc8: 20 bytes 00 60 00 61 c0 63 80 63 00 66 00 6e 00 7e 00 73 00 63 80 61 | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); no record offset starts inside this region; the record 75 (0x080a0468 + 8*75, word 0x00a006ab, width 16, height 14, 1 bit per pixel from the descriptor halfword at 0x2000119a) gives the start 0x0809acc3 and the next glyph starts at 0x0809acdf, so its 28 bytes 0x0809acc3..0x0809acde include this region
 	.global UNREF_0809acc8
 UNREF_0809acc8:
 	.incbin "assets/rodata.bin", 0x54a74, 36
-@ UNREF_0809acec: 24 bytes 60 6f 3c 7f fe 71 c6 61 86 61 86 61 86 61 86 61 86 61 86 61 86 6f 00 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809aced, last 0x0809ad01)
+@ UNREF_0809acec: 24 bytes 60 6f 3c 7f fe 71 c6 61 86 61 86 61 86 61 86 61 86 61 86 61 86 6f 00 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809aced, last 0x0809ad01)
 	.global UNREF_0809acec
 UNREF_0809acec:
 	.incbin "assets/rodata.bin", 0x54a98, 40
-@ UNREF_0809ad14: 264 bytes c0 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 6f 80 7f c0 70 c0 70 60 60 60 60 60 70 60 70 c0 7f c0 6f 80 60 00 60 00 60 00 60 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 13 record offsets give bitmap start addresses inside this region (first 0x0809ad15, last 0x0809ae0e)
+@ UNREF_0809ad14: 264 bytes c0 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 6f 80 7f c0 70 c0 70 60 60 60 60 60 70 60 70 c0 7f c0 6f 80 60 00 60 00 60 00 60 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 13 record offsets give bitmap start addresses inside this region (first 0x0809ad15, last 0x0809ae0e)
 	.global UNREF_0809ad14
 UNREF_0809ad14:
 	.incbin "assets/rodata.bin", 0x54ac0, 284
-@ UNREF_0809ae30: 344 bytes f0 30 38 18 18 18 18 1e 0e 18 18 18 18 18 30 f0 e0 18 c0 3c c0 67 c0 63 80 08 80 1d c0 08 80 00 00 06 00 07 00 07 00 0d 80 0d 80 19 80 18 c0 18 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 15 record offsets give bitmap start addresses inside this region (first 0x0809ae30, last 0x0809af87)
+@ UNREF_0809ae30: 344 bytes f0 30 38 18 18 18 18 1e 0e 18 18 18 18 18 30 f0 e0 18 c0 3c c0 67 c0 63 80 08 80 1d c0 08 80 00 00 06 00 07 00 07 00 0d 80 0d 80 19 80 18 c0 18 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 15 record offsets give bitmap start addresses inside this region (first 0x0809ae30, last 0x0809af87)
 	.global UNREF_0809ae30
 UNREF_0809ae30:
 	.incbin "assets/rodata.bin", 0x54bdc, 356
-@ UNREF_0809af94: 12 bytes 60 1d 80 37 80 03 00 00 00 6f 00 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 1 record offsets give bitmap start addresses inside this region (first 0x0809af95, last 0x0809af95)
+@ UNREF_0809af94: 12 bytes 60 1d 80 37 80 03 00 00 00 6f 00 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 1 record offsets give bitmap start addresses inside this region (first 0x0809af95, last 0x0809af95)
 	.global UNREF_0809af94
 UNREF_0809af94:
 	.incbin "assets/rodata.bin", 0x54d40, 28
-@ UNREF_0809afb0: 92 bytes c0 03 00 06 00 06 00 00 00 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 1d 80 37 80 03 00 00 00 1f 00 3f 80 70 c0 60 c0 60 c0 60 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 4 record offsets give bitmap start addresses inside this region (first 0x0809afb1, last 0x0809b005)
+@ UNREF_0809afb0: 92 bytes c0 03 00 06 00 06 00 00 00 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 1d 80 37 80 03 00 00 00 1f 00 3f 80 70 c0 60 c0 60 c0 60 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 4 record offsets give bitmap start addresses inside this region (first 0x0809afb1, last 0x0809b005)
 	.global UNREF_0809afb0
 UNREF_0809afb0:
 	.incbin "assets/rodata.bin", 0x54d5c, 104
-@ UNREF_0809b018: 372 bytes c0 60 c0 71 c0 3f c0 1e c0 0f c0 1f f0 38 30 30 18 60 18 60 1c 60 1c 60 1c 60 18 30 18 30 30 1c 70 7c fc 7c fc 06 00 07 00 07 00 0d 80 0d 80 19 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 13 record offsets give bitmap start addresses inside this region (first 0x0809b021, last 0x0809b185)
+@ UNREF_0809b018: 372 bytes c0 60 c0 71 c0 3f c0 1e c0 0f c0 1f f0 38 30 30 18 60 18 60 1c 60 1c 60 1c 60 18 30 18 30 30 1c 70 7c fc 7c fc 06 00 07 00 07 00 0d 80 0d 80 19 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 13 record offsets give bitmap start addresses inside this region (first 0x0809b021, last 0x0809b185)
 	.global UNREF_0809b018
 UNREF_0809b018:
 	.incbin "assets/rodata.bin", 0x54dc4, 384
-@ UNREF_0809b198: 152 bytes 18 30 18 38 30 1f f0 0f c0 3f f8 3f f8 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 3f 00 3f c0 30 e0 30 60 30 60 30 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 5 record offsets give bitmap start addresses inside this region (first 0x0809b1a1, last 0x0809b211)
+@ UNREF_0809b198: 152 bytes 18 30 18 38 30 1f f0 0f c0 3f f8 3f f8 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 30 18 3f 00 3f c0 30 e0 30 60 30 60 30 ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 5 record offsets give bitmap start addresses inside this region (first 0x0809b1a1, last 0x0809b211)
 	.global UNREF_0809b198
 UNREF_0809b198:
 	.incbin "assets/rodata.bin", 0x54f44, 164
-@ UNREF_0809b23c: 316 bytes 60 60 60 70 e0 3f e0 1f 60 00 60 00 60 00 60 00 60 00 60 0f e0 1f e0 30 60 70 60 70 60 30 60 38 60 1f e0 0f e0 1c 60 18 60 30 60 70 60 e0 60 1f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 14 record offsets give bitmap start addresses inside this region (first 0x0809b24f, last 0x0809b369)
+@ UNREF_0809b23c: 316 bytes 60 60 60 70 e0 3f e0 1f 60 00 60 00 60 00 60 00 60 00 60 0f e0 1f e0 30 60 70 60 70 60 30 60 38 60 1f e0 0f e0 1c 60 18 60 30 60 70 60 e0 60 1f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 14 record offsets give bitmap start addresses inside this region (first 0x0809b24f, last 0x0809b369)
 	.global UNREF_0809b23c
 UNREF_0809b23c:
 	.incbin "assets/rodata.bin", 0x54fe8, 328
-@ UNREF_0809b384: 36 bytes c0 7f c0 7f c0 60 c0 60 c0 60 c0 60 c0 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 7f c0 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809b391, last 0x0809b3a5)
+@ UNREF_0809b384: 36 bytes c0 7f c0 7f c0 60 c0 60 c0 60 c0 60 c0 1f 00 3f 80 70 c0 60 c0 60 c0 60 c0 60 c0 70 c0 3f 80 1f 00 7f c0 7f | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809b391, last 0x0809b3a5)
 	.global UNREF_0809b384
 UNREF_0809b384:
 	.incbin "assets/rodata.bin", 0x55130, 52
-@ UNREF_0809b3b8: 152 bytes c0 6f 80 7f c0 70 c0 70 60 60 60 60 60 70 60 70 c0 7f c0 6f 80 60 00 60 00 60 00 60 00 1f 00 3f 80 71 00 60 00 60 00 60 00 60 00 71 00 3f 80 1f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 6 record offsets give bitmap start addresses inside this region (first 0x0809b3b9, last 0x0809b43d)
+@ UNREF_0809b3b8: 152 bytes c0 6f 80 7f c0 70 c0 70 60 60 60 60 60 70 60 70 c0 7f c0 6f 80 60 00 60 00 60 00 60 00 1f 00 3f 80 71 00 60 00 60 00 60 00 60 00 71 00 3f 80 1f ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 6 record offsets give bitmap start addresses inside this region (first 0x0809b3b9, last 0x0809b43d)
 	.global UNREF_0809b3b8
 UNREF_0809b3b8:
 	.incbin "assets/rodata.bin", 0x55164, 168
-@ UNREF_0809b460: 84897 bytes (odd count), first bytes c0 7f e0 7f e0 00 20 00 20 00 20 61 80 61 80 61 80 61 80 61 80 7f 80 3f 80 01 80 01 80 01 80 61 8c 61 8c 61 8c ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); glyph data of that descriptor and of the descriptor at 0x200011b8 (words 0x080a1ab8, 0x080b9000, 0x080ba1b8, font object 0x200011a4 with callback words 0x0802fa59 and 0x0802f5f9) continue through this region: 801 record offsets give bitmap start addresses inside it (first 0x0809b46b, last 0x080affe2); its record table 0x080a0468..0x080a162f and range table 0x080a1630.. are read by the same callback (ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 for the records, ldr r2,[r0,#0], ldrh r2,[r0,#4], ldr.w lr,[r0,#8] at 0x0802f58e..0x0802f5cc for the range table)
+@ UNREF_0809b460: 84897 bytes (odd count), first bytes c0 7f e0 7f e0 00 20 00 20 00 20 61 80 61 80 61 80 61 80 61 80 7f 80 3f 80 01 80 01 80 01 80 61 8c 61 8c 61 8c ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (src/ram_init.s, copied to 0x20000000 at reset); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); glyph data of that descriptor and of the descriptor at 0x200011b8 (words 0x080a1ab8, 0x080b9000, 0x080ba1b8, font object 0x200011a4 with callback words 0x0802fa59 and 0x0802f5f9) continue through this region: 801 record offsets give bitmap start addresses inside it (first 0x0809b46b, last 0x080affe2); its record table 0x080a0468..0x080a162f and range table 0x080a1630.. are read by the same callback (ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 for the records, ldr r2,[r0,#0], ldrh r2,[r0,#4], ldr.w lr,[r0,#8] at 0x0802f58e..0x0802f5cc for the range table)
 	.global UNREF_0809b460
 UNREF_0809b460:
-	.incbin "assets/rodata.bin", 0x5520c, 25048
+	.incbin "assets/rodata.bin", 0x5520c, 20488
+@ d_080a0468: 25 px font record table (context word +4 at 0x2000118C in src/ram_init.s)
+	.global d_080a0468
+d_080a0468:
+	.incbin "assets/rodata.bin", 0x5a214, 4552
+@ d_080a1630: 25 px font range descriptor (context word +8 at 0x20001190)
+	.global d_080a1630
+d_080a1630:
+	.incbin "assets/rodata.bin", 0x5b3dc, 8
 @ 0x080a1638: word +8 of the 25 px font range descriptor (0x080a1630): pointer to its key array
 	.word d_080a1644                                   @ 0x080a1638 = 0x080a1644
 	.incbin "assets/rodata.bin", 0x5b3e8, 8
 @ d_080a1644: key array of the 25 px font (descriptor + 0x14)
 	.global d_080a1644
 d_080a1644:
-	.incbin "assets/rodata.bin", 0x5b3f0, 59837
+	.incbin "assets/rodata.bin", 0x5b3f0, 1140
+@ d_080a1ab8: 28 px font glyph data base (context word +0 at 0x200011B8 in src/ram_init.s)
+	.global d_080a1ab8
+d_080a1ab8:
+	.incbin "assets/rodata.bin", 0x5b864, 58697
 @ DATA_080b0001: 36425 bytes from the odd address 0x080b0001, first bytes fe 80 00 0a fe 8e c3 0c fa 3e ec 30 00 00 5e e5 | the reference movt.eq r0,#0x80b at 0x0801dfee in draw_page_by_selector_nibble follows movweq r0,#0xc4f2 at 0x0801dfea, so the value built is 0x080bc4f2 (text '3:/System file/74.jpg'; the ne path builds 0x080bc5cf, '3:/System file/77.jpg'), then bl 0x08039f6c; the address 0x080b0001 comes from r0 = 1 and is not loaded by any instruction | draw_page_by_selector_nibble: draws one of seven option pages with radio-style rows
 	.global DATA_080b0001
 DATA_080b0001:
@@ -1455,14 +1531,34 @@ DATA_080b0001:
 @ UNREF_080b8e54: 9624 bytes, first bytes 08 aa aa aa aa aa aa aa cf e5 00 00 00 00 00 00 00 00 00 8e e5 00 00 00 00 00 00 00 00 00 8e e5 (the pattern 8e e5 followed by 9 zero bytes repeats at 11-byte distance at the start) | READ: glyph data of the descriptors at 0x200011b8 (words 0x080a1ab8 data base, 0x080b9000 record table, 0x080ba1b8 range table, font object 0x200011a4 with callback words 0x0802fa59 and 0x0802f5f9) and 0x200011e8 (words 0x080ba63c, 0x080bb2f0, 0x080bb3a8, font object 0x200011d4 with callback words 0x0802faed and 0x0802f66d): the pointer callbacks (0x0802f5f8 and 0x0802f66c) load the 8-byte records with ldr.w r0,[r0,r4,lsl #3] and return the data base plus the low 20 bits of the record word, blend_glyph_into_region_buffer (0x0800fb90) reads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; 27 record offsets give bitmap start addresses inside this region (first 0x080b8e8a, last 0x080bb249), and the record tables 0x080b9000..0x080ba1b7 and 0x080bb2f0..0x080bb3a7 lie inside it
 	.global UNREF_080b8e54
 UNREF_080b8e54:
-	.incbin "assets/rodata.bin", 0x72c00, 4972
+	.incbin "assets/rodata.bin", 0x72c00, 428
+@ d_080b9000: 28 px font record table (context word +4 at 0x200011BC in src/ram_init.s)
+	.global d_080b9000
+d_080b9000:
+	.incbin "assets/rodata.bin", 0x72dac, 4536
+@ d_080ba1b8: 28 px font range descriptor (context word +8 at 0x200011C0)
+	.global d_080ba1b8
+d_080ba1b8:
+	.incbin "assets/rodata.bin", 0x73f64, 8
 @ 0x080ba1c0: word +8 of the 28 px font range descriptor (0x080ba1b8): pointer to its key array
 	.word d_080ba1cc                                   @ 0x080ba1c0 = 0x080ba1cc
 	.incbin "assets/rodata.bin", 0x73f70, 8
 @ d_080ba1cc: key array of the 28 px font (descriptor + 0x14)
 	.global d_080ba1cc
 d_080ba1cc:
-	.incbin "assets/rodata.bin", 0x73f78, 4580
+	.incbin "assets/rodata.bin", 0x73f78, 1136
+@ d_080ba63c: 63 px font glyph data base (context word +0 at 0x200011E8 in src/ram_init.s)
+	.global d_080ba63c
+d_080ba63c:
+	.incbin "assets/rodata.bin", 0x743e8, 3252
+@ d_080bb2f0: 63 px font record table (context word +4 at 0x200011EC)
+	.global d_080bb2f0
+d_080bb2f0:
+	.incbin "assets/rodata.bin", 0x7509c, 184
+@ d_080bb3a8: 63 px font range descriptor (context word +8 at 0x200011F0)
+	.global d_080bb3a8
+d_080bb3a8:
+	.incbin "assets/rodata.bin", 0x75154, 8
 @ 0x080bb3b0: word +8 of the 63 px font range descriptor (0x080bb3a8): pointer to its key array
 	.word d_080bb3bc                                   @ 0x080bb3b0 = 0x080bb3bc
 	.incbin "assets/rodata.bin", 0x75160, 8
@@ -1540,14 +1636,15 @@ UNREF_080be312:
 @ scatter_load_regions (src/startup_56.s) from d_080be314 up to d_080be334 (distance words at .L080071b8)
 	.global d_080be314
 d_080be314:
-	.word DATA_080be480                                @ 0x080be314 = 0x080be480: region 1 source, the packed initial RAM image
-	.incbin "assets/rodata.bin", 0x780c4, 8              @ destination 0x20000000, length 0x00001240
+	.word ram_init                                     @ region 1 source: the initial RAM image, src/ram_init.s (V1.2.0: 0x080be480, a packed stream)
+	.word 0x20000000                                   @ region 1 destination
+	.word 0x00001240                                   @ region 1 length in bytes (src/ram_init.s checks its own size against it)
 .Lsw_080be320:
-	.word unpack_token_stream_addr                     @ 0x080be320 = 0x080071c0
-@ UNREF_080be324: 12 bytes = 3 words 0x080be680, 0x20001240, 0x00035d50 (region 2 source, destination, length; its handler word 0x0800721c at 0x080be330 follows) | ldm.w r10!,{r0,r1,r2,r3} at 0x080071a6 loads them, and zero_fill_words does not read r0 (the source)
+	.word copy_words_addr                              @ region 1 handler: plain word copy, even entry label (V1.2.0: 0x080071c0, unpack_token_stream)
+@ UNREF_080be324: 12 bytes = 3 words: region 2 source, destination 0x20001240, length 0x00035d50; its handler word zero_fill_words_addr follows | ldm.w r10!,{r0,r1,r2,r3} in scatter_load_regions loads them, and zero_fill_words does not read r0 (the source)
 	.global UNREF_080be324
 UNREF_080be324:
-	.word rodata_end                                   @ 0x080be324 = 0x080be680: region 2 source = the byte after the packed RAM image (DATA_080be480 + 512); here also the start of .text_added
+	.word rodata_end                                   @ region 2 source = the end of this file's data (V1.2.0: 0x080be680); zero_fill_words does not read it
 	.incbin "assets/rodata.bin", 0x780d4, 8              @ destination 0x20001240, length 0x00035d50
 .Lsw_080be330:
 	.word zero_fill_words_addr                         @ 0x080be330 = 0x0800721c
@@ -1585,9 +1682,7 @@ d_080be35c:
 	.global UNREF_080be3d8
 UNREF_080be3d8:
 	.incbin "assets/rodata.bin", 0x78184, 168
-@ DATA_080be480: 512 bytes, first bytes 1a aa 01 75 64 aa 55 05 43 0a 40 13 12 7a 12 70 49 13 72 0a 72 20 18 0e | the source of the first block of the scatter-load table: words 0x080be480 (source), 0x20000000 (destination), 0x1240 (length), 0x080071c0 at 0x080be314..0x080be323 and the next block starts at 0x080be680 = 0x080be480 + 512 | ldm.w r10!,{r0,r1,r2,r3} at 0x080071a6 in the routine at 0x0800718c | routine at 0x0800718c: reads r0..r3 from the table (ldm.w at 0x080071a6) and branches with bx r3 (0x080071b6, lr set by subw lr,pc,#9 at 0x080071a2) to the routine at 0x080071c0 with source 0x080be480, destination 0x20000000, length 0x1240
-	.global DATA_080be480
-DATA_080be480:
-	.incbin "assets/rodata.bin", 0x7822c, 512
+@ The 512 bytes 0x080be480..0x080be67f of V1.2.0 (the packed initial RAM image, unpacked by
+@ unpack_token_stream) are not part of this file: the image is src/ram_init.s, copied by copy_words.
 	.global rodata_end
 rodata_end:

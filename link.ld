@@ -1,7 +1,7 @@
 /* link.ld - memory layout of the FNIRSI 2C53T application.
  * Below 0x08007000 are the bootloader and the settings / calibration page at 0x08006000; this image
  * starts at 0x08007000 and never covers them.  RAM addresses are absolute in the code
- * (0x20000000..0x20036F8F: initial values unpacked at reset, the rest zeroed; stack top 0x20036F90).
+ * (0x20000000..0x20036F8F: initial values 0x20000000..0x2000123F copied from src/ram_init.s at reset, the rest zeroed; stack top 0x20036F90).
  * Layout: vector table at 0x08007000 (the only fixed address), then the original functions in their
  * original order, then the data of src/rodata.s and the texts of src/text.s, then code added by this
  * rewrite; each section follows
@@ -541,13 +541,15 @@ SECTIONS
     KEEP(*(.text.double_to_u64_special_case))                  /* 0x08046146 */
     KEEP(*(.text.double_scale_by_pow2))                        /* 0x080461c8 */
   } > FLASH
-  .rodata :
+  .rodata :                                                        /* data, right after the code */
   {
-    KEEP(*(.rodata.fixed))                                         /* data of src/rodata.s, right after the code */
-    KEEP(*(.rodata.text))                                          /* texts of src/text.s (English, UTF-8) */
+    KEEP(*(.rodata.fixed))                                         /* src/rodata.s */
+    KEEP(*(.rodata.ram_init))                                      /* src/ram_init.s: initial RAM image, word aligned */
+    KEEP(*(.rodata.text))                                          /* src/text.s: texts (English, UTF-8) */
   } > FLASH
   .text_added :                                                    /* code added by this rewrite, right after the data */
   {
+    KEEP(*(.text.copy_words))                                      /* scatter-load region 1 handler, src/startup_56.s */
     KEEP(*(.text.boot_dump))
     KEEP(*(.text.boot_install))
     KEEP(*(.text.usb_ctl))                                         /* USB control channel */

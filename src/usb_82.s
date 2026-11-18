@@ -1561,7 +1561,7 @@ set_string_descriptor_mass_storage_config:
 
 @ ----------------------------------------------------------------------------
 @ get_configuration_descriptor_record - returns the constant address
-@ 0x200000b0. The 8 bytes there (initial RAM image, unpacked from 0x080BE480 at reset) are the word
+@ 0x200000b0. The 8 bytes there (initial RAM image src/ram_init.s, copied at reset) are the word
 @ 0x00000020 and the pointer 0x200000b8, whose bytes begin 09 02 20 00 01 01 04
 @ c0 32 (length 9, type 2, total length 0x20), followed at 0x200000c1 by 09 04
 @ 00 00 02 08 06 50. Purpose: returns a record {length 0x20, pointer to the
@@ -1581,7 +1581,7 @@ get_configuration_descriptor_record:
 
 @ ----------------------------------------------------------------------------
 @ get_device_descriptor_record - returns the constant address 0x200000d8. The 8
-@ bytes there (initial RAM image, unpacked from 0x080BE480 at reset) are the word 0x00000012 and the
+@ bytes there (initial RAM image src/ram_init.s, copied at reset) are the word 0x00000012 and the
 @ pointer 0x200000e0, whose bytes begin 12 01 00 02 00 00 00 40 (length 0x12,
 @ type 1, version 0x0200, max packet 0x40). Purpose: returns a record {length
 @ 0x12, pointer to the device descriptor}.
@@ -1657,7 +1657,7 @@ set_string_descriptor_mass_storage_interface:
 
 @ ----------------------------------------------------------------------------
 @ get_language_id_descriptor_record - returns the constant address 0x200000a4.
-@ The 8 bytes there (initial RAM image, unpacked from 0x080BE480 at reset) are the word 0x00000004 and
+@ The 8 bytes there (initial RAM image src/ram_init.s, copied at reset) are the word 0x00000004 and
 @ the pointer 0x200000ac, whose bytes are 04 03 09 04 (length 4, type 3,
 @ language 0x0409). Purpose: returns a record {length 4, pointer to the
 @ language id string descriptor}.
@@ -1791,7 +1791,7 @@ fn_08036db0:
 @ (high nibble first; nibble+0x30 below 10, nibble+0x37 otherwise) and the top
 @ 16 bits of the word at 0x1ffff7ec as 4 hex digits to 0x20000092,94,96,98,
 @ with zero bytes between and after the digits (0x20000083.. and 0x20000099).
-@ Returns 0x2000009c. The record at 0x2000009c (initial RAM image, unpacked from 0x080BE480 at reset) is
+@ Returns 0x2000009c. The record at 0x2000009c (initial RAM image src/ram_init.s, copied at reset) is
 @ the word 0x0000001a followed by the pointer 0x20000080, whose halfword is
 @ 0x031a (length 0x1a, type 3): the 12 characters written at
 @ 0x20000082..0x20000098 fill that string descriptor.

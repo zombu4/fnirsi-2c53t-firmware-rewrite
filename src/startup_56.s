@@ -1,4 +1,4 @@
-@ startup_56.s - reset entry glue, scatter loader, region decompressors, printf conversion dispatcher, C runtime start-up and idle loops.
+@ startup_56.s - reset entry glue, scatter loader, region handlers (word copy, zero fill, the unused V1.2.0 unpacker), printf conversion dispatcher, C runtime start-up and idle loops.
 @ Part of the FNIRSI 2C53T firmware rewrite (hand-written Thumb-2 assembly).
 	.syntax unified
 	.arch armv7e-m
@@ -24,12 +24,16 @@ fn_08007184:
 @ table start d_080be314 and end d_080be334 (V1.2.0 values 0x000b715c and
 @ 0x000b717c); added to r0 they make r10=0x080be314 and r11=0x080be334 in
 @ V1.2.0's layout. The table (src/rodata.s) has two 16-byte entries
-@ {r0,r1,r2,r3}: {0x080be480,0x20000000,0x1240,0x080071c0} and
-@ {0x080be680,0x20001240,0x35d50,0x0800721c}. Per entry lr=0x0800719d (subw lr,pc,#9
+@ {r0,r1,r2,r3}: {ram_init,0x20000000,0x1240,copy_words_addr} and
+@ {rodata_end,0x20001240,0x35d50,zero_fill_words_addr} (V1.2.0: {0x080be480,
+@ 0x20000000,0x1240,0x080071c0} with the packed image and unpack_token_stream, and
+@ {0x080be680,0x20001240,0x35d50,0x0800721c}). Per entry lr=.L0800719a+1 (adr.w lr
 @ at 080071a2), ldm r10!,{r0-r3} at 080071a6, tst r3,#1; if set r3=(r10start-1)-r3,
-@ orr r3,#1, bx r3 at 080071b6. So 080071c0 (unpack_token_stream) runs on the first
-@ entry and 0800721c (zero_fill_words) on the second; when r10==r11 (cmp at
-@ 0800719a) the bl fn_080072f0 at 0800719e is reached.
+@ orr r3,#1, bx r3 at 080071b6. So copy_words runs on the first entry and
+@ zero_fill_words on the second; when r10==r11 (cmp at 0800719a) the bl
+@ fn_080072f0 at 0800719e is reached. Registers the loop keeps across a handler:
+@ r7, r10, r11 and lr (the handler returns with bx lr); r0..r3 are reloaded by
+@ the ldm, r4..r6 and r12 are not read by the loop.
 @ Decompiler note: the indirect jump 'bx r3' at 080071b6 was treated as a call.
 @ ----------------------------------------------------------------------------
 	.global scatter_load_regions
@@ -66,7 +70,11 @@ scatter_load_regions:
 @ else copies run+2 bytes from destination minus the next source byte (back
 @ reference).
 @ unpack_token_stream_addr is a plain global label on the same address: the
-@ scatter-load region table holds this address as an even value.
+@ scatter-load region table of V1.2.0 held this address as an even value.
+@ Not used since the initial RAM image is typed source (src/ram_init.s, copied
+@ by copy_words): no table entry, call or pointer names it. It is kept in place
+@ for now so that this step moves no code (the functions after it keep their
+@ addresses); it can be removed when code is allowed to move.
 @ ----------------------------------------------------------------------------
 	.section .text.unpack_token_stream,"ax",%progbits
 	.global unpack_token_stream
@@ -146,6 +154,39 @@ zero_fill_words_addr:		@ plain label after the function label (.thumb_func appli
 	stmiacs	r1!, {r4, r5}
 	it	mi
 	strmi	r3, [r1, #0]
+	bx	lr
+
+@ ----------------------------------------------------------------------------
+@ copy_words - copy by words (added by this rewrite; region 1 handler of the
+@ scatter-load table, copies the initial RAM image src/ram_init.s).
+@ r0=source, r1=destination, r2=byte count (a multiple of 4). Copies one word
+@ per loop pass from [r0] to [r1], both advanced by 4, until the count is used
+@ up; a count of 0 copies nothing. A count that is not a multiple of 4 is
+@ rounded up to the next word (the loop ends when the subtraction gives 0 or
+@ borrows, bhi), so it never runs past the next word boundary.
+@ Changes r0..r3 and the flags only; r4..r12 and lr are kept (scatter_load_regions
+@ relies on r7, r10, r11 and lr). Returns with bx lr.
+@ copy_words_addr is a plain global label on the same address: the scatter-load
+@ region table holds this address as an even value (a word with bit 0 set would
+@ be taken as an offset, scatter_load_regions tst r3,#1).
+@ Placed in .text_added by link.ld. src/boot_install.s has its own local label
+@ copy_words (r0 = destination, r1 = source); its bl calls bind to that local
+@ label, not to this global one.
+@ ----------------------------------------------------------------------------
+	.section .text.copy_words,"ax",%progbits
+	.global copy_words
+	.thumb_func
+	.type copy_words, %function
+	.global copy_words_addr
+copy_words:
+copy_words_addr:		@ plain label after the function label (.thumb_func applies to the first)
+	cbz	r2, .Lcopy_words_done	@ nothing to copy
+.Lcopy_words_loop:
+	ldr.w	r3, [r0], #4		@ next source word
+	str.w	r3, [r1], #4		@ to the destination
+	subs	r2, #4			@ count down by one word
+	bhi.n	.Lcopy_words_loop	@ more left (not zero, no borrow)
+.Lcopy_words_done:
 	bx	lr
 
 @ ----------------------------------------------------------------------------
