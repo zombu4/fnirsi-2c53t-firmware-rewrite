@@ -31,7 +31,7 @@
 	.equ	HDR_CRC,	0x18		@ word: CRC-32 of bytes 0x00..0x17
 	.equ	SLOT_MAGIC,	0x544F4C53
 	.equ	SLOT_FORMAT,	1
-	.equ	SLOT_IMAGE_VERSION, 1		@ HDR_VERSION the installer writes for this source
+	.equ	SLOT_IMAGE_VERSION, 2		@ HDR_VERSION the installer writes for this source (2: staged updates)
 
 @ record pages and records (16 bytes; an erased cell reads all 0xFF)
 	.equ	REC_PAGE0,	0x080E7000
@@ -90,3 +90,24 @@
 	.equ	KTA_WORD,	0x41544B38
 	.equ	GATE_LO,	0x08006800
 	.equ	GATE_HI,	0x080E7000
+
+@ application <-> slot bootloader (version 2) words in RAM: above the bootloader's RAM (it ends at
+@ 0x20001A08) and the starter's stack, inside the 96 KB of SRAM that exist whatever EOPB0 says; they
+@ survive a system reset (CONTROL_DESIGN.md revision 2, items 3 and 4)
+	.equ	REQ_ADDR,	0x20017FE0	@ update request, written by the application before its reset:
+	.equ	REQ_MAGIC,	0xB0075AFE	@   +0 magic, +4 image CRC-32, +8 image length, +12 ~magic
+	.equ	HANDOVER_ADDR,	0x20017FF0	@ hand-over, written by the bootloader before it starts the
+	.equ	HANDOVER_MAGIC,	0xB007C0DE	@   application: +0 magic, +4 slot id, +8 bootloader version,
+						@   +12 result of the last staged update (UPD_*)
+	.equ	UPD_NONE,	0
+	.equ	UPD_OK,		1
+	.equ	UPD_NO_FILE,	2		@ 2:/UPDATE/APP.BIN missing or the volume not readable
+	.equ	UPD_BAD_IMAGE,	3		@ length / CRC-32 / vector table do not match the request
+	.equ	UPD_FLASH_FAIL,	4		@ programmed application does not compare
+	.equ	BOOT_VERSION_STAGED, 2		@ first slot bootloader version with staged updates
+
+@ serial flash (research 2026-11-17, src/serial_flash_52.s): SPI 0x40003800, chip select PB12 low;
+@ drive "2:" is a FAT volume from serial flash byte 0x200000, 4096-byte sectors
+	.equ	SPI2_BASE,	0x40003800
+	.equ	VOL2_BASE,	0x00200000
+	.equ	IWDG_KEY,	0x40003000	@ independent watchdog key register: 0xAAAA reloads it

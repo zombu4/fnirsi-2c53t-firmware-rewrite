@@ -365,12 +365,26 @@ gpio_40011000_pin9_config_write_14:
 	strb.w	r0, [sp, #6]
 	lsls	r0, r0, #5		@ 0x10 << 5 = 0x200, pin 9 mask
 	str	r0, [sp, #0]
+.ifdef SLOT
+@ Slot build: PC9 is the power hold (the meter stays on while it is high: update-mode power key loop
+@ 0x080029BC drives it low to switch off; slot F kept the meter on after the button was released,
+@ NOTES "Installation through SWD"). The output register bit is set before the pin becomes an
+@ output, so the pin comes up high and the meter stays on also when the application's reset
+@ entered the bootloader (staged update) without the power button held.
+	mov.w	r1, #0x200
+	ldr	r0, .L08000978
+	bl	write_reg_0x10
+	mov	r1, sp
+	ldr	r0, .L08000978
+	bl	config_record_apply_nibbles
+.else
 	mov	r1, sp
 	ldr	r0, .L08000978
 	bl	config_record_apply_nibbles
 	mov.w	r1, #0x200
 	ldr	r0, .L08000978
 	bl	write_reg_0x14
+.endif
 	pop	{r2, r3, r4, pc}
 .L08000974:
 	.word 0x00180004	@ argument of set_or_clear_bit_40021000_offset

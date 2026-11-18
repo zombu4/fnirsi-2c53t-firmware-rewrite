@@ -1044,6 +1044,7 @@ fn_08002784:
 	cbnz	r0, 1f
 	pop	{r4, r5, r6, pc}	@ refused: back to the caller, which stays in update mode
 1:	bl	slot_confirm		@ the bootloader got here: confirm its slot (TRIAL -> OK)
+	bl	slot_handover		@ tell the application slot, bootloader version, update result
 	bl	slot_quiesce		@ every NVIC interrupt and SysTick off, as after a reset
 .endif
 	ldr	r5, [r4]

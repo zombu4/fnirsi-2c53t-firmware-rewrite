@@ -796,6 +796,9 @@ fn_08002938:
 	bl	gpio_init_33c
 	bl	gpio_40011000_pin9_config_write_14
 	bl	gpio_init_4b0
+.ifdef SLOT
+	bl	slot_staged_update	@ slot build: install a staged update when the application asked
+.endif
 	movs	r1, #4
 	ldr	r0, .L08002a2c
 	bl	reg8_all_bits_set
@@ -877,6 +880,9 @@ fn_08002938:
 .endif
 	b.n	.L08002a2a
 .L08002a10:
+.ifdef SLOT
+	bl	iwdg_feed		@ slot build: entered by the application's reset, the watchdog runs
+.endif
 	bl	fn_08001d2c
 	mov.w	r1, #0x100
 	ldr	r0, .L08002a48

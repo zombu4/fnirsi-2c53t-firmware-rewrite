@@ -917,8 +917,12 @@ save_settings_to_flash:
 	movw	r0, #0x1014
 	movt	r0, #0x4001
 	mov.w	r1, #0x200
-	str	r1, [r0]
+	str	r1, [r0]			@ PC9 (power hold) low: power off
+	.ifdef	VENDOR_V120
 	bl	reset_system
+	.else
+	bl	power_off_wait			@ wait for the power to go (boot_install.s), no reset
+	.endif
 
 @ ----------------------------------------------------------------------------
 @ fn_08029d40 - no parameters, no return value.

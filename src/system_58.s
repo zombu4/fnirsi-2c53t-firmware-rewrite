@@ -393,7 +393,12 @@ system_bring_up:
 	strb.w	r6, [sp, #0x47]
 	str	r4, [sp, #0x40]
 	bl	set_nibble_fields_from_bit_mask
-	str	r4, [r7]
+	.ifdef	VENDOR_V120
+	str	r4, [r7]			@ 0x40011014 = 0x200: PC9 (power hold) low
+	.else
+	str	r4, [r5, #0x10]			@ 0x40011010 = 0x200: PC9 (power hold) high from the start, so
+						@ the meter stays on after a reset by this firmware (update)
+	.endif
 	ldr.w	r0, [r9]
 	add	r4, sp, #0x40
 	orr	r0, r0, #4

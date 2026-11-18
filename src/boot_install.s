@@ -104,6 +104,40 @@ boot_hook_then_file_open:
 	b.w	file_open		@ the original call, arguments unchanged
 
 @ ----------------------------------------------------------------------------
+@ power_off_wait - end of save_settings_to_flash in this firmware (replaces its reset_system call): the
+@ caller has driven PC9 (power hold) low. A reset here would let the bootloader, which drives PC9 high
+@ at start (slot build), keep the meter on; so this waits instead: backlight off (0x40015034 = 0, as
+@ system_bring_up does around the logo), interrupts off, watchdog fed. Without external power the
+@ meter switches off here. While external power keeps it running, the power key (PC8 low, key scanner
+@ bit 0) held for 500000 consecutive polls (each poll calls iwdg_feed and reads the port: well above
+@ 10 ms at the core clock) restarts it (system reset = switching on). Does not return.
+@ ----------------------------------------------------------------------------
+	.global	power_off_wait
+	.thumb_func
+	.type	power_off_wait, %function
+power_off_wait:
+	cpsid	i
+	ldr	r0, =0x40015034
+	movs	r1, #0
+	str	r1, [r0]
+	ldr	r4, =0x40011008		@ port C input
+	movs	r5, #0			@ r5 = consecutive polls with the key pressed
+1:	bl	iwdg_feed
+	ldr	r0, [r4]
+	tst	r0, #0x100
+	ite	eq
+	addeq	r5, r5, #1
+	movne	r5, #0
+	ldr	r0, =500000
+	cmp	r5, r0
+	blo	1b
+	ldr	r0, =0xE000ED0C		@ AIRCR: SYSRESETREQ
+	ldr	r1, =0x05FA0004
+	str	r1, [r0]
+	dsb
+2:	b	2b
+
+@ ----------------------------------------------------------------------------
 @ boot_install - r0 = file object (not open), r1 = 1 for the dry run (BOOTTEST.TXT), 0 for the real
 @ install (BOOTINST.TXT).  See the file header.  The dry run does every check and, in a first
 @ install, writes slots F and A and the records (bank 2, nothing the stock bootloader uses) but
