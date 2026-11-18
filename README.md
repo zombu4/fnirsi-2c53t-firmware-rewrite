@@ -166,6 +166,8 @@ ignores "._" files by their content.
 | `src/` | application: vector table, functions by subsystem, fixed data, installer, flash dump |
 | `src/parts/` | continuation parts of very large functions |
 | `assets/` | binary data included by the sources |
+| `assets/tables/` | computed tables (sine, FFT twiddles and swap order, JPEG IDCT scale and clamp, signal generator waveforms) and the FatFs code page / case tables (`LICENSE-FatFs.txt`) |
+| `assets/vendor_kept/` | `fpga.bin` (FPGA configuration stream) and `filter_bank.bin` (filter coefficients): the vendor's data, kept for now |
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, bootloader and installer |
@@ -185,6 +187,10 @@ with hardware or other products, and paid flashing services. Full terms: [LICENS
 The bootloader font is Terminus Font 4.49.1, Copyright (C) 2020 Dimitar Toshkov Zhekov, under the
 SIL Open Font License 1.1 (`bootloader/assets/OFL.txt`).
 
+The file system code page and case conversion tables (`assets/tables/fat_*.bin`) are data of FatFs
+R0.15, Copyright (C) ChaN, under the FatFs license (`assets/tables/LICENSE-FatFs.txt`).
+
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
 names are trademarks of their owners. Content derived from the vendor's firmware (the application
-port, the stock bootloader port and `assets/`) is not licensed by this project.
+port, the stock bootloader port, `assets/rodata.bin` and `assets/vendor_kept/`) is not licensed by
+this project.
