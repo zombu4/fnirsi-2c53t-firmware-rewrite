@@ -2,8 +2,12 @@
 @ pointer tables, the text pointer tables, fonts and glyph bitmaps, pictures and the scatter-load region
 @ table (0x080BE314). The initial RAM image it names is src/ram_init.s (typed source, copied at reset).
 @ The fonts (assets/fonts/) and pictures (assets/pictures/) are own data with typed descriptors and
-@ animation records; the other bytes come from assets/rodata.bin; words that hold code addresses are written as symbols, and so
-@ are the data addresses (font key array pointers, scatter-load table). The text pointer tables
+@ animation records. Number tables, runtime library constants and small tables are typed here with
+@ their values; computed tables come from assets/tables/ (tools/make_tables.py of the project folder),
+@ the FatFs code page and case tables from assets/tables/fat_*.bin (FatFs R0.15, LICENSE-FatFs.txt),
+@ the FPGA stream and the filter bank are the vendor's data kept for now (assets/vendor_kept/). Words
+@ that hold code addresses are written as symbols, and so are the data addresses (font key array
+@ pointers, scatter-load table). The text pointer tables
 @ (0x0804bf28..0x0804c9fb) are typed as .word lists of the English strings of src/text.s; the
 @ vendor text area (0x080bb416..0x080be05b, every language) is not part of the image any more.
 @ Where code reaches several objects from one label with fixed offsets, a .if/.error guard keeps
@@ -21,21 +25,21 @@ rodata_start:
 @ d_08046254: upper case digit text '0123456789ABCDEF@0X', target of the distance word of format_hex_u64 (src/format_10.s .L080075b0)
 	.global d_08046254
 d_08046254:
-	.incbin "assets/rodata.bin", 0x0, 1
+	.ascii "0"                                         @ printf digit text, upper case: '0' (index 0)
 @ UNREF_08046255: 5 bytes ASCII '12345' (31..35), index 1..5 of the digit text '0123456789ABCDEF' at 0x08046254 | READ: in format_hex_u64, ldr r4,[pc,#132] at 0x0800752a plus add r4,pc at 0x0800752c (word 0x0003ed24 at 0x080075b0 + 0x08007530) gives r4 = 0x08046254, taken when bit 11 of the halfword [r0] is set (lsls #20 / bpl at 0x08007526 / 0x08007528); ldrb r7,[r4,r7] at 0x08007544 with r7 = r2 & 15 (and.w at 0x0800753e), so the index is 0..15
 	.global UNREF_08046255
 UNREF_08046255:
-	.incbin "assets/rodata.bin", 0x1, 5
+	.ascii "12345"                                     @ index 1..5
 @ DATA_0804625a: 2 bytes ASCII '67' (36 37), index 6..7 of the digit text at 0x08046254 | the value 0x0804625a is an intermediate: ldr r4,[pc,#124] at 0x08007530 loads the same word 0x0003ed24 from 0x080075b0 and add r4,pc at 0x08007532 gives 0x0003ed24 + 0x08007536 = 0x0804625a, then adds r4,#14 at 0x08007534 makes r4 = 0x08046268 (the text '0123456789abcdef'); no instruction reads at 0x0804625a through this value
 	.global DATA_0804625a
 DATA_0804625a:
 	.global d_0804625a
 d_0804625a:
-	.incbin "assets/rodata.bin", 0x6, 14
+	.asciz "6789ABCDEF@0X"                             @ index 6..15, then '@0X' and the NUL
 @ d_08046268: lower case digit text '0123456789abcdef@0x'; format_hex_u64 reaches it as d_08046254 + 6 + 14 (second add r4,pc 6 bytes after the first, then adds r4,#14), so these 0x14 bytes stay fixed
 	.global d_08046268
 d_08046268:
-	.incbin "assets/rodata.bin", 0x14, 20
+	.asciz "0123456789abcdef@0x"                       @ printf digit text, lower case, 20 bytes with the NUL
 	.if (d_08046268 - d_08046254) != 0x14
 	.error "format_hex_u64 (src/format_10.s) needs the lower case digit text 0x14 bytes after d_08046254"
 	.endif
@@ -44,113 +48,164 @@ d_08046268:
 DATA_0804627c:
 	.global d_0804627c
 d_0804627c:
-	.incbin "assets/rodata.bin", 0x28, 20
+	.byte 0x04, 0x00, 0x00, 0x08                       @ ' ' space flag 0x04, '!' '"' none, '#' alternate form 0x08
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00     @ '$' .. '*': no flag
+	.byte 0x02, 0x00, 0x01, 0x00, 0x00                 @ '+' sign 0x02, ',' none, '-' left justify 0x01, '.' '/' none
+	.byte 0x10, 0x00, 0x00, 0x00                       @ '0' zero padding 0x10, '1' '2' '3' none
+@ d_08046290 .. d_08046317: double constants of double_pow (src/math_rt_29.s), runtime library data.
+@ The values have the layout and numbers of the constants bp = {1.0, 1.5}, dp_h, dp_l, L1..L6, P1..P5
+@ of the e_pow.c algorithm of fdlibm (identified by the numbers; the fdlibm source was not fetched
+@ for this file). The code reads bp through d_08046290, dp_h through d_080462a0 + 8*k and dp_l
+@ through d_080462b0 + 8*k with k = 0 or 1. Each double is two words, low word first.
 	.global d_08046290
 d_08046290:
-	.incbin "assets/rodata.bin", 0x3c, 16
+	.word 0x00000000, 0x3ff00000                       @ bp[0] = 1.0
+	.word 0x00000000, 0x3ff80000                       @ bp[1] = 1.5
 	.global d_080462a0
 d_080462a0:
-	.incbin "assets/rodata.bin", 0x4c, 8
+	.word 0x00000000, 0x00000000                       @ dp_h[0] = 0.0
 @ UNREF_080462a8: 8 bytes = one 64-bit double 0.5849624872207642 (bytes 00 00 00 40 03 b8 e2 3f) | READ: ldr r0,[pc,#236] at 0x0804410e plus add r0,pc at 0x08044110 gives 0x080462a0; add.w r4,r0,r4,lsl #3 at 0x08044112 and vldr d1,[r4] at 0x0804411a, element size 8; r4 is 0 or 1 (movle r4,#0 at 0x08043e5a, movgt r4,#1 at 0x08043e64, movs r4,#0 at 0x08043e68) and no instruction between 0x08043e72 and 0x08044112 writes r4; this region is r4 = 1
 	.global UNREF_080462a8
 UNREF_080462a8:
-	.incbin "assets/rodata.bin", 0x54, 8
+	.word 0x40000000, 0x3fe2b803                       @ dp_h[1] = 0.5849624872207642 (high part of log2(1.5))
 	.global d_080462b0
 d_080462b0:
-	.incbin "assets/rodata.bin", 0x5c, 8
+	.word 0x00000000, 0x00000000                       @ dp_l[0] = 0.0
 @ UNREF_080462b8: 8 bytes = one 64-bit double 1.350039202129749e-08 (bytes 06 d0 cf 43 eb fd 4c 3e) | READ: ldr r0,[pc,#284] at 0x080440d8 plus add r0,pc at 0x080440da gives 0x080462b0; add.w r0,r0,r4,lsl #3 at 0x080440dc and vldr d1,[r0] at 0x080440e0, element size 8; r4 is 0 or 1 (set at 0x08043e5a, 0x08043e64, 0x08043e68; not written between 0x08043e72 and 0x080440dc); this region is r4 = 1
 	.global UNREF_080462b8
 UNREF_080462b8:
-	.incbin "assets/rodata.bin", 0x64, 8
+	.word 0x43cfd006, 0x3e4cfdeb                       @ dp_l[1] = 1.350039202129749e-08 (low part: dp_h[1] + dp_l[1] = log2(1.5))
 @ DATA_080462c0: 48 bytes = 6 64-bit doubles 0.5999999999999946, 0.4285714285785502, 0.33333332981837743, 0.272728123808534, 0.23066074577556175, 0.20697501780033842 | add r0,pc at 0x08043f72 builds this address | double_pow: double-precision x^y routine with special cases for y==0, NaN/inf, 1.0, 2.0, 0.5
 	.global DATA_080462c0
 DATA_080462c0:
 	.global d_080462c0
 d_080462c0:
-	.incbin "assets/rodata.bin", 0x6c, 48
+	.word 0x33333303, 0x3fe33333                       @ L1 = 0.5999999999999946
+	.word 0xdb6fabff, 0x3fdb6db6                       @ L2 = 0.4285714285785502
+	.word 0x518f264d, 0x3fd55555                       @ L3 = 0.33333332981837743
+	.word 0xa91d4101, 0x3fd17460                       @ L4 = 0.272728123808534
+	.word 0x93c9db65, 0x3fcd864a                       @ L5 = 0.23066074577556175
+	.word 0x4a454eef, 0x3fca7e28                       @ L6 = 0.20697501780033842
 @ DATA_080462f0: 5 x 64-bit float, 40 bytes, first 0x3fc555555555553e | the array argument of 0x08044c58 (r0 = 0x080462f0 from add r0,pc at 0x0804440c, r1 = 5 from movs r1,#5 at 0x0804440a, call at 0x0804440e), which evaluates the elements from a[4] down to a[0] with 0x0804577c and 0x08044fac.
 	.global DATA_080462f0
 DATA_080462f0:
 	.global d_080462f0
 d_080462f0:
-	.incbin "assets/rodata.bin", 0x9c, 40
+	.word 0x5555553e, 0x3fc55555                       @ P1 = 0.16666666666666602
+	.word 0x16bebd93, 0xbf66c16c                       @ P2 = -0.0027777777777015593
+	.word 0xaf25de2c, 0x3f11566a                       @ P3 = 6.613756321437934e-05
+	.word 0xc5d26bf1, 0xbebbbd41                       @ P4 = -1.6533902205465252e-06
+	.word 0x72bea4d0, 0x3e663769                       @ P5 = 4.1381367970572385e-08
 @ DATA_08046318: 4 bytes 00 00 00 00 = float 0.0, the first float of a table of 8-byte pairs of floats spanning 0x08046318..0x08046397 (this region plus DATA_0804631c, 16 pairs) | vldr.32 s6,[r0] at 0x0804467a with r0 = table + 8*r1 (add.w r0,r0,r1,lsl #3 at 0x08044676) | float_pow: single-precision x^y routine with special cases for y==0, x==1.0, NaN, inf
 	.global DATA_08046318
 DATA_08046318:
 	.global d_08046318
 d_08046318:
-	.incbin "assets/rodata.bin", 0xc4, 4
-@ DATA_0804631c: 124 bytes = 31 32-bit floats continuing the pairs table from 0x08046318: second float of pair 0 is 0.0, then pairs (1.3984375, 0.00096796), (2.71875, 5.0023e-05), (3.96875, -0.0019098), (5.1523438, -0.0014942), (6.2773438, -0.00026499), (7.3515625, -0.0006566) ... up to the last pair (15.265625, 0.001516); the first floats of the pairs rise from 0 to 15.265625 and the second floats are below 0.002 in magnitude | vldr.32 s3,[r0,#0x4] at 0x0804467e reads the second float of the pair at table + 8*r1 | float_pow: single-precision x^y routine
-	.global DATA_0804631c
-DATA_0804631c:
-	.incbin "assets/rodata.bin", 0xc8, 124
+@ 16 pairs of float32 (a, b), written as their bit patterns; how the library computed them was not
+@ determined (UNPROVEN): a rises 0 .. 15.265625 in steps near 1.1, b is below 0.002 in magnitude.
+	.word 0x00000000, 0x00000000                       @ pair 0: 0.0, 0.0
+@ (vldr.32 s3,[r0,#0x4] at 0x0804467e of V1.2.0 reads the second float of the pair at table + 8*r1)
+	.word 0x3fb30000, 0x3a7dbeb2                       @ pair 1: 1.3984375, 0.00096795999
+	.word 0x402e0000, 0x3851cfdf                       @ pair 2: 2.71875, 5.0023078e-05
+	.word 0x407e0000, 0xbafa51bf                       @ pair 3: 3.96875, -0.0019097849
+	.word 0x40a4e000, 0xbac3da19                       @ pair 4: 5.15234375, -0.0014942318
+	.word 0x40c8e000, 0xb98aedc2                       @ pair 5: 6.27734375, -0.00026498555
+	.word 0x40eb4000, 0xba2c1fcd                       @ pair 6: 7.3515625, -0.0006566018
+	.word 0x41061000, 0xbafaff2a                       @ pair 7: 8.37890625, -0.0019149531
+	.word 0x4115c000, 0x37d1cfdf                       @ pair 8: 9.359375, 2.5011539e-05
+	.word 0x4124d000, 0x3a70979a                       @ pair 9: 10.30078125, 0.00091778638
+	.word 0x41335000, 0x368e4789                       @ pair 10: 11.20703125, 4.2402576e-06
+	.word 0x41414000, 0x389d5be7                       @ pair 11: 12.078125, 7.5034615e-05
+	.word 0x414eb000, 0xb9980ac0                       @ pair 12: 12.91796875, -0.00028999709
+	.word 0x415ba000, 0x3a948f55                       @ pair 13: 13.7265625, 0.001133422
+	.word 0x41683000, 0xbac092da                       @ pair 14: 14.51171875, -0.0014692203
+	.word 0x41744000, 0x3ac6b362                       @ pair 15: 15.265625, 0.0015159661
 @ DATA_08046398: 64 bytes = 16 32-bit floats rising 1.0, 1.043945, 1.090332, 1.138672, 1.188965, 1.241699, 1.296387, 1.354004, 1.414062, 1.476562, 1.541992, 1.610352, 1.681641, 1.755859, 1.833984, 1.915039 | vldr.32 s0,[r0] at 0x080447ba with r0 = base + 4*(x & 15) (and.w r0,r0,#15 at 0x0804478a; add.w r0,r1,r0,lsl #2 at 0x080447b4) | float_pow: single-precision x^y routine
 	.global DATA_08046398
 DATA_08046398:
 	.global d_08046398
 d_08046398:
-	.incbin "assets/rodata.bin", 0x144, 64
+@ 2^(k/16) high parts, k = 0..15 (float32 with at most 12 significant mantissa bits; hi[k] + lo[k]
+@ of the next table equals 2^(k/16) within 1.45e-11, DATA_INVENTORY 5)
+	.word 0x3f800000, 0x3f85a000, 0x3f8b9000, 0x3f91c000 @ 1.0, 1.0439453125, 1.09033203125, 1.138671875
+	.word 0x3f983000, 0x3f9ef000, 0x3fa5f000, 0x3fad5000 @ 1.18896484375, 1.24169921875, 1.29638671875, 1.35400390625
+	.word 0x3fb50000, 0x3fbd0000, 0x3fc56000, 0x3fce2000 @ 1.4140625, 1.4765625, 1.5419921875, 1.6103515625
+	.word 0x3fd74000, 0x3fe0c000, 0x3feac000, 0x3ff52000 @ 1.681640625, 1.755859375, 1.833984375, 1.9150390625
 @ DATA_080463d8: 64 bytes = 16 32-bit floats of small magnitude 0.0, 0.00032847, 0.00017570, 0.00011676, 0.00024227, 0.00015859, 0.00045284, 0.00025164, 0.00015106, 0.00026365, 0.00021864, 0.00013877, 0.00015221, 0.00039279, 2.3711e-05, 0.00016750 | vldr.32 s2,[r1] at 0x0804479c with r1 = base + 4*(x & 15) (add.w r1,r1,r0,lsl #2 at 0x08044798); s2 then accumulates vmla.f32 s2,s3,s0 at 0x080447ae | float_pow: single-precision x^y routine
 	.global DATA_080463d8
 DATA_080463d8:
 	.global d_080463d8
 d_080463d8:
-	.incbin "assets/rodata.bin", 0x184, 64
+@ 2^(k/16) low parts, k = 0..15 (float32)
+	.word 0x00000000, 0x39ac367d, 0x39383c7d, 0x38f4dceb @ 0.0, 0.00032846993, 0.00017570141, 0.00011675976
+	.word 0x397e0a32, 0x39264c12, 0x39ed6a9b, 0x3983eea4 @ 0.00024227126, 0.00015859332, 0.0004528359, 0.00025164068
+	.word 0x391e667f, 0x398a39f6, 0x3965422b, 0x391182a4 @ 0.00015106237, 0.00026364595, 0.00021863791, 0.00013876945
+	.word 0x391f995b, 0x39cdeec3, 0x37c6e7dd, 0x392fa2a5 @ 0.00015220551, 0.00039278538, 2.3711409e-05, 0.0001674989
 @ DATA_08046418: 63 bytes = 15 whole 32-bit floats 1.0, 1.0442737, 1.0905077, 1.1387886, 1.189207, 1.2418578, 1.2968396, 1.3542556, 1.4142135, 1.4768262, 1.5422108, 1.6104903, 1.6817929, 1.7562522, 1.8340081 plus 3 bytes of a 16th float (whose 4 bytes 0x08046454..0x08046457 read 1.9152066) | vldr.32 s3,[r1] at 0x080447a8 with r1 = base + 4*(x & 15) (add.w r1,r1,r0,lsl #2 at 0x080447a4) | float_pow: single-precision x^y routine
 	.global DATA_08046418
 DATA_08046418:
 	.global d_08046418
 d_08046418:
-	.incbin "assets/rodata.bin", 0x1c4, 64
+@ 2^(k/16), k = 0..15, each the correctly rounded float32 (16 of 16, DATA_INVENTORY 5)
+	.word 0x3f800000, 0x3f85aac3, 0x3f8b95c2, 0x3f91c3d3 @ 1.0, 1.0442737, 1.0905077, 1.1387886
+	.word 0x3f9837f0, 0x3f9ef532, 0x3fa5fed7, 0x3fad583f @ 1.1892071, 1.2418578, 1.2968396, 1.3542556
+	.word 0x3fb504f3, 0x3fbd08a4, 0x3fc5672a, 0x3fce248c @ 1.4142135, 1.4768262, 1.5422108, 1.6104903
+	.word 0x3fd744fd, 0x3fe0ccdf, 0x3feac0c7, 0x3ff5257d @ 1.6817929, 1.7562522, 1.8340081, 1.9152066
 @ d_08046458: lower case digit text '0123456789abcdefxp' of format_float_hex; reached as d_0804646b + 6 - 0x19 (src/format_10.s .L08007e98)
 	.global d_08046458
 d_08046458:
-	.incbin "assets/rodata.bin", 0x204, 19
+	.asciz "0123456789abcdefxp"                        @ 19 bytes with the NUL
 @ d_0804646b: upper case digit text '0123456789ABCDEFXP' of format_float_hex, target of its distance word (src/format_10.s .L08008080); then 2 zero bytes
 	.global d_0804646b
 d_0804646b:
-	.incbin "assets/rodata.bin", 0x217, 21
+	.asciz "0123456789ABCDEFXP"                        @ 19 bytes with the NUL
+	.byte 0x00, 0x00                                   @ padding to the word at d_08046480
 	.if (d_0804646b - d_08046458) != 0x13
 	.error "format_float_hex (src/format_10.s) needs the upper case digit text 0x13 bytes after the lower case one"
 	.endif
 	.global d_08046480
 d_08046480:
-	.incbin "assets/rodata.bin", 0x22c, 8
+	.word 0x00000000, 0x00000000                       @ double 0.0 (read by fn_08008114, src/format_10.s .L08008122)
 	.global d_08046488
 d_08046488:
-	.incbin "assets/rodata.bin", 0x234, 8
+	.word 0x00000000, 0x00000000                       @ double 0.0 (read by double_pow, src/math_rt_29.s)
 @ DATA_08046490: 60 bytes = 5 entries of 12 bytes (stride 0xc), each three 32-bit words: (0x00004002, 0xa0000000, 0x0), (0x00004005, 0xc8000000, 0x0), (0x0000400c, 0x9c400000, 0x0), (0x00004019, 0xbebc2000, 0x0), (0x00004034, 0x8e1bc9bf, 0x04000000) | with word0 as exponent (bias 0x3fff) and words 1,2 as the 64-bit mantissa the entries equal 10, 100, 10000, 1e8, 1e16 | add.w r1,r10,r1,lsl #2 at 0x080084ac | fn_08008448: combines 12-byte table entries with 0804356a and divides with 08043540 when n is negative
 	.global DATA_08046490
 DATA_08046490:
 	.global d_08046490
 d_08046490:			@ reached by fn_08008448 as d_0804650c - 0x7c (src/format_10.s .L08008496)
-	.incbin "assets/rodata.bin", 0x23c, 60
+	.word 0x00004002, 0xa0000000, 0x00000000           @ 10    (exponent 0x4002, mantissa 0xa0000000:00000000)
+	.word 0x00004005, 0xc8000000, 0x00000000           @ 100
+	.word 0x0000400c, 0x9c400000, 0x00000000           @ 1e4
+	.word 0x00004019, 0xbebc2000, 0x00000000           @ 1e8
+	.word 0x00004034, 0x8e1bc9bf, 0x04000000           @ 1e16
 @ DATA_080464cc: 4 bytes b5 40 00 00 = word 0x000040b5, word 0 (exponent word) of the 16-byte entry at 0x080464cc | ldm.w r0,{r1,r2,r3} at 0x080084d4 loads words 0..2 of the entry | entry words (0x000040b5, 0xd0cf4b50, 0xcfe20766, 0x00000001) equal 1e55 with the same reading as the table at 0x08046490 | fn_08008448: combines 12-byte table entries with 0804356a
 	.global DATA_080464cc
 DATA_080464cc:
 	.global d_080464cc
 d_080464cc:			@ reached by fn_08008448 as d_0804650c - 0x40 (src/format_10.s .L080084c2)
-	.incbin "assets/rodata.bin", 0x278, 4
-@ DATA_080464d0: 4 bytes 50 4b cf d0 = word 0xd0cf4b50, word 1 of the 16-byte entry at 0x080464cc (high mantissa word) | loaded by ldm.w r0,{r1,r2,r3} at 0x080084d4 in fn_08008448
-	.global DATA_080464d0
-DATA_080464d0:
-	.incbin "assets/rodata.bin", 0x27c, 4
-@ DATA_080464d4: 4 bytes 66 07 e2 cf = word 0xcfe20766, word 2 of the 16-byte entry at 0x080464cc (low mantissa word) | loaded by ldm.w r0,{r1,r2,r3} at 0x080084d4 in fn_08008448
-	.global DATA_080464d4
-DATA_080464d4:
-	.incbin "assets/rodata.bin", 0x280, 4
+@ 16-byte entries: exponent word, mantissa high, mantissa low, then word 3 (1 or -1, read by
+@ ldr r0,[r0,#0xc] at 0x080084dc). The values are 1e55, 1e110, 1e220, 1e440 to the 64-bit
+@ mantissa (relative errors 1.1e-23, 2.1e-20, -1.1e-20, -1.4e-20, computed with fractions);
+@ that word 3 is the sign of the rounding error fits these four (+, +, -, -) but is UNPROVEN.
+	.word 0x000040b5, 0xd0cf4b50, 0xcfe20766           @ 1e55
+@ (V1.2.0 named the words of this entry DATA_080464d0 / DATA_080464d4; nothing refers to them)
 @ DATA_080464d8: 52 bytes = word 0x00000001 (word 3 of the entry at 0x080464cc, read by ldr r0,[r0,#0xc] at 0x080084dc) followed by three 16-byte entries (0x0000416c, 0xaa51823e, 0x34a7eedf, 0x00000001), (0x000042d9, 0xe2a0b5dc, 0x971f303a, 0xffffffff), (0x000045b4, 0xc8a025fd, 0x4fc1a3e9, 0xffffffff) = 1e110, 1e220, 1e440 with the exponent/mantissa reading used for 0x08046490 | stride 0x10 | fn_08008448: combines 12-byte table entries with 0804356a
 	.global DATA_080464d8
 DATA_080464d8:
-	.incbin "assets/rodata.bin", 0x284, 52
+	.word 0x00000001                                   @ word 3 of the 1e55 entry
+	.word 0x0000416c, 0xaa51823e, 0x34a7eedf, 0x00000001 @ 1e110
+	.word 0x000042d9, 0xe2a0b5dc, 0x971f303a, 0xffffffff @ 1e220
+	.word 0x000045b4, 0xc8a025fd, 0x4fc1a3e9, 0xffffffff @ 1e440
 @ d_0804650c: 12-byte extended value 1.0 (words 0x00003fff, 0x80000000, 0), target of fn_08008448's distance word (src/format_10.s .L08008528)
 	.global d_0804650c
 d_0804650c:
-	.incbin "assets/rodata.bin", 0x2b8, 12
+	.word 0x00003fff, 0x80000000, 0x00000000           @ 1.0
 @ d_08046518: 12-byte extended value 1.0 again plus a zero word; reached by fn_08008448 as d_0804650c + 0xc (src/format_10.s .L0800845e)
 	.global d_08046518
 d_08046518:
-	.incbin "assets/rodata.bin", 0x2c4, 16
+	.word 0x00003fff, 0x80000000, 0x00000000           @ 1.0
+	.word 0x00000000                                   @ zero word
 @ fn_08008448 reaches four tables from one distance word, each through its own fixed place in the code:
 @ the block 0x08046490..0x08046527 keeps these distances to d_0804650c
 	.if (d_08046518 - d_0804650c) != 0xc
@@ -164,19 +219,23 @@ d_08046518:
 	.endif
 	.global d_08046528
 d_08046528:
-	.incbin "assets/rodata.bin", 0x2d4, 7
+@ 32 bytes 0x08046528..0x08046547 (V1.2.0 values): byte table of fn_080400b8 (src/keys_26.s, base
+@ d_08046528 in r10, read at [base + 3k], [base + 3k + 1..2] and [base + 3k + 15..17], k = 0..4) and
+@ the word before the handler table d_08046548. What the numbers stand for is UNPROVEN.
+	.byte 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
 @ UNREF_0804652f: 8 bytes 08 09 0a 0b 0c 0d 0e 0f (ascending) | READ: the function containing 0x08040382 holds sl = 0x08046528 (movw at 0x08040382, movt at 0x08040392); r6 = 0,3,6,9,12 (movs r6,#0 at 0x0804039e, adds r6,#3 at 0x080403a8, cmp r6,#15 / beq at 0x080403aa); bytes are loaded with ldrb.w r1,[sl,r6] (0x080403e8, 0x08040406), ldrb r5,[r5,#15] after add.w r5,sl,r6 (0x080403d2, 0x080403d6), [r5,#16] (0x08040432, 0x08040436), [r5,#17] (0x08040494, 0x08040498), [r1,#1] (0x08040448, 0x0804044c and 0x08040466, 0x0804046a) and [r1,#2] (0x080404ae, 0x080404b2 and 0x080404d2, 0x080404d6), so the bytes 0x08046528..0x08046545 are addressed; this region (0x0804652f..0x08046536) is inside that range (offsets 7..14 from 0x08046528: [sl,r6] reaches 0x08046531 and 0x08046534, [r1,#1] reaches 0x0804652f, 0x08046532, 0x08046535, [r1,#2] reaches 0x08046530, 0x08046533, 0x08046536)
 	.global UNREF_0804652f
 UNREF_0804652f:
-	.incbin "assets/rodata.bin", 0x2db, 16
+	.byte 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+	.byte 0x00, 0x10, 0x00, 0x11, 0x12, 0x13, 0x14, 0x00
 @ UNREF_0804653f: 5 bytes 15 16 00 00 00 | READ: the function containing 0x08040382 holds sl = 0x08046528 (movw at 0x08040382, movt at 0x08040392); r6 = 0,3,6,9,12 (movs r6,#0 at 0x0804039e, adds r6,#3 at 0x080403a8, cmp r6,#15 / beq at 0x080403aa); bytes are loaded with ldrb.w r1,[sl,r6] (0x080403e8, 0x08040406), ldrb r5,[r5,#15] after add.w r5,sl,r6 (0x080403d2, 0x080403d6), [r5,#16] (0x08040432, 0x08040436), [r5,#17] (0x08040494, 0x08040498), [r1,#1] (0x08040448, 0x0804044c and 0x08040466, 0x0804046a) and [r1,#2] (0x080404ae, 0x080404b2 and 0x080404d2, 0x080404d6), so the bytes 0x08046528..0x08046545 are addressed; this region (0x0804653f..0x08046543) is offsets 0x17..0x1b from 0x08046528: [r5,#17] with r6 = 6 reaches 0x0804653f, [r5,#15] with r6 = 9 reaches 0x08046540, [r5,#16] with r6 = 9 reaches 0x08046541, [r5,#17] with r6 = 9 reaches 0x08046542, [r5,#15] with r6 = 12 reaches 0x08046543
 	.global UNREF_0804653f
 UNREF_0804653f:
-	.incbin "assets/rodata.bin", 0x2eb, 5
+	.byte 0x15, 0x16, 0x00, 0x00, 0x00
 @ DATA_08046544: 4 bytes 00 17 00 00 = word 0x00001700 = element 0 of the word table at 0x08046544 | ldr.w r0,[r0,#-0x4] at 0x08040094 then blx r0 at 0x08040098, with r0 = r8 + 4*byte [sp+7] (add.w at 0x08040090) and r8 = 0x08046548 (movw #0x6548 at 0x08040012, movt at 0x08040028); the words from 0x08046548 on are 0x08009fe1, 0x0800cb51, 0x0800cfcd, 0x0800d121 ... through 0x0800d955 at 0x080465a0 (odd addresses in the code range) | the code at 0x08040012..0x0804009a is inside fn_08040008 (0x08040008..0x0804009b)
 	.global DATA_08046544
 DATA_08046544:
-	.incbin "assets/rodata.bin", 0x2f0, 4
+	.word 0x00001700                                   @ word 0x00001700 (bytes 00 17 00 00)
 	.global d_08046548
 d_08046548:
 .Lsw_08046548:
@@ -230,77 +289,99 @@ d_08046548:
 DATA_080465a4:
 	.global d_080465a4
 d_080465a4:
-	.incbin "assets/rodata.bin", 0x350, 36
+	.word 19, 39, 79, 199, 399, 799, 1999, 3999, 7999  @ 2n - 1 for n = 10, 20, 40, 100, 200, 400, 1000, 2000, 4000
+@ d_080465c8: 1-2-5 step bytes, indexed by a value modulo 3 (0..2)
 	.global d_080465c8
 d_080465c8:
-	.incbin "assets/rodata.bin", 0x374, 2
+	.byte 1, 2
 @ UNREF_080465ca: 2 bytes 05 00 = halfword 5; the bytes at 0x080465c8..0x080465c9 are 01 02, then halfwords 10 (0x080465cc), 20, 50, 100, 200 (0x080465d4), 500 (0x080465d6), 1000, 2000, 5000, 10000 follow | READ: the byte table at 0x080465c8 (bytes 01 02 05) is indexed by a value modulo 3 computed by multiplying with 0xaaaaaaab (movw/movt at 0x08020f30/0x08020f34, copied to r5 at 0x08020f50) and subtracting 3*quotient: ldrb r2,[r7,r2] at 0x08020fa4 (r7 = 0x080465c8 from movw/movt at 0x08020f9a/0x08020fa0, index r2 + r3 with r3 = r6 - 4*r6 at 0x08020f94, so index 0..2), ldrb r2,[r3,r2] at 0x080210b0, ldrb r0,[r8,r0] at 0x08026040, ldrb r0,[r4,r0] at 0x0802644a, ldrb r0,[r1,r0] at 0x0802e09c, ldrb r3,[r4,r3] at 0x0803b14c, ldrb.w r3,[r9,r3] at 0x0803b36e, ldrb r0,[r7,r0] at 0x0803b4f4 and ldrb.w r0,[r9,r0] at 0x0803b5dc, each with the same modulo-3 index (0..2); the byte 0x080465ca (value 5) is index 2 and is read; the byte 0x080465cb (value 0) is not addressed through this base (index <= 2) and no other base reaches it
 	.global UNREF_080465ca
 UNREF_080465ca:
-	.incbin "assets/rodata.bin", 0x376, 2
+	.hword 5                                           @ byte 5 (index 2 of d_080465c8) and its zero high byte
+@ d_080465cc: halfwords 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000 (the halfword 5 before it
+@ is the 1-2-5 byte table's last entry)
 	.global d_080465cc
 d_080465cc:
-	.incbin "assets/rodata.bin", 0x378, 2
+	.hword 10
 @ UNREF_080465ce: 8 bytes = 4 halfwords 0x14, 0x32, 0x64, 0xc8 (20, 50, 100, 200), after the halfwords 5 (0x080465ca) and 10 (0x080465cc) and before 500 at 0x080465d6 | READ: the halfword table at 0x080465cc is read with ldrh.w r2,[r7,r2,lsl #1] at 0x080212c6 (r7 = 0x080465cc from movw/movt at 0x080212bc/0x080212c2, index r2 = ldrb [r2] at 0x080212ba, no compare between the load and the ldrh), ldrh.w r2,[r7,r3,lsl #1] at 0x080212d0, ldrh.w r1,[r0,r1,lsl #1] at 0x0802431a (base from movw/movt at 0x08024312/0x08024316, index ldrb.w [r8,#2] at 0x0802430e) and through lr (movw at 0x080223ca, movt at 0x080223e0), element size 2, so the code allows index 0..255; this region is elements 1..4 (0x080465ce = 0x080465cc + 2)
 	.global UNREF_080465ce
 UNREF_080465ce:
-	.incbin "assets/rodata.bin", 0x37a, 10
+	.hword 20, 50, 100, 200, 500
 @ UNREF_080465d8: 112 bytes: 4 halfwords 0x03e8, 0x07d0, 0x1388, 0x2710 (1000, 2000, 5000, 10000) then 13 64-bit little-endian values 10, 10, 10, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000 (the next value 20000 is at 0x08046648, outside this region) | READ: the halfwords 0x080465d8..0x080465df are elements 6..9 of the halfword table at 0x080465cc (the halfword table at 0x080465cc is read with ldrh.w r2,[r7,r2,lsl #1] at 0x080212c6 (r7 = 0x080465cc from movw/movt at 0x080212bc/0x080212c2, index r2 = ldrb [r2] at 0x080212ba, no compare between the load and the ldrh), ldrh.w r2,[r7,r3,lsl #1] at 0x080212d0, ldrh.w r1,[r0,r1,lsl #1] at 0x0802431a (base from movw/movt at 0x08024312/0x08024316, index ldrb.w [r8,#2] at 0x0802430e) and through lr (movw at 0x080223ca, movt at 0x080223e0), element size 2, so the code allows index 0..255); the 64-bit values from 0x080465e0 are read by ldr.w r4,[ip,r3,lsl #3] at 0x08030b02 and ldr r0,[r0,#4] at 0x08030b1e (add.w r0,ip,r3,lsl #3 at 0x08030b1a) with ip = 0x080465e0 (movw/movt at 0x08030af8/0x08030afc), element size 8, and r3 = ldrb.w [r8,#3520] at 0x08030ae8 (no compare bounds it: cmp r3,#4 at 0x08030aee only selects r2), so the code allows index 0..255
 	.global UNREF_080465d8
 UNREF_080465d8:
-	.incbin "assets/rodata.bin", 0x384, 8
+	.hword 1000, 2000, 5000, 10000
+@ d_080465e0: u64 table, index = a byte (no bound in fn_08030a70): 10, 10, 10, 10, then 1-2-5 steps
+@ 20 .. 2000000000, then 1, 2, 5 = d_080466c8 (same table, indexed by a value modulo 3). Each u64
+@ is two words, low word first.
 	.global d_080465e0
 d_080465e0:
-	.incbin "assets/rodata.bin", 0x38c, 112
+	.word 10, 0, 10, 0, 10, 0, 10, 0
+	.word 20, 0, 50, 0, 100, 0, 200, 0
+	.word 500, 0, 1000, 0, 2000, 0, 5000, 0
+	.word 10000, 0, 20000, 0
 @ UNREF_08046650: 128 bytes = 16 64-bit little-endian values 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000, 50000000, 100000000, 200000000, 500000000, 1000000000, 2000000000, then 1 | READ: the 64-bit values are read with ldr.w r4,[ip,r3,lsl #3] at 0x08030b02 and ldr r0,[r0,#4] at 0x08030b1e where ip = 0x080465e0 and r3 = ldrb.w [r8,#3520] (0x08030ae8, no bound), element size 8, so 0x080465e0 + 8*r3 reaches this region (it starts at element 14); the last value (1 at 0x080466c8..0x080466cf) is also read with base 0x080466c8 (movw/movt at 0x08030aaa/0x08030ab0) by ldr.w r0,[r1,r0,lsl #3] at 0x08030ab8 and ldr r1,[r2,#4] at 0x08030abc, r2 = r1 + 8*r0 (add.w at 0x08030ab4), r0 = value modulo 3 (umull by 0xaaaaaaab at 0x08030a9e, lsrs at 0x08030aa2, sub.w at 0x08030aa4, add at 0x08030aa8) = 0..2, element 0 = 1
 	.global UNREF_08046650
 UNREF_08046650:
-	.incbin "assets/rodata.bin", 0x3fc, 120
+	.word 50000, 0, 100000, 0, 200000, 0, 500000, 0
+	.word 1000000, 0, 2000000, 0, 5000000, 0
+	.word 10000000, 0, 20000000, 0, 50000000, 0
+	.word 100000000, 0, 200000000, 0, 500000000, 0
+	.word 1000000000, 0, 2000000000, 0
+@ d_080466c8: u64 1, 2, 5 (fn_08030a70, src/measure_37.s:1138, index = value modulo 3)
 	.global d_080466c8
 d_080466c8:
-	.incbin "assets/rodata.bin", 0x474, 16
-@ UNREF_080466d8: 15624 bytes = 3906 32-bit little-endian words; word 0 is 5, words 1..8 are 0, word 9 (0x080466fc) is 0x8000, zeros follow until 0x08046720 where signed words begin: -112, 189, -424, 883, -1683, 3105, ... with alternating sign | READ: ldr.w r7,[r2,ip] at 0x0803d6e2, ldrd r7,fp,[r9,#4] at 0x0803d6f2 and further ldr.w from [r9,#12..#48] (0x0803d700, 0x0803d706, 0x0803d720, 0x0803d732, 0x0803d738, 0x0803d74a, 0x0803d750, 0x0803d762, 0x0803d768, 0x0803d77a) with r2 = 0x080466e0 + 64*r0 (movw/movt at 0x0803d630/0x0803d636, add.w r2,r2,r0,lsl #6 at 0x0803d63a), r0 = uxth r7 (0x0803d634) and r7 = sum of constants chosen by compares of r3 (2 if r3 > 2, +4 if > 4, +5 if > 5, +8 if > 8, +10 if > 10, +20 if > 20, +25 if > 25, +40 if > 40, +50 if > 50 at 0x0803d5dc..0x0803d612, +80 if > 80 at 0x0803d61c), so r7 = 0..244 and the rows are 64 bytes (this path is taken when r2 >= 17: cmp r2,#17 / bcc at 0x0803d614 / 0x0803d618); rows 0..243 (0x080466e0..0x0804a3df) are inside this region; the first 8 bytes (0x080466d8..0x080466df) precede row 0 and are not addressed
-	.global UNREF_080466d8
-UNREF_080466d8:
-	.incbin "assets/rodata.bin", 0x484, 8
+	.word 1, 0, 2, 0
+	.word 5, 0                                         @ u64 5 = d_080466c8 element 2
+@ d_080466e0: filter coefficient bank, 344 rows of 16 x s32 (fir_filter_rows, src/measure_38.s;
+@ DATA_INVENTORY 5.1), 22016 bytes 0x080466e0..0x0804bcdf of V1.2.0. Vendor data kept for now
+@ (owner decision, DATA_DESIGN.md): assets/vendor_kept/filter_bank.bin.
 	.global d_080466e0
 d_080466e0:
-	.incbin "assets/rodata.bin", 0x48c, 15700
-@ UNREF_0804a434: 6202 bytes = signed 32-bit words 141, -313, 32762, 320, -143, 79, -45, 24, -12, 5, -3, -11, ... (first bytes 8d 00 00 00 c7 fe ff ff fa 7f 00 00 40 01 00 00); the region ends at 0x0804bc6e inside the word 0x00000030 at 0x0804bc6c (its bytes 30 00 are the last two bytes of this region, its bytes 00 00 are the first two bytes of DATA_0804bc6e); the words -89, 158, -287, 646, 32746 start at 0x0804bc70 | no reference found
-	.global UNREF_0804a434
-UNREF_0804a434:
-	.incbin "assets/rodata.bin", 0x41e0, 6202
-@ DATA_0804bc6e: 114 bytes: 0x0000 (the upper two bytes of the word 0x00000030 at 0x0804bc6c) then 32-bit words (word-aligned from 0x0804bc70) -89, 158, -287, 646, 32746, -619, 280, -155, 87, -47, 23, -11, -3, 5, -12, 24 ... | the reference is an address bias: ldrh r6,[r0,r1] at 0x0803678c in path_resolve uses r0 = 0x0804bd6e + 2*byte (add.w r0,r1,r0,lsl #1 at 0x08036784, movw #0xbd6e/movt #0x804 at 0x0803677c/0x08036780) and r1 = -256 (mvn.w r1,#255 at 0x08036788) for bytes >= 0x80, so the loads read 0x0804bd6e..0x0804be6d, not these bytes | path_resolve: walks a path string against a directory object and converts bytes to halfwords
-	.global DATA_0804bc6e
-DATA_0804bc6e:
-	.incbin "assets/rodata.bin", 0x5a1a, 114
+	.incbin "assets/vendor_kept/filter_bank.bin"
+	.if (. - d_080466e0) != 22016
+	.error "fir_filter_rows (src/measure_38.s) needs the 344 x 64-byte filter bank"
+	.endif
+@ d_0804bce0: halfwords 125, 250, 500, indexed by a value modulo 3 in compute_channel_measurements
+@ (src/measure_33.s:91, 149), then a zero tail; d_0804bce8 (zero word) is also read by
+@ scsi_command_dispatch (src/usb_82.s:363).
 	.global d_0804bce0
 d_0804bce0:
-	.incbin "assets/rodata.bin", 0x5a8c, 2
+	.hword 125
 @ UNREF_0804bce2: 8 bytes fa 00 f4 01 00 00 00 00 = halfwords 0x00fa, 0x01f4, 0x0000, 0x0000 | elements 1 and 2 of the halfword table at 0x0804bce0 (0x007d, 0x00fa, 0x01f4): ldrh.w r0,[r1,r0,lsl #1] at 0x08026734 and ldrh.w r0,[r2,r0,lsl #1] at 0x080267f6 in compute_channel_measurements with r1/r2 = 0x0804bce0 (movw/movt at 0x0802672a/0x08026730 and 0x080267ec/0x080267f2) and r0 = a value minus 3*(value/3) (smmul by 0x55555556 at 0x0802671c); the other halfwords of this region are 0 | a movw/movt pair of one register ending at 0x080304c2 gives 0x0804bce8 (offset 0x6)
 	.global UNREF_0804bce2
 UNREF_0804bce2:
-	.incbin "assets/rodata.bin", 0x5a8e, 6
+	.hword 250, 500, 0
 	.global d_0804bce8
 d_0804bce8:
-	.incbin "assets/rodata.bin", 0x5a94, 4
-	.incbin "assets/rodata.bin", 0x5a98, 1		@ 0x0804bcec, the byte before the table (the code addresses the table by its own label d_0804bced)
+	.word 0x00000000
+	.byte 0x00                                         @ zero byte before the table (the code addresses the table by its own label d_0804bced)
 @ DATA_0804bced: 129 bytes: 128 entries 80 9a 45 41 8e 41 8f 80 45 45 45 49 49 49 8e 8f 90 92 92 4f 99 4f 55 55 59 99 9a 9b 9c 9d 9e 9f 41 49 4f 55 a5 a5 a6 a7 a8 a9 aa ab ac ad ae af ... through ff (byte 127 = 0xff), plus a trailing 00 | ldrb r6,[r1,r0] at 0x08036a4a with r1 = 0x0804bced (movw/movt at 0x08036a3e/0x08036a46) and r0 = result & 0x7f (and.w at 0x08036a42), taken when bit 7 of the result of bl 0x08035908 is set (bpl at 0x08036a3c) | path_resolve: walks a path string against a directory object
 	.global DATA_0804bced
 DATA_0804bced:
 	.global d_0804bced
 d_0804bced:
-	.incbin "assets/rodata.bin", 0x5a99, 129
+@ FatFs data (ChaN, FatFs R0.15 ff.c TBL_CT437, licence assets/tables/LICENSE-FatFs.txt): upper-case
+@ CP437 byte for each byte 0x80..0xff of a short file name (ExCvt[], 128 bytes)
+	.incbin "assets/tables/fat_oem_upper.bin"
+	.if (. - d_0804bced) != 128
+	.error "path_resolve (src/filesystem_08.s) needs the 128-byte CP437 upper-case table"
+	.endif
+	.byte 0x00                                         @ padding: the next table is halfwords
+@ d_0804bd6e: FatFs data (R0.15 ffunicode.c uc437[]): Unicode code point of each CP437 byte
+@ 0x80..0xff, 128 halfwords (character_code_to_byte, path_resolve, src/filesystem_08.s)
 	.global d_0804bd6e
 d_0804bd6e:
-	.incbin "assets/rodata.bin", 0x5b1a, 44
-@ UNREF_0804bd9a: 214 bytes = 107 halfwords (table elements 22..127 and, after the table, the halfword 0x0000 at 0x0804be6e) 0x00fb, 0x00f9, 0x00ff, 0x00d6, 0x00dc, 0x00a2, 0x00a3, 0x00a5, 0x20a7, 0x0192, 0x00e1, 0x00ed, 0x00f3, 0x00fa, 0x00f1, 0x00d1, 0x00aa, 0x00ba, 0x00bf, 0x2310, 0x00ac, 0x00bd, 0x00bc, 0x00a1 ... | it lies inside the 128-halfword table 0x0804bd6e..0x0804be6d (first halfwords 0x00c7, 0x00fc, 0x00e9, 0x00e2; last 0x25a0, 0x00a0) that path_resolve reads at 0x0804bd6e + 2*(byte-0x80) (ldrh at 0x0803678c); this region starts at table element 22
-	.global UNREF_0804bd9a
-UNREF_0804bd9a:
-	.incbin "assets/rodata.bin", 0x5b46, 214
+	.incbin "assets/tables/fat_cp437.bin"
+	.if (. - d_0804bd6e) != 256
+	.error "path_resolve (src/filesystem_08.s) needs the 128-halfword CP437 to Unicode table"
+	.endif
+	.hword 0x0000                                      @ padding to the word d_0804be70
+@ d_0804be70: the word 4, returned by create_idle_and_tmr_svc_tasks (src/kernel_24.s:690) when task
+@ creation returns neither 1 nor -1
 	.global d_0804be70
 d_0804be70:
-	.incbin "assets/rodata.bin", 0x5c1c, 4
+	.word 4
 	.global d_0804be74
 d_0804be74:
 .Lsw_0804be74:
@@ -430,7 +511,7 @@ DATA_0804bfa8:
 DATA_0804bfb8:
 	.global d_0804bfb8
 d_0804bfb8:
-	.incbin "assets/rodata.bin", 0x5d64, 8
+	.hword 400, 800, 2000, 0
 @ d_0804bfc0: lower-case time units (draw_waveform_display_p7.inc)
 	.global d_0804bfc0
 d_0804bfc0:
@@ -573,11 +654,8 @@ UNREF_0804c124:
 DATA_0804c180:
 	.global d_0804c180
 d_0804c180:
-	.incbin "assets/rodata.bin", 0x5f2c, 6
-@ UNREF_0804c186: 2 bytes 00 00 = element 3 of the halfword array at 0x0804c180 (0x8c73, 0xffff, 0x055f, 0x0000); the next bytes 0x0804c188.. are the words 0x080bb8b2, 0x080bb682 ... | no reference found
-	.global UNREF_0804c186
-UNREF_0804c186:
-	.incbin "assets/rodata.bin", 0x5f32, 2
+	.hword 0x8c73, 0xffff, 0x055f                      @ read as RGB565: grey, white, blue (0x055f is also the colour argument of the message box calls); colour use of this table not traced
+	.hword 0x0000                                      @ element 3, no reference found
 @ Status message rows 9..12 (8 words each, [row + 4*byte - 4], byte = 0x20001058)
 	.global d_0804c188
 d_0804c188:
@@ -1027,29 +1105,22 @@ d_0804d7d3:
 DATA_0804d833:
 	.global d_0804d833
 d_0804d833:
-	.incbin "assets/rodata.bin", 0x75df, 14
+	.byte 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1     @ index 0..13
 @ UNREF_0804d841: 7 bytes 03 05 09 15 29 52 00 | READ: ldrb r1,[r1,r0] at 0x0803e558 with r1 = 0x0804d833 (movw/movt at 0x0803e550/0x0803e554) and r0 = ldrb.w [r9,#45] at 0x0803e54c (no compare shown between them), and ldrb r1,[r3,r1] at 0x0804067c with r3 = 0x0804d833 (movw/movt at 0x08040670/0x08040678) and r1 = ldrb [r0,#45] at 0x08040668 limited by cmp r1,#19 / bhi at 0x0804066c / 0x0804066e (0..19); this region is index 14..20 (0x0804d841 = 0x0804d833 + 14), index 14..19 reachable at 0x0804067c
 	.global UNREF_0804d841
 UNREF_0804d841:
-	.incbin "assets/rodata.bin", 0x75ed, 7
+	.byte 3, 5, 9, 21, 41, 82                          @ index 14..19
+	.byte 0                                            @ index 20 (the reader at 0x0804067c bounds the index to 0..19)
 @ d_0804d848: anchor of the 1600-byte waveform block 0x0804d848..0x0804de87 (8 tables of 100 halfwords, 200-byte
 @ stride). fill_output_waveform_table (src/siggen_55.s) reaches every table as d_0804d848 + 200*case minus
 @ 0x3d6..0x3e8, so the block is one unit: only d_0804d848 is a label, the inner layout stays (guard after the block).
 	.global d_0804d848
 d_0804d848:
-	.incbin "assets/rodata.bin", 0x75f4, 28
-@ UNREF_0804d864: 78 bytes = 39 halfwords 3624, 3703, 3775, 3841, 3899, 3950, 3994, 4030, 4058, 4078, 4090, 4094 (peak at 0x0804d87a), 4090, 4078, ... falling to 1790 (first bytes 28 0e 77 0e bf 0e 01 0f) | element 14 onward of the 100-halfword table at 0x0804d848 (table 0 of the 200-byte-stride tables 0x0804d848 + 200*index, movw #0xd848 at 0x08029e4a); table 0 starts 2047, 2176, 2304, 2431, 2556, 2680 | READ: the loop at 0x0802a1e0..0x0802a29c reads table 0: ldrh r2,[r6,r1] at 0x0802a1e8 with r6 = 0x0804d848 (movw/movt at 0x0802a1e0/0x0802a1e4), then ldrh [r5,#2] .. [r5,#18] with r5 = r6 + r1 (adds at 0x0802a1ea), r1 = 0, 20, .. 180 (adds r1,#20 at 0x0802a258, cmp r1,#200 / bne at 0x0802a28e / 0x0802a29c), so all 100 halfwords 0x0804d848..0x0804d90f are read; this region is elements 14..52
-	.global UNREF_0804d864
-UNREF_0804d864:
-	.incbin "assets/rodata.bin", 0x7610, 79
-@ UNREF_0804d8b3: 193 bytes from the odd address 0x0804d8b3; the halfwords from 0x0804d8b2 are table-0 elements 53..99 of 0x0804d848: 1663, 1538, 1414, 1293, 1175, 1061, 950, 844, 742, 646, 555, 470 ... falling to 0 (element 75, 0x0804d8de), rising again 4, 16, 36, 64 ... to 1790, 1918 (element 99, 0x0804d90e), followed by table 1 (0x0804d910 = 0x0804d848 + 200*1) elements 0..49: 2047, 2176, 2304, 2431, 2556, 2680 ... to 2176 and then 2048 2048 2048 (indexing 0x0804d848 + 200*index per smlabb ...,#200 at 0x08029e54) | READ: elements 53..99 (0x0804d8b2..0x0804d90f) are read by the loop at 0x0802a1e0..0x0802a29c (ldrh r2,[r6,r1] at 0x0802a1e8 and [r5,#2..#18], r6 = 0x0804d848, r1 = 0, 20, .. 180, cmp r1,#200 at 0x0802a28e); table 1 (0x0804d910..0x0804d9d7) is read by the code at 0x08029f82 (smlabb r7,r2,r3,r0 with r3 = 200 and r0 = 0x0804d848 from movw/movt at 0x08029f78/0x08029f7c; r2 = 3 or 4 from tbh at 0x08029e2c), which forms ten pointers r7-400..r7-382 (sub.w at 0x08029f86..0x08029fc4) = table (r2-2) and loads ldrh r0,[r0,r6] through them (0x08029fd6..0x0802a03e) with r6 = 0, 20, .. 180 (adds r6,#20 at 0x0802a056, cmp r6,#200 at 0x0802a090), so all 100 halfwords of table 1 are read when r2 = 3
-	.global UNREF_0804d8b3
-UNREF_0804d8b3:
-	.incbin "assets/rodata.bin", 0x765f, 293
-@ UNREF_0804d9d8: 1200 bytes = 6 tables of 100 halfwords (200-byte stride) at 0x0804d9d8, 0x0804daa0, 0x0804db68, 0x0804dc30, 0x0804dcf8, 0x0804ddc0, i.e. indexes 2..7 of 0x0804d848 + 200*index (smlabb ...,#200 at 0x08029e54, movw #0xd848 at 0x08029e4a); table starts: 2047, 2111, 2176, 2240, 2304, 2367 (max 4095) | 30, 31, 33, 34, 36, 38 | 4065, 4063, 4061, 4060, 4058, 4056 | 2049, 2532, 2986, 3386, 3709, 3940 | 729, 661, 601, 556, 535, 541 | 1, 52, 105, 160, 217, 276; the region ends at 0x0804de88 | READ: tables 2..7 (0x0804d848 + 200*index) are read through three sites that form a base with smlabb from 0x0804d848 + 200*r2: at 0x08029f82 (r2 = 3 or 4, entries 3 and 4 of the tbh at 0x08029e2c) with ten pointers r7-400..r7-382 (sub.w at 0x08029f86..0x08029fc4) used by ldrh r0,[r0,r6] at 0x08029fd6..0x0802a03e, r6 = 0, 20, .. 180 (adds r6,#20 at 0x0802a056, cmp r6,#200 at 0x0802a090), i.e. table r2-2; at 0x0802a0ae (r2 = 7 or 8) with ten pointers r3-800..r3-782 (0x0802a0b2..0x0802a0f0) used by ldrh r4,[r1,r7] at 0x0802a106..0x0802a16c, r7 = 0, 20, .. 180 (adds r7,#20 at 0x0802a178, cmp r7,#200 at 0x0802a1bc), i.e. table r2-4; at 0x08029e54 (r2 = 10, 11 or 12) with ten pointers r7-1000..r7-982 (0x08029e58..) used by ldrh r4,[r0,r6] at 0x08029eae..0x08029f14, r6 = 0, 20, .. 180 (adds r6,#20 at 0x08029f20, cmp r6,#200 at 0x08029f64), i.e. table r2-5; each of these loops reads all 100 halfwords of its table, so tables 2 (r2 = 4), 3 (r2 = 7), 4 (r2 = 8), 5, 6 and 7 (r2 = 10, 11, 12) of this region are read
-	.global UNREF_0804d9d8
-UNREF_0804d9d8:
-	.incbin "assets/rodata.bin", 0x7784, 1200
+@ Our own tables, from tools/make_tables.py (project folder) waves(): 8 x 100 u16, values 0..4095,
+@ in the order the cases reach them: T0 sine (case 0), T1 half wave (3), T2 full wave (4),
+@ T3 exponential rise "Index Up" (7), T4 1 - exponential "Index Decrease" (8), T5 sum of
+@ harmonics 1..5 "Multi-audio" (10), T6 sin(x)/x "Sink Pulse" (11), T7 1/(1+x^2) "Lorentz waves" (12).
+	.incbin "assets/tables/waves.bin"
 @ d_0804de88: lower value panel frame (own picture, tools/make_pictures.py): 300 x 52 4 bpp coverage
 @ mask, rows packed without padding (300 is even), 7800 bytes, a frame with rounded corners and
 @ dividers at x 100 and 199. Drawn by draw_value_panel (src/ui_pages_76.s) as
@@ -1079,103 +1150,71 @@ d_0804fd00:
 @ d_08051d19: start of the FPGA configuration stream (115638 bytes to 0x0806e0ce, read as triples by system_bring_up); own label instead of d_08051d18+1
 	.global d_08051d19
 d_08051d19:
-	.incbin "assets/rodata.bin", 0xbac5, 4
-@ UNREF_08051d1d: 115619 bytes, first bytes ff x18 then a5 c3 06 00 00 00 01 20 68 1b 10 00 ...; 89285 of the bytes are 00 | READ: the loop at 0x0802db74..0x0802dc30 loads ldrb.w r3,[r1,r0] at 0x0802db7c, ldrb r7,[r3,#1] at 0x0802dbba (r3 = r0 + r1) and ldrb r3,[r3,#2] at 0x0802dbf4, advances r0 by 3 (adds r0,#3 at 0x0802db74) from 0 (movs at 0x0802db30) until r0 == r2 (cmp at 0x0802db78, beq at 0x0802db7a) with r1 = 0x08051d19 (movw/movt at 0x0802db28/0x0802db32) and r2 = 0x0001c3b6 (movw/movt at 0x0802db2c/0x0802db36), so the bytes 0x08051d19..0x0806e0ce are read, which includes this whole region (0x08051d1d..0x0806e0bf); the two words 0x0805f000 found at 0x080088ac and 0x08008a60 are bytes inside instructions (tbb at 0x080088aa and 0x08008a5e) and not pointers
-	.global UNREF_08051d1d
-UNREF_08051d1d:
-	.incbin "assets/rodata.bin", 0xbac9, 115619
-@ DATA_0806e0c0: 16 bytes ff 08 00 00 00 ff ff ff ff ff ff ff ff ff ff 00 (not floats) | the reference is an address bias: movw r0,#0xe0d0 at 0x08025208 and movt r0,#0x806 at 0x08025214 give 0x0806e0d0, subs r0,#16 at 0x08025224 gives 0x0806e0c0, str r0,[sp,#4] at 0x0802522a; the data at 0x0806e0d0 are 8-byte pairs of floats (1.0, 0.0), (0.9987954, 0.0490677), (0.9951847, 0.0980171), (0.9891765, 0.1467305) ... | compute_spectrum_bytes: per channel: allocates 0x400/0x200/0x80 byte buffers and fills 256 floats from a byte ring
-	.global DATA_0806e0c0
-DATA_0806e0c0:
-	.incbin "assets/rodata.bin", 0x27e6c, 16
+@ Vendor data kept for now (owner decision, DATA_DESIGN.md): assets/vendor_kept/fpga.bin, the bytes
+@ 0x08051d19..0x0806e0ce of V1.2.0 (115638 = 3 * 38546). system_bring_up reads it as byte triples from
+@ d_08051d19 for 0x1c3b6 bytes (movw/movt at 0x0802db2c/0x0802db36 of V1.2.0).
+	.incbin "assets/vendor_kept/fpga.bin"
+	.if (. - d_08051d19) != 0x1c3b6
+	.error "system_bring_up (src/parts/system_bring_up_p4.inc) sends 0x1c3b6 bytes from d_08051d19"
+	.endif
+	.byte 0x00                                         @ filler before the word-aligned twiddle table
+@ d_0806e0d0: FFT twiddles, 128 float32 pairs (cos(2 pi k/128), sin(2 pi k/128)), correctly rounded,
+@ from tools/make_tables.py twiddle() (compute_spectrum_bytes, src/measure_32.s, takes d_0806e0d0 - 16
+@ as its base and reads from base + 16 on; fft64_radix8_in_place, src/measure_37.s)
 	.global d_0806e0d0
 d_0806e0d0:
-	.incbin "assets/rodata.bin", 0x27e7c, 24
-@ UNREF_0806e0e8: 8 bytes = 2 32-bit floats 0.9891765, 0.1467305 (x*x + y*y = 1.00000) = pair 3 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 3 (k = 1, second pair of the iteration)
-	.global UNREF_0806e0e8
-UNREF_0806e0e8:
-	.incbin "assets/rodata.bin", 0x27e94, 16
-@ UNREF_0806e0f8: 8 bytes = 2 32-bit floats 0.9700313, 0.2429802 (x*x + y*y = 1.00000) = pair 5 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 5 (k = 2, second pair of the iteration)
-	.global UNREF_0806e0f8
-UNREF_0806e0f8:
-	.incbin "assets/rodata.bin", 0x27ea4, 16
-@ UNREF_0806e108: 8 bytes = 2 32-bit floats 0.9415441, 0.3368899 (x*x + y*y = 1.00000) = pair 7 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 7 (k = 3, second pair of the iteration)
-	.global UNREF_0806e108
-UNREF_0806e108:
-	.incbin "assets/rodata.bin", 0x27eb4, 16
-@ UNREF_0806e118: 8 bytes = 2 32-bit floats 0.9039893, 0.4275551 (x*x + y*y = 1.00000) = pair 9 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 9 (k = 4, second pair of the iteration)
-	.global UNREF_0806e118
-UNREF_0806e118:
-	.incbin "assets/rodata.bin", 0x27ec4, 16
-@ UNREF_0806e128: 8 bytes = 2 32-bit floats 0.8577286, 0.5141028 (x*x + y*y = 1.00000) = pair 11 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 11 (k = 5, second pair of the iteration)
-	.global UNREF_0806e128
-UNREF_0806e128:
-	.incbin "assets/rodata.bin", 0x27ed4, 16
-@ UNREF_0806e138: 8 bytes = 2 32-bit floats 0.8032075, 0.5956993 (x*x + y*y = 1.00000) = pair 13 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 13 (k = 6, second pair of the iteration)
-	.global UNREF_0806e138
-UNREF_0806e138:
-	.incbin "assets/rodata.bin", 0x27ee4, 16
-@ UNREF_0806e148: 8 bytes = 2 32-bit floats 0.7409511, 0.671559 (x*x + y*y = 1.00000) = pair 15 of the 8-byte float-pair table that starts at 0x0806e0d0 (address built at 0x08025208/0x08025214 in compute_spectrum_bytes) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region is pair 15 (k = 7, second pair of the iteration)
-	.global UNREF_0806e148
-UNREF_0806e148:
-	.incbin "assets/rodata.bin", 0x27ef4, 12
-@ UNREF_0806e154: 892 bytes = 223 32-bit floats within [-1, 1], first 0.707107, 0.671559, 0.740951, 0.634393, 0.77301, 0.595699, 0.803208, 0.55557: the word at 0x0806e154 completes the pair (0.707107, 0.707107) of the float-pair table at 0x0806e0d0 and the following pairs are (0.671559, 0.740951), (0.634393, 0.77301), (0.595699, 0.803208) | READ: vldr s1,[r2,#16] at 0x08025480 and vldr s3,[r2,#20] at 0x08025484 (pair 2k) and vldr s0,[r2,#24] at 0x080254d0 and vldr s2,[r2,#28] at 0x080254d4 (pair 2k+1) with r2 = 0x0806e0c0 + 16*k (movw/movt at 0x08025208/0x08025214, subs r0,#16 at 0x08025224, str r0,[sp,#4] at 0x0802522a, ldr r2,[sp,#4] at 0x080253d8, adds r2,#16 at 0x08025518) and k = 0..15 (mvn.w r0,#15 at 0x080253e2, adds r0,#1 at 0x0802551c, bcc at 0x0802551e), so pairs 0..31 (0x0806e0d0..0x0806e1cf) are read; this region starts one word into pair 16 and its first 0x7c bytes (0x0806e154..0x0806e1cf) are pairs 16..31 of that loop; the loops of the function at 0x0802fb80 also address the table at 0x0806e0d0 (movw/movt at 0x0802fda2/0x0802fda8, add.w r6,r7,r1,lsl #3 at 0x0802fdac, vldr s0,[r6] at 0x0802fdb0, add.w r5,r7,r1,lsl #4 at 0x0802fdb4, vldr s0,[r5] at 0x0802fdbc, and r7 + 24*r1, 32*r1 at 0x0802fdc4, 0x0802fdd0)
-	.global UNREF_0806e154
-UNREF_0806e154:
-	.incbin "assets/rodata.bin", 0x27f00, 892
+	.incbin "assets/tables/twiddle.bin"
+	.if (. - d_0806e0d0) != 1024
+	.error "fft64_radix8_in_place (src/measure_37.s) needs 128 float pairs at d_0806e0d0"
+	.endif
+@ d_0806e4d0: FFT output swap table, 104 pairs of u16 byte offsets (8 i, 8 j) of the 8-byte entries
+@ that compute_spectrum_bytes (src/measure_32.s) exchanges after the transform, from
+@ tools/make_tables.py fftswap() (permutation 64 (i & 1) + 8 ((i >> 1) & 7) + (i >> 4))
 	.global d_0806e4d0
 d_0806e4d0:
-	.incbin "assets/rodata.bin", 0x2827c, 24
-@ UNREF_0806e4e8: 392 bytes = 98 32-bit words, as halfword pairs (0x0038, 0x02c0), (0x0040, 0x0100), (0x0048, 0x0300), (0x0050, 0x0140), (0x0058, 0x0340), (0x0060, 0x0180), (0x0068, 0x0380), (0x0070, 0x01c0), (0x0078, 0x03c0), (0x0080, 0x0200), (0x0088, 0x0208), (0x0090, 0x0300); the first halfword of these 12 pairs rises by 8 | READ: the loop at 0x08025538..0x080255f4 reads halfwords with ldrh.w r2,[ip,r0] at 0x0802553c and ldrh r3,[r1,#2], [r1,#4], [r1,#6] .. (r1 = ip + r0 at 0x08025538, ip = 0x0806e4d0 from movw/movt at 0x0802552e/0x08025534), r0 = 0, 16, .. 400 (adds r0,#16 at 0x080255ea, cmp.w r0,#416 / bne at 0x080255ec / 0x080255f4), so all bytes 0x0806e4d0..0x0806e66f are addressed; this region is offset 0x18..0x19f of that range
-	.global UNREF_0806e4e8
-UNREF_0806e4e8:
-	.incbin "assets/rodata.bin", 0x28294, 392
+	.incbin "assets/tables/fftswap.bin"
+	.if (. - d_0806e4d0) != 416
+	.error "compute_spectrum_bytes (src/measure_32.s) reads 416 bytes of swap offsets"
+	.endif
+@ d_0806e670: sine table, 513 float32 sin(2 pi k / 512), k = 0..512, correctly rounded, from
+@ tools/make_tables.py sine() (draw_arc_degrees, src/gfx_12.s; polar_degrees_to_xy_center_160_225,
+@ src/gfx_14.s; the reader takes words k and k + 1 for k = 0..511)
 	.global d_0806e670
 d_0806e670:
-	.incbin "assets/rodata.bin", 0x2841c, 8
-@ UNREF_0806e678: 2044 bytes = 511 32-bit floats, first 0.02454123, 0.03680722, 0.04906767, 0.06132074, 0.07356456, 0.08579731 (rising), range [-1, 1], last value -0.0 | READ: add.w r1,r5,r0,lsl #2 at 0x08030954 with r5 = 0x0806e670 (movw at 0x08030940, movt at 0x0803094c) and r0 = the integer part of a float (vcvt at 0x08030932) forced to 0 unless r0 >> 9 equals 0 (cmp.w r4,r0,lsr #9 / movne r0,#0 at 0x08030944 / 0x08030948), so r0 = 0..511; vldr s2,[r1] at 0x0803096a and vldr s4,[r1,#4] at 0x0803096e read words r0 and r0+1 (element size 4), so the words 0x0806e670..0x0806ee77 are addressed and this region (elements 2..512) is read; the same table is used at 0x0801fb7a (r6 = 0x0806e670, movw at 0x0801fb60, movt at 0x0801fb7a)
-	.global UNREF_0806e678
-UNREF_0806e678:
-	.incbin "assets/rodata.bin", 0x28424, 2044
+	.incbin "assets/tables/sine.bin"
+	.if (. - d_0806e670) != 2052
+	.error "the sine readers (src/gfx_12.s, src/gfx_14.s) need 513 floats at d_0806e670"
+	.endif
+@ d_0806ee74: the standard JPEG zigzag order (ITU-T T.81): position in the 8x8 block of the k-th
+@ coefficient of a scan (decode_scan_data_to_rgb565, src/image_18.s; parse_jpeg_header, src/image_20.s)
 	.global d_0806ee74
 d_0806ee74:
-	.incbin "assets/rodata.bin", 0x28c20, 20
-@ UNREF_0806ee88: 44 bytes 28 30 29 22 1b 14 0d 06 07 0e 15 1c 23 2a 31 38 39 32 2b 24 1d 16 0f 17 1e 25 2c 33 3a 3b 34 2d 26 1f 27 2e 35 3c 3d 36 2f 37 3e 3f = entries 20..63 of a 64-byte table that starts at 0x0806ee74 with 00 01 08 10 09 02 03 0a 11 18 20 19 12 0b 04 05 0c 13 1a 21 (the 64 bytes contain each value 0..63 once) | READ: ldrb.w r7,[r7,r9] at 0x08037a3e with r7 = 0x0806ee74 (movw/movt at 0x08037a34/0x08037a38) and r9 compared against 63 at 0x08037990 (0..63); also ldrb r6,[sl,r2] at 0x08039c1c with sl = 0x0806ee74 (movw 0x08038fa8, movt 0x08038fb2) and r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22); this region is index 20..63
-	.global UNREF_0806ee88
-UNREF_0806ee88:
-	.incbin "assets/rodata.bin", 0x28c34, 44
-@ DATA_0806eeb4: 2 bytes 00 20 = halfword 0x2000, element 0 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | ldrh.w r4,[r11,r6,lsl #0x1] at 0x08039c24 | parse_jpeg_header: parses the header of an image stream (0xffd8 start, marker segments, component descriptors)
-	.global DATA_0806eeb4
-DATA_0806eeb4:
+	.byte  0,  1,  8, 16,  9,  2,  3, 10
+	.byte 17, 24, 32, 25, 18, 11,  4,  5
+	.byte 12, 19, 26, 33, 40, 48, 41, 34
+	.byte 27, 20, 13,  6,  7, 14, 21, 28
+	.byte 35, 42, 49, 56, 57, 50, 43, 36
+	.byte 29, 22, 15, 23, 30, 37, 44, 51
+	.byte 58, 59, 52, 45, 38, 31, 39, 46
+	.byte 53, 60, 61, 54, 47, 55, 62, 63
+@ d_0806eeb4: JPEG IDCT scale factors, 64 u16 round(8192 s_i s_j), s_0 = 1, s_k = sqrt(2) cos(k pi/16)
+@ (AAN), from tools/make_tables.py idct(); parse_jpeg_header (src/image_20.s) reads element
+@ d_0806ee74[k] for k = 0..63 (V1.2.0 ldrh at 0x08039c24 with the index a byte of the zigzag table)
 	.global d_0806eeb4
 d_0806eeb4:
-	.incbin "assets/rodata.bin", 0x28c60, 12
-@ UNREF_0806eec0: 4 bytes 51 11 d4 08 = halfwords 0x1151, 0x08d4 = elements 6 and 7 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | READ: ldrh.w r4,[fp,r6,lsl #1] at 0x08039c24 (and 0x08039c3a, 0x08039c48 .. 0x08039d16) with fp = 0x0806eeb4 (movw 0x08038fac, movt 0x08038fb6) and r6 = a byte of the 64-byte table at 0x0806ee74 (ldrb.w r6,[sl,r2] at 0x08039c1c; each value 0..63 occurs once in that table), r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22; each pass reads 16 consecutive bytes of the 64-byte table), so all 64 halfwords 0x0806eeb4..0x0806ef33 are read; this region is elements 6 and 7
-	.global UNREF_0806eec0
-UNREF_0806eec0:
-	.incbin "assets/rodata.bin", 0x28c6c, 14
-@ UNREF_0806eece: 6 bytes df 22 05 18 3e 0c = halfwords 0x22df, 0x1805, 0x0c3e = elements 13..15 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | READ: ldrh.w r4,[fp,r6,lsl #1] at 0x08039c24 (and 0x08039c3a, 0x08039c48 .. 0x08039d16) with fp = 0x0806eeb4 (movw 0x08038fac, movt 0x08038fb6) and r6 = a byte of the 64-byte table at 0x0806ee74 (ldrb.w r6,[sl,r2] at 0x08039c1c; each value 0..63 occurs once in that table), r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22; each pass reads 16 consecutive bytes of the 64-byte table), so all 64 halfwords 0x0806eeb4..0x0806ef33 are read; this region is elements 13..15
-	.global UNREF_0806eece
-UNREF_0806eece:
-	.incbin "assets/rodata.bin", 0x28c7a, 14
-@ UNREF_0806eedc: 8 bytes cf 29 d9 20 a0 16 89 0b = halfwords 0x29cf, 0x20d9, 0x16a0, 0x0b89 = elements 20..23 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | READ: ldrh.w r4,[fp,r6,lsl #1] at 0x08039c24 (and 0x08039c3a, 0x08039c48 .. 0x08039d16) with fp = 0x0806eeb4 (movw 0x08038fac, movt 0x08038fb6) and r6 = a byte of the 64-byte table at 0x0806ee74 (ldrb.w r6,[sl,r2] at 0x08039c1c; each value 0..63 occurs once in that table), r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22; each pass reads 16 consecutive bytes of the 64-byte table), so all 64 halfwords 0x0806eeb4..0x0806ef33 are read; this region is elements 20..23
-	.global UNREF_0806eedc
-UNREF_0806eedc:
-	.incbin "assets/rodata.bin", 0x28c88, 14
-@ UNREF_0806eeea: 10 bytes 3e 2c a0 25 90 1d 5d 14 61 0a = halfwords 0x2c3e, 0x25a0, 0x1d90, 0x145d, 0x0a61 = elements 27..31 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | READ: ldrh.w r4,[fp,r6,lsl #1] at 0x08039c24 (and 0x08039c3a, 0x08039c48 .. 0x08039d16) with fp = 0x0806eeb4 (movw 0x08038fac, movt 0x08038fb6) and r6 = a byte of the 64-byte table at 0x0806ee74 (ldrb.w r6,[sl,r2] at 0x08039c1c; each value 0..63 occurs once in that table), r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22; each pass reads 16 consecutive bytes of the 64-byte table), so all 64 halfwords 0x0806eeb4..0x0806ef33 are read; this region is elements 27..31
-	.global UNREF_0806eeea
-UNREF_0806eeea:
-	.incbin "assets/rodata.bin", 0x28c96, 12
-@ UNREF_0806eef6: 62 bytes = 31 halfwords 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4, 0x1924 ... = elements 33..63 of the halfword table of 64 entries at 0x0806eeb4..0x0806ef33 (rows of 8; row 0 = 0x2000, 0x2c62, 0x29cf, 0x25a0, 0x2000, 0x1924, 0x1151, 0x08d4; row 1 = 0x2c62, 0x3d90, 0x39fe, 0x3431, 0x2c62, 0x22df, 0x1805, 0x0c3e) | READ: ldrh.w r4,[fp,r6,lsl #1] at 0x08039c24 (and 0x08039c3a, 0x08039c48 .. 0x08039d16) with fp = 0x0806eeb4 (movw 0x08038fac, movt 0x08038fb6) and r6 = a byte of the 64-byte table at 0x0806ee74 (ldrb.w r6,[sl,r2] at 0x08039c1c; each value 0..63 occurs once in that table), r2 = 0, 16, 32, 48 (adds r2,#16 at 0x08039c68, cmp r2,#64 at 0x08039c78, bne at 0x08039d22; each pass reads 16 consecutive bytes of the 64-byte table), so all 64 halfwords 0x0806eeb4..0x0806ef33 are read; this region is elements 33..63
-	.global UNREF_0806eef6
-UNREF_0806eef6:
-	.incbin "assets/rodata.bin", 0x28ca2, 62
-@ DATA_0806ef34: 71892 bytes; the first 1024 bytes are a lookup table: byte i = i for i 0..255 (0x0806ef34..0x0806f033), 0xff for i 256..511, 0x00 for i 512..1023; from 0x0806f334 the bytes are no ramp (first bytes ac ae ae ae ac 35 ce 33 33 ce ec cc cc 55 55 03) | ldrb r6,[r2,r6] at 0x08037e0a with r2 = 0x0806ef34 (movw #0xef34 at 0x08037de4, movt at 0x08037dea) and the index masked to 10 bits (bfc r6,#10,#22 at 0x08037e02), so only the first 1024 bytes are addressed by it | decode_scan_data_to_rgb565: decodes the scan data of an image stream (Huffman bit reader, dequantise, rows via callback)
-	.global DATA_0806ef34
-DATA_0806ef34:
+	.incbin "assets/tables/idct.bin"
+	.if (. - d_0806eeb4) != 128
+	.error "parse_jpeg_header (src/image_20.s) needs 64 halfwords at d_0806eeb4"
+	.endif
+@ d_0806ef34: clamp table, 1024 bytes: i for 0..255, 255 for 256..511, 0 for 512..1023, from
+@ tools/make_tables.py clamp(); decode_scan_data_to_rgb565 (src/image_18.s) indexes it with
+@ (value & 0x3ff)
 	.global d_0806ef34
 d_0806ef34:
-	.incbin "assets/rodata.bin", 0x28ce0, 1024
+	.incbin "assets/tables/clamp.bin"
+	.if (. - d_0806ef34) != 1024
+	.error "decode_scan_data_to_rgb565 (src/image_18.s) needs the 1024-byte clamp table"
+	.endif
 
 @ ============================================================================
 @ The 8 fonts (own data, DATA_DESIGN.md step 4). The binary pieces come from tools/make_fonts.py of
@@ -1522,34 +1561,40 @@ d_080bb3bc:
 
 	.global d_080bb3ec
 d_080bb3ec:
-	.incbin "assets/rodata.bin", 0x75198, 1
+@ d_080bb3ec: 16 right-shift counts indexed by bits 7..4 of the word at 0x40021004, read by
+@ compute_clock_frequencies and init_system_clock (src/system_62.s): 0 for 0..7, then 1, 2, 3, 4,
+@ 6, 7, 8, 9. d_080bb404: 8 right-shift counts indexed by bits 10..8 and 13..11 of that word.
+	.byte 0
 @ UNREF_080bb3ed: 15 bytes 00 00 00 00 00 00 00 01 02 03 04 06 07 08 09 = bytes 1..15 of the 16-byte table at 0x080bb3ec (00 00 00 00 00 00 00 00 01 02 03 04 06 07 08 09) | ldrb r3,[r4,r3] at 0x080314c8 with r4 = 0x080bb3ec (movw #0xb3ec at 0x080314bc, movt at 0x080314c4) and r3 = (x>>4)&0xf (ubfx at 0x080314c0) in compute_clock_frequencies, the byte is the shift count of lsrs r2,r3 at 0x080314ce (x = word read from 0x40021004)
 	.global UNREF_080bb3ed
 UNREF_080bb3ed:
-	.incbin "assets/rodata.bin", 0x75199, 15
+	.byte 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9
 	.global d_080bb3fc
 d_080bb3fc:
-	.incbin "assets/rodata.bin", 0x751a8, 1
+@ d_080bb3fc: 8 bytes read by fn_0800b1f8 (src/ui_keys_64.s:1002) and fn_0800b7cc
+@ (src/ui_keys_65.s:135) with an index 0..7; what the values stand for is UNPROVEN
+	.byte 0x14
 @ UNREF_080bb3fd: 6 bytes 0c 17 0b 0a 12 11 | READ: ldrb r0,[r2,r0] at 0x0800b2f8 with r2 = 0x080bb3fc (movw at 0x0800b2e6, movt at 0x0800b2f4) and r0 = uxtb r1 at 0x0800b2f2 where r1 = [0x2d] - 1 or 7 (subs at 0x0800b2ea, moveq at 0x0800b2f0) and, in the second function, ldrb r0,[r2,r0] at 0x0800b8d0 with r2 = 0x080bb3fc (movw 0x0800b8c0, movt 0x0800b8cc) and r1 = r0 + 1 when r0 < 7 else 0 (cmp r0,#7 / addcc at 0x0800b8c4 / 0x0800b8c8), so the index is 0..7 at 0x0800b8d0 and this region is index 1..6
 	.global UNREF_080bb3fd
 UNREF_080bb3fd:
-	.incbin "assets/rodata.bin", 0x751a9, 7
+	.byte 0x0c, 0x17, 0x0b, 0x0a, 0x12, 0x11, 0x10
 @ DATA_080bb404: 8 bytes 00 00 00 00 01 02 03 04 | ldrb r3,[r4,r3] at 0x080314dc with r3 = (x>>8)&7 (ubfx at 0x080314d8) and at 0x080314ea with r3 = (x>>11)&7 (ubfx at 0x080314e6), r4 = 0x080bb404 (movw #0xb404 at 0x080314ca, movt at 0x080314d4); the byte is the shift count of lsr.w r3,r2,r3 at 0x080314de and lsrs r2,r3 at 0x080314ee | compute_clock_frequencies: reads 0x40021004 and derives a base frequency and four shifted/divided values into a 5-dword result
 	.global DATA_080bb404
 DATA_080bb404:
 	.global d_080bb404
 d_080bb404:
-	.incbin "assets/rodata.bin", 0x751b0, 8
+	.byte 0, 0, 0, 0, 1, 2, 3, 4
 @ DATA_080bb40c: 2 bytes a0 fe = halfword 0xfea0, element 0 of the halfword array 0x080bb40c: 0xfea0, 0x055f, 0x055f, 0xfea0 (the next halfwords are DATA_080bb40e) | ldrh.w with index*4 (lsl #0x2) at 0x08028b6c, 0x0801e7c4, 0x08014984, 0x08014554, 0x08014a34, 0x08014a08 | draw_channel_offset_markers_08028b40: calls fill_triangle (0x08020af8) at 0x08028b80 and 0x08028baa; the colour argument (stack slot [sp+8], str r7,[sp,#8] at 0x08028b7e / 0x08028ba8) is the halfword at 0x080bb40c + byte(0x2000105b)*4 for the first call and at +2 for the second; draw_bottom_strip and draw_panels_by_selector_20001062 also load from it
 	.global DATA_080bb40c
 DATA_080bb40c:
 	.global d_080bb40c
 d_080bb40c:
-	.incbin "assets/rodata.bin", 0x751b8, 2
+	.hword 0xfea0                                      @ element 0; the readers index by byte * 4 and read +0 and +2
 @ DATA_080bb40e: 6 bytes 5f 05 5f 05 a0 fe = halfwords 0x055f, 0x055f, 0xfea0 (elements 1..3 of the halfword array at 0x080bb40c) | ldrh r7,[r3,#0x2] at 0x08028b98, ldrh r1,[r1,#0x2] at 0x0801e7fc, ldrh r7,[r0,#0x2] at 0x0801458e and 0x080145bc, 0x080145ea, 0x08014646 | draw_channel_offset_markers_08028b40, draw_bottom_strip, draw_panels_by_selector_20001062
 	.global DATA_080bb40e
 DATA_080bb40e:
-	.incbin "assets/rodata.bin", 0x751ba, 8
+	.hword 0x055f, 0x055f, 0xfea0                      @ elements 1..3 (read as RGB565: 0xfea0 yellow-orange, 0x055f blue)
+	.byte 0x20, 0x00                                   @ the bytes of the V1.2.0 text " " (now t_080bb414 in src/text.s)
 @ (the last 2 of these 8 bytes, 20 00 at 0x080bb414, were the text " " of draw_arc_gauge,
 @ now t_080bb414 in src/text.s; the bytes are kept here unchanged)
 @ (V1.2.0 had its text area, every language, at 0x080bb416..0x080be05b here; the English texts
@@ -1557,35 +1602,24 @@ DATA_080bb40e:
 @ next line pads with zero bytes to a multiple of 4 from the section start (the section is
 @ 4-aligned, see the .p2align at its start), as the vendor address 0x080be05c was.
 	.p2align 2
+@ d_080be05c / d_080be118: FatFs data (ChaN, FatFs R0.15 ffunicode.c, ff_wtoupper tables cvt2 for
+@ code points U+1000..U+FFFF and cvt1 for U+0000..U+0FFF, licence assets/tables/LICENSE-FatFs.txt),
+@ u16 groups {start, type << 8 | count, type 0: count halfwords}, each table ending with start 0.
+@ The code of src/filesystem_03.s (find_directory_entry_by_name and its neighbours) walks them; it
+@ takes d_080be05c for a key >= 0x1000 and d_080be118 otherwise.
 	.global d_080be05c
 d_080be05c:
-	.incbin "assets/rodata.bin", 0x77e08, 4
-@ UNREF_080be060: 184 bytes = 92 halfwords 0x2c63, 0x1e00, 0x0196, 0x1ea0, 0x015a, 0x1f00, 0x0608, 0x1f10, 0x0606, 0x1f20, 0x0608, 0x1f30, 0x0608, 0x1f40, 0x0606, 0x1f51, 0x0007, 0x1f59, 0x1f52, 0x1f5b, 0x1f54, ... | READ: the group walker in find_directory_entry_by_name starts at r7 = 0x080be05c when the 16-bit key is >= 0x1000 (movw/movt at 0x08031946/0x08031956, cmp.w r2,#4096 / movcc r7,r1 at 0x0803195e / 0x08031962) and at 0x080be118 otherwise (movw 0x0803194e, movt 0x0803195a); each group is a start halfword followed by a halfword with the count in the low byte and flags in the high byte; ldrh r3,[r7,#0] at 0x08031966 and ldrh r1,[r7,#2] at 0x08031976 read the header, groups with flags 0 are followed by count halfwords that the found path reads (sub r1,r2,sl at 0x08031a10 and ldrh.w r1,[r9,r1,lsl #1] at 0x08031a14), r7 advances by 2*count at 0x0803199e, and the walk continues group by group until start-1 >= key (bcs at 0x08031974); the first group at 0x080be05c has start 0x1d7d and count 1, so the halfword 0x2c63 at 0x080be060 is its entry (read when the key is 0x1d7d) and the groups that follow (headers and entries) lie in this region
-	.global UNREF_080be060
-UNREF_080be060:
-	.incbin "assets/rodata.bin", 0x77e0c, 184
+	.incbin "assets/tables/fat_cvt2.bin"
 	.global d_080be118
 d_080be118:
-	.incbin "assets/rodata.bin", 0x77ec4, 8
-@ DATA_080be120: 46 bytes = 23 halfwords 0x00f8, 0x0307, 0x00ff, 0x0001, 0x0178, 0x0100, 0x0130, 0x0132, 0x0106, 0x0139, 0x0110, 0x014a, 0x012e, 0x0179, 0x0106, 0x0180, 0x004d, 0x0243, 0x0181, 0x0182, 0x0182, 0x0184, 0x0184 | Read through no fixed base: the region lies inside the table that starts at 0x080be118 (used when the character code is below 0x1000, otherwise the table at 0x080be05c is used: cmp #0x1000 and conditional move at 0x0803293c..0x08032946, 0x080329e0..0x080329ea, 0x08032ac0..0x08032aca, 0x08032b64..0x08032b6e, 0x08032c42..0x08032c4c, 0x08032c96..0x08032ca0) and is walked entry by entry: an entry is a start halfword and an info halfword (high byte = type, low byte = count), a type 0 entry is followed by count data halfwords, any other type by none, and the walk ends at a start halfword 0 (0x080be308) | Entries in this region: 0x080be120 {start 0x00f8, type 3, count 7}; 0x080be124 {0x00ff, type 0, count 1} with its data halfword at 0x080be128 = 0x0178; 0x080be12a {0x0100, type 1, count 0x30}; 0x080be12e {0x0132, type 1, count 6}; 0x080be132 {0x0139, type 1, count 0x10}; 0x080be136 {0x014a, type 1, count 0x2e}; 0x080be13a {0x0179, type 1, count 6}; 0x080be13e {0x0180, type 0, count 0x4d} whose data starts at 0x080be142: its first six halfwords 0x080be142..0x080be14c (0x0243, 0x0181, 0x0182, 0x0182, 0x0184, 0x0184) are the last six halfwords of this region, the other 71 follow from 0x080be14e to 0x080be1da | The six ldrh.w are all [base + index*2] and run only when the entry type is 0 (tbb case 0): base = address of the current entry + 4 (its first data halfword), index = character code - entry start halfword, so the address read is entry+4 + 2*(code - start): 0x08032992 base r7 (r3+4 at 0x08032956), index r1 = lr - r5 (0x0803298e; lr = uxth ip, r5 = entry start), result in ip; 0x08032a36 base r7 (0x080329fa), index r1 = r9 - r5 (0x08032a32; r9 loaded at 0x080329d4), result in r9; 0x08032b16 base r7 (0x08032ada), index r1 = lr - r5 (0x08032b12), result in ip; 0x08032b
-	.global DATA_080be120
-DATA_080be120:
-	.incbin "assets/rodata.bin", 0x77ecc, 48
-@ UNREF_080be150: 444 bytes = 222 halfwords 0x0187, 0x0187, 0x0189, 0x018a, 0x018b, 0x018b, 0x018d, 0x018e, 0x018f, 0x0190, 0x0191, 0x0191, 0x0193, 0x0194, 0x01f6, 0x0196, ... (not monotonic: first decrease at element 14, 0x01f6 then 0x0196; the last element 221 = 0x8c73 is at 0x080be30a); the region starts at 0x080be150, 2 bytes after the end of DATA_080be120 (0x080be14e) | READ: the group walker in find_directory_entry_by_name starts at r7 = 0x080be05c when the 16-bit key is >= 0x1000 (movw/movt at 0x08031946/0x08031956, cmp.w r2,#4096 / movcc r7,r1 at 0x0803195e / 0x08031962) and at 0x080be118 otherwise (movw 0x0803194e, movt 0x0803195a); each group is a start halfword followed by a halfword with the count in the low byte and flags in the high byte; ldrh r3,[r7,#0] at 0x08031966 and ldrh r1,[r7,#2] at 0x08031976 read the header, groups with flags 0 are followed by count halfwords that the found path reads (sub r1,r2,sl at 0x08031a10 and ldrh.w r1,[r9,r1,lsl #1] at 0x08031a14), r7 advances by 2*count at 0x0803199e, and the walk continues group by group until start-1 >= key (bcs at 0x08031974); the group chain that starts at 0x080be118 runs through this region up to the group at 0x080be304; the last halfword of this region (element 221 = 0x8c73 at 0x080be30a) is also read by ldrh.w r1,[r7,r6,lsl #1] at 0x08015a62 with r7 = 0x080be30a (movw at 0x08015a52, movt at 0x08015a5a) and r6 = 0, 1 or 3 (movs r6,#1 at 0x08015a34, moveq r6,#3 at 0x08015a42, movne r6,r7 at 0x08015a4c with r7 = 0, 1 or 3 from 0x08015a20..0x08015a30)
-	.global UNREF_080be150
-UNREF_080be150:
-	.incbin "assets/rodata.bin", 0x77efc, 442
+	.incbin "assets/tables/fat_cvt1.bin"
+@ d_080be30a: 4 halfwords read by draw_three_value_rows (src/ui_pages_76.s:367, ldrh at 0x08015a62 of
+@ V1.2.0) as [d_080be30a + 2*i], i = 0, 1 or 3: 0x8c73, 0xffff, 0x055f, 0x0000 (read as RGB565:
+@ grey, white, blue, black; element 2 is not read there)
 	.global d_080be30a
 d_080be30a:
-	.incbin "assets/rodata.bin", 0x780b6, 4
-@ UNREF_080be30e: 2 bytes 5f 05 = halfword 0x055f | no reference found
-	.global UNREF_080be30e
-UNREF_080be30e:
-	.incbin "assets/rodata.bin", 0x780ba, 4
-@ UNREF_080be312: 2 bytes 00 00 | no reference found
-	.global UNREF_080be312
-UNREF_080be312:
-	.incbin "assets/rodata.bin", 0x780be, 2
+	.hword 0x8c73, 0xffff, 0x055f, 0x0000
+	.hword 0x0000                                      @ padding to the word-aligned region table
 @ d_080be314: scatter-load region table, 2 entries {source, destination, length, handler}, read by
 @ scatter_load_regions (src/startup_56.s) from d_080be314 up to d_080be334 (distance words at .L080071b8)
 	.global d_080be314
@@ -1599,43 +1633,63 @@ d_080be314:
 	.global UNREF_080be324
 UNREF_080be324:
 	.word rodata_end                                   @ region 2 source = the end of this file's data (V1.2.0: 0x080be680); zero_fill_words does not read it
-	.incbin "assets/rodata.bin", 0x780d4, 8              @ destination 0x20001240, length 0x00035d50
+	.word 0x20001240                                   @ region 2 destination (zero-filled RAM after the initial image)
+	.word 0x00035d50                                   @ region 2 length in bytes
 .Lsw_080be330:
 	.word zero_fill_words_addr                         @ 0x080be330 = 0x0800721c
 @ d_080be334: end of the scatter-load region table (the word here, 0x0000001c, is not part of it)
 	.global d_080be334
 d_080be334:
-	.incbin "assets/rodata.bin", 0x780e0, 4
+	.word 0x0000001c                                   @ value 0x1c (V1.2.0 word, no reader found)
+@ C runtime library locale data ("C" locale), V1.2.0 values. fn_08044ed8 (src/runtime_lib_41.s)
+@ compares its argument with the name d_080be338 and returns d_080be340; fn_08044f04 compares with
+@ d_080be354 and returns d_080be35c. The word -8 before each block equals the distance from the
+@ block back to its name; no reader of it was found.
 	.global d_080be338
 d_080be338:
-	.incbin "assets/rodata.bin", 0x780e4, 2
-@ UNREF_080be33a: 6 bytes 00 00 f8 ff ff ff = halfword 0 then word 0xfffffff8 (-8) | no reference found
-	.global UNREF_080be33a
-UNREF_080be33a:
-	.incbin "assets/rodata.bin", 0x780e6, 6
-@ DATA_080be340: 20 bytes = 5 words 0x0c, 0x0e, 0x0f, 0x2e, 0x110, followed by 0x43 and 0xfffffff8 | add r0,pc at 0x08044ef6 in fn_08044ed8 builds this address | fn_08044ed8: returns the address held in the constant when the string is null, empty or "C"
-	.global DATA_080be340
-DATA_080be340:
+	.asciz "C"
+	.byte 0x00, 0x00                                   @ padding
+	.word 0xfffffff8                                   @ -8
+@ d_080be340: 5 words 0x0c, 0x0e, 0x0f, 0x2e, 0x110 (how the library reads them was not traced: UNPROVEN)
 	.global d_080be340
 d_080be340:
-	.incbin "assets/rodata.bin", 0x780ec, 20
+	.word 0x0000000c, 0x0000000e, 0x0000000f, 0x0000002e, 0x00000110
 	.global d_080be354
 d_080be354:
-	.incbin "assets/rodata.bin", 0x78100, 2
-@ UNREF_080be356: 6 bytes 00 00 f8 ff ff ff = halfword 0 then word 0xfffffff8 (-8) | no reference found
-	.global UNREF_080be356
-UNREF_080be356:
-	.incbin "assets/rodata.bin", 0x78102, 6
-@ DATA_080be35c: 104 bytes: 00 x1, 40 x9, 41 x5, 40 x18, 05 x1, 02 x15, 20 x10, 02 x7, 90 x6, 10 x20, 02 x6, 88 x6 | add r0,pc at 0x08044f22 in fn_08044f04 builds this address | fn_08044f04: returns the address held in the constant when the string is null, empty or "C"
-	.global DATA_080be35c
-DATA_080be35c:
+	.asciz "C"
+	.byte 0x00, 0x00                                   @ padding
+	.word 0xfffffff8                                   @ -8
+@ d_080be35c: character class table: byte [d_080be35c] is the entry of EOF (-1), d_080be35c + 1 + c
+@ the entry of the character c = 0..255 (fn_08008534 reads [base + c] for c <= 255 and the byte at
+@ base + 257, base = d_080be35c + 1 stored at 0x20001264 by fn_080072c8). Flag values seen:
+@ 0x40 control, 0x01 with control for 9..13, 0x05 for space, 0x02 punctuation, 0x20 digits,
+@ 0x10 upper case, 0x08 lower case, 0x80 with the letters a..f / A..F.
 	.global d_080be35c
 d_080be35c:
-	.incbin "assets/rodata.bin", 0x78108, 124
-@ UNREF_080be3d8: 168 bytes: 02 x4, 40 x1, 00 x163 | READ: fn_08008534 reads a 256-entry byte table whose address is stored as 0x080be35d at [0x20001264]: the routine at 0x080072c8 calls 0x08044f04 (it returns 0x080be35c: ldr r0,[pc,#8] / add r0,pc at 0x08044f20 / 0x08044f22), adds 1 (adds r0,r0,#1 at 0x080072dc) and stores it with str r0,[r4,#4] at 0x080072de (r4 = 0x20001260 returned by 0x08008300); fn_08008534 loads it (bl 0x08008620 at 0x0800853e, ldr r3,[r0,#0] at 0x08008542) and executes ldrb r0,[r3,r4] at 0x08008550 for r4 <= 255 (cmp r4,#255 / bhi at 0x0800854c / 0x0800854e) and ldrb.w r0,[r3,#257] at 0x08008544, so 0x080be35d..0x080be45c and the byte 0x080be45e are read; this region starts at index 123 (0x080be3d8 = 0x080be35d + 123), so its bytes 0x080be3d8..0x080be45c and 0x080be45e are read; the word at [r3,#263] (ldr.w at 0x0800855c) is read only when the byte at [r3,#257] equals 1 and that byte is 0
-	.global UNREF_080be3d8
-UNREF_080be3d8:
-	.incbin "assets/rodata.bin", 0x78184, 168
+	.byte 0x00                                         @ EOF
+	.byte 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 @ 0x00..0x08
+	.byte 0x41, 0x41, 0x41, 0x41, 0x41                 @ 0x09..0x0d tab, line feed, vertical tab, form feed, return
+	.byte 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 @ 0x0e..0x16
+	.byte 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40 @ 0x17..0x1f
+	.byte 0x05                                         @ 0x20 space
+	.byte 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 @ 0x21..0x28 ! " # $ % & ' (
+	.byte 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02     @ 0x29..0x2f ) * + , - . /
+	.byte 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 @ 0x30..0x39 digits
+	.byte 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02     @ 0x3a..0x40 : ; < = > ? @
+	.byte 0x90, 0x90, 0x90, 0x90, 0x90, 0x90           @ 0x41..0x46 A..F
+	.byte 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 @ 0x47..0x50 G..P
+	.byte 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 @ 0x51..0x5a Q..Z
+	.byte 0x02, 0x02, 0x02, 0x02, 0x02, 0x02           @ 0x5b..0x60 [ \ ] ^ _ `
+	.byte 0x88, 0x88, 0x88, 0x88, 0x88, 0x88           @ 0x61..0x66 a..f
+	.byte 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 @ 0x67..0x70 g..p
+	.byte 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 @ 0x71..0x7a q..z
+	.byte 0x02, 0x02, 0x02, 0x02                       @ 0x7b..0x7e { | } ~
+	.byte 0x40                                         @ 0x7f delete
+	.space 128, 0x00                                   @ 0x80..0xff: no class
+	.space 35, 0x00                                    @ zero bytes to the end of the block (base + 257 is one of them)
+	.if (. - d_080be35c) != 292
+	.error "the character class block keeps its 292 bytes (fn_08008534 reads base + 257 and the word at base + 263)"
+	.endif
 @ The 512 bytes 0x080be480..0x080be67f of V1.2.0 (the packed initial RAM image, unpacked by
 @ unpack_token_stream) are not part of this file: the image is src/ram_init.s, copied by copy_words.
 	.global rodata_end

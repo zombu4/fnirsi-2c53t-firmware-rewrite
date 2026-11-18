@@ -168,6 +168,8 @@ ignores "._" files by their content.
 | `assets/` | binary data included by the sources |
 | `assets/fonts/` | application fonts: DejaVu Sans Condensed 2.37 rendered at 4 bpp (`LICENSE-DejaVu.txt`), own 7-segment font |
 | `assets/pictures/` | own boot logo, boot animation sprites, trigger icons, value panel and message box frames |
+| `assets/tables/` | computed tables (sine, FFT twiddles and swap order, JPEG IDCT scale and clamp, signal generator waveforms) and the FatFs code page / case tables (`LICENSE-FatFs.txt`) |
+| `assets/vendor_kept/` | `fpga.bin` (FPGA configuration stream) and `filter_bank.bin` (filter coefficients): the vendor's data, kept for now |
 | `bootloader/` | stock bootloader port (`make check`) and its slot build (`make slot`) |
 | `starter/` | the starter (page 0) |
 | `common/` | flash layout and record code shared by starter, bootloader and installer |
@@ -191,7 +193,10 @@ The application's text fonts (`assets/fonts/`) are rendered from DejaVu Sans Con
 Vera Fonts Copyright (c) 2003 by Bitstream, Inc., Arev Fonts Copyright (c) 2006 by Tavmjong Bah,
 DejaVu changes in the public domain; license text in `assets/fonts/LICENSE-DejaVu.txt`.
 
+The file system code page and case conversion tables (`assets/tables/fat_*.bin`) are data of FatFs
+R0.15, Copyright (C) ChaN, under the FatFs license (`assets/tables/LICENSE-FatFs.txt`).
+
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
 names are trademarks of their owners. Content derived from the vendor's firmware (the application
-port, the stock bootloader port and `assets/` except `assets/fonts/` and `assets/pictures/`) is not
-licensed by this project.
+port, the stock bootloader port, `assets/rodata.bin` and `assets/vendor_kept/`) is not licensed by
+this project.
