@@ -109,10 +109,10 @@
 	beq.n	.L0802db0c
 .L0802db26:
 	ldr	r0, [r6, #4]
-	movw	r1, #:lower16:d_08051d18+1
+	movw	r1, #:lower16:d_08051d19	@ own label of the FPGA configuration stream at 0x08051d19 (was d_08051d18+1)
 	movw	r2, #0xc3b6
 	movs	r0, #0
-	movt	r1, #:upper16:d_08051d18+1
+	movt	r1, #:upper16:d_08051d19	@ own label of the FPGA configuration stream at 0x08051d19 (was d_08051d18+1)
 	movt	r2, #1
 	b.n	.L0802db7c
 

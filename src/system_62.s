@@ -279,11 +279,11 @@ init_system_clock:
 	push {r4, r5, r7, lr}
 	movw r12, #0xed0c
 	movw r1, #0x1004
-	movw r0, #0x7000
+	movw r0, #:lower16:vectors	@ the vector table (src/vectors.s, 0x08007000): symbolic like every code address
 	movt r12, #0xe000
 	movt r1, #0x4002
-	movt r0, #0x800
-	str.w r0, [r12, #-4]		@ VTOR = 0x08007000
+	movt r0, #:upper16:vectors
+	str.w r0, [r12, #-4]		@ VTOR = vectors (0x08007000)
 	cpsie i
 	ldr.w r0, [r1, #-4]
 	orr r0, r0, #1

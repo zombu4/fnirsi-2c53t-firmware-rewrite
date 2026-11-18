@@ -15,6 +15,9 @@
 @ 11, 12 (default) do the same with the u16 table at base + case*200 + 2*i, with
 @ bases 0x0804d6b8 (cases 3, 4), 0x0804d528 (cases 7, 8) and 0x0804d460 (cases
 @ 10-12), all inside the 200-byte tables starting at 0x0804d848 + 200*k.
+@ The tables are reached only from the anchor d_0804d848 (+ 200*case - 0x3d6..
+@ 0x3e8), so src/rodata.s keeps the 1600-byte block 0x0804d848..0x0804de87 as
+@ one unit with this inner layout (guard there).
 @ Case 1: A + 0x14 for i < w, 0x14 for i >= w.
 @ Case 2: triangle, (i*A)/w + 0x14 for i < w, then A*(100-i)/(100-w) + 0x14.
 @ Case 5: staircase table[i] = A7 * ((8*i)/100) + 0x14 with A7 = a*0xfff/231

@@ -373,6 +373,7 @@ L_080074f8:
 @ not yet saved (pushed at 0x08007520); lr is the caller's return address.
 @ ----------------------------------------------------------------------------
 	.section .text.format_hex_u64,"ax",%progbits
+	.p2align 2			@ 0x08007520 and the section end 0x080075b4 are word aligned; lets GAS form the 16-bit literal loads
 	.global format_hex_u64
 	.thumb_func
 	.type format_hex_u64, %function
@@ -382,14 +383,15 @@ format_hex_u64:
 	ldrh	r1, [r0, #0x0]
 	lsls	r1, r1, #0x14		@ flag bit11 (upper case)
 	bpl.n	.L08007530
-	.inst.n	0x4c21			@ ldr r4, [pc, #0x84] = word at 0x080075b0 (literal lies in format_hex_u32's section)
-	add	r4, pc			@ r4 = upper case table
+	ldr	r4, .L080075b0		@ distance word (format_hex_u32 shares this section, so GAS forms the load)
+.L0800752c:
+	add	r4, pc			@ r4 = upper case table d_08046254
 	b.n	.L08007536
 .L08007530:
-	.inst.n	0x4c1f			@ ldr r4, [pc, #0x7c] = word at 0x080075b0 (literal lies in format_hex_u32's section)
+	ldr	r4, .L080075b0		@ the same distance word, used 6 bytes later
 .L08007532:
-	add	r4, pc
-	adds	r4, #0xe		@ r4 = lower case table
+	add	r4, pc			@ r4 = d_08046254 + 6 (the add lies 6 bytes after .L0800752c)
+	adds	r4, #0xe		@ r4 = d_08046254 + 0x14 = lower case table d_08046268
 .L08007536:
 	movs	r1, #0x0		@ digit count
 	add.w	r6, r0, #0x24		@ digit buffer
@@ -437,8 +439,10 @@ format_hex_u64:
 @ 08007238. The code at 0x08007592 (r2 aligned up to 8, ldrd r2,r3 of the
 @ 64-bit slot) and at 0x0800759e (pointer form: sets flag bit5, precision 8,
 @ r2 = word at [r2], r3 = 0) are other entries to format_hex_u64.
+@ No .section line: this unit shares format_hex_u64's section, because its last
+@ word (0x080075b0) is the literal that format_hex_u64 loads twice; in one
+@ section GAS forms those loads and the distance word itself.
 @ ----------------------------------------------------------------------------
-	.section .text.format_hex_u32,"ax",%progbits
 	.global format_hex_u32
 	.thumb_func
 	.type format_hex_u32, %function
@@ -476,7 +480,7 @@ L_0800759e:
 	movs	r3, #0x0
 	b.n	format_hex_u64
 .L080075b0:
-	.word	0x0003ed24		@ distance for add r4,pc at 08007532: 0x0003ED24 + 0x08007532 + 4 = 0x0804625A (the add lies in format_hex_u64's section, so GAS cannot form the symbolic difference)
+	.word	d_08046254 - (.L0800752c + 4)	@ distance from the add at .L0800752c to the upper case table (V1.2.0: 0x0003ED24); the add at .L08007532 gets d_08046254 + 6, so the digit tables 0x08046254..0x0804627B stay one block (guard in rodata.s)
 
 @ ----------------------------------------------------------------------------
 @ fn_080075b4 - format driver (the vfprintf-like loop).
@@ -1618,13 +1622,14 @@ format_float_hex:
 	lsls	r0, r0, #0x14		@ flag bit11 (upper case)
 	bpl.n	.L08007e96
 	ldr	r0, .L08008080
-	add	r0, pc			@ upper case digit string
+.L08007e92:
+	add	r0, pc			@ upper case digit string d_0804646b
 	b.n	.L08007e9c
 .L08007e96:
 	ldr	r0, .L08008080
 .L08007e98:
-	add	r0, pc
-	subs	r0, #0x19		@ lower case digit string
+	add	r0, pc			@ d_0804646b + 6 (this add lies 6 bytes after .L08007e92)
+	subs	r0, #0x19		@ d_0804646b - 0x13 = lower case digit string d_08046458
 .L08007e9c:
 	add	r2, sp, #0x20		@ output text buffer starts with the sign
 	movs	r3, #0x30
@@ -1839,7 +1844,7 @@ format_float_hex:
 	bcc.n	.L08008056
 	b.n	.L08008072
 .L08008080:
-	.word	d_08046470+1 - (.L08007e98 + 4)
+	.word	d_0804646b - (.L08007e92 + 4)	@ distance from the add at .L08007e92 to the upper case digit string; the add at .L08007e98 with subs #0x19 reaches d_08046458, so both strings stay one block (guard in rodata.s)
 .L08008084:
 	.word	0xfffffc02		@ -1022
 
@@ -1851,6 +1856,7 @@ format_float_hex:
 @ pointer into word 4 (+0x10), and fn_080075b4 calls context[3](context).
 @ ----------------------------------------------------------------------------
 	.section .text.read_byte_advance,"ax",%progbits
+	.p2align 2			@ 0x08008088 and the section end 0x080080b8 are word aligned; lets GAS form fn_08008092's literal load
 	.global read_byte_advance
 	.thumb_func
 	.type read_byte_advance, %function
@@ -1870,8 +1876,10 @@ read_byte_advance:
 @ (+0x10) = r0 format pointer, word 5 = 0; then calls fn_080075b4(context, r2)
 @ and returns its count. Callers: 08007370 and 080073b4 (r3 = 0x080080b9) and
 @ 080080f0.
+@ No .section line: this unit starts at 0x08008092 (2 mod 4) and shares
+@ read_byte_advance's word-aligned section, so GAS forms the 16-bit literal
+@ load of .L080080b4 itself.
 @ ----------------------------------------------------------------------------
-	.section .text.fn_08008092,"ax",%progbits
 	.global fn_08008092
 	.thumb_func
 	.type fn_08008092, %function
@@ -1881,7 +1889,7 @@ fn_08008092:
 	strd	r3, r1, [sp, #0x4]
 	movs	r1, #0x0
 	str	r1, [sp, #0x14]
-	.inst.n	0x4905			@ ldr r1, [pc, #0x14] = word at .L080080b4 (unit starts at an address = 2 mod 4, GAS cannot place the literal word-aligned from the section start)
+	ldr	r1, .L080080b4		@ distance word to read_byte_advance
 .L080080a0:
 	add	r1, pc			@ r1 = read_byte_advance
 	strd	r1, r0, [sp, #0xc]
@@ -2203,6 +2211,7 @@ format_decimal_64:
 @ caller.
 @ ----------------------------------------------------------------------------
 	.section .text.format_octal_64,"ax",%progbits
+	.p2align 2			@ 0x0800824c and the section end 0x080082bc are word aligned; lets GAS form the two adr
 	.global format_octal_64
 	.thumb_func
 	.type format_octal_64, %function
@@ -2224,7 +2233,7 @@ format_octal_64:
 	bne.n	.L08008256
 	ldr	r4, [r0, #0x0]
 	movs	r3, #0x0		@ prefix length = 0
-	.inst.n	0xa210			@ adr r2, 0x080082b4 = empty prefix string (lies in format_octal_32's section)
+	adr	r2, .L080082b4		@ empty prefix string (format_octal_32 shares this section, so GAS forms the adr)
 	lsls	r5, r4, #0x1c		@ flag bit3 ('#')
 	bpl.n	.L0800828a
 	and	r4, r4, #0x20
@@ -2232,7 +2241,7 @@ format_octal_64:
 	beq.n	.L0800828a
 	ldr	r4, [r0, #0x1c]
 	movs	r3, #0x1
-	.inst.n	0xa20c			@ adr r2, 0x080082b8 = prefix string "0" (lies in format_octal_32's section)
+	adr	r2, .L080082b8		@ prefix string "0"
 	.inst.n	0x1e64		@ subs r4, r4, #1
 	str	r4, [r0, #0x1c]		@ precision -= 1
 .L0800828a:
@@ -2251,8 +2260,10 @@ format_octal_64:
 @ 08007238. The block at 0x080082a8 (r2 aligned up to 8, ldrd r2,r3 of the
 @ 64-bit slot, b.n format_octal_64) and the data at 0x080082b4 (empty prefix
 @ string) and 0x080082b8 (prefix string "0") belong to this unit.
+@ No .section line: this unit shares format_octal_64's section, because
+@ format_octal_64 addresses the two prefix strings with adr; in one section GAS
+@ forms those adr itself.
 @ ----------------------------------------------------------------------------
-	.section .text.format_octal_32,"ax",%progbits
 	.global format_octal_32
 	.thumb_func
 	.type format_octal_32, %function
@@ -2428,13 +2439,15 @@ fn_08008448:
 	mov	r9, r0			@ output
 	mov	r6, r2			@ mode
 	sub	sp, #0x28
-	ldr	r0, .L08008528
-	add	r0, pc
+	ldr	r0, .L08008528		@ one distance word serves four add r,pc sites; each lands on its
+.L08008454:				@ table through its own place in this function (see .L08008528)
+	add	r0, pc			@ r0 = d_0804650c (12-byte value 1.0)
 	ldmia	r0, {r0, r2, r3}
 	stm.w	sp, {r0, r2, r3}
 	ldr	r0, .L08008528
-	add	r0, pc
-	.inst.n	0x1c80		@ adds r0, r0, #2
+.L0800845e:
+	add	r0, pc			@ d_0804650c + 0xa (0xa bytes after .L08008454)
+	.inst.n	0x1c80		@ adds r0, r0, #2: r0 = d_0804650c + 0xc = d_08046518
 	add	r4, sp, #0xc
 	ldmia	r0, {r0, r2, r3}
 	stm.w	r4, {r0, r2, r3}
@@ -2456,8 +2469,9 @@ fn_08008448:
 	ldr.w	r10, .L08008528
 	mov	r8, r0
 	movs	r7, #0x0
-	add	r10, pc
-	sub.w	r10, r10, #0xbe
+.L08008496:
+	add	r10, pc			@ d_0804650c + 0x42 (0x42 bytes after .L08008454)
+	sub.w	r10, r10, #0xbe		@ r10 = d_0804650c - 0x7c = d_08046490 (12-byte entries)
 	b.n	.L080084bc
 .L0800849e:
 	lsls	r0, r4, #0x1f
@@ -2477,8 +2491,8 @@ fn_08008448:
 	bne.n	.L0800849e
 	ldr	r7, .L08008528
 .L080084c2:
-	add	r7, pc
-	subs	r7, #0xae
+	add	r7, pc			@ d_0804650c + 0x6e (0x6e bytes after .L08008454)
+	subs	r7, #0xae		@ r7 = d_0804650c - 0x40 = d_080464cc (16-byte entries)
 	b.n	.L080084fc
 .L080084c8:
 	lsls	r0, r5, #0x1f
@@ -2522,7 +2536,7 @@ fn_08008448:
 	add	sp, #0x28
 	pop.w	{r4, r5, r6, r7, r8, r9, r10, pc}
 .L08008528:
-	.word	d_0804657a - (.L080084c2 + 4)
+	.word	d_0804650c - (.L08008454 + 4)	@ distance from the add at .L08008454 to d_0804650c (V1.2.0: 0x0003E0B4); the adds at .L0800845e, .L08008496, .L080084c2 reach d_08046518, d_08046490, d_080464cc through their fixed places here, so 0x08046490..0x08046523 stays one block (guard in rodata.s)
 
 @ ----------------------------------------------------------------------------
 @ fn_0800852c - test a flag bit of an object.

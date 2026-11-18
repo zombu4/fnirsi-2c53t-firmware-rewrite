@@ -384,6 +384,7 @@ fn_08045766:
 @ 0x080458cc = 0x7ff80000 (quiet NaN high word).
 @ ----------------------------------------------------------------------------
 	.section .text.double_mul,"ax",%progbits
+	.p2align 2	@ 0x0804577c and the section end 0x080458d0 are word aligned; lets GAS form the 16-bit literal load
 	.global double_mul
 	.thumb_func
 	.type double_mul, %function
@@ -492,7 +493,7 @@ double_mul:
 	lsrs.w	r12, r12, #21
 	bne.n	.L080458ae
 .L080458c0:
-	.inst.n 0x4902	@ ldr r1, .L080458cc
+	ldr	r1, .L080458cc	@ quiet NaN high word (GAS forms the load: the section is word aligned)
 	mov.w	r0, #0
 	bx	lr
 .L080458c8:
@@ -722,6 +723,7 @@ double_rsub:
 @ 8=6, bit31=1. Literal at 08045b90 = 0x7ff80000 (quiet NaN high word).
 @ ----------------------------------------------------------------------------
 	.section .text.double_sqrt,"ax",%progbits
+	.p2align 2	@ 0x080459fc and the section end 0x08045b94 are word aligned; lets GAS form the 16-bit literal load
 	.global double_sqrt
 	.thumb_func
 	.type double_sqrt, %function
@@ -844,7 +846,7 @@ double_sqrt:
 	.word 0xbeffdb6d	@ inline word for 080458d0
 .L08045b84:
 	pop.w	{r4, r5, r6, r7, r8, lr}
-	.inst.n 0x4901	@ ldr r1, .L08045b90
+	ldr	r1, .L08045b90	@ quiet NaN high word (GAS forms the load: the section is word aligned)
 	mov.w	r0, #0
 	bx	lr
 .L08045b90:
@@ -1536,6 +1538,7 @@ fpscr_set_fz_dn_round_nearest:
 @ Called from 08043864.
 @ ----------------------------------------------------------------------------
 	.section .text.float_ieee_remainder,"ax",%progbits
+	.p2align 2	@ 0x08045f20 and the end 0x08046020 of the section (float_remainder_special_case included) are word aligned
 	.global float_ieee_remainder
 	.thumb_func
 	.type float_ieee_remainder, %function
@@ -1641,8 +1644,10 @@ float_ieee_remainder:
 @ mask on entry). Global label L_08046014 (08046014) is a further entry used
 @ from other code: r0 = 0xff | (r0 >> 23), then r0 <<= 23. The last two bytes
 @ are padding (never reached, aligns the next function to 2 bytes).
+@ No .section line: this unit starts at 0x08045ff6 (2 mod 4) and shares
+@ float_ieee_remainder's word-aligned section, so GAS forms the 16-bit literal
+@ load of .L08046010 itself.
 @ ----------------------------------------------------------------------------
-	.section .text.float_remainder_special_case,"ax",%progbits
 	.global float_remainder_special_case
 	.thumb_func
 	.type float_remainder_special_case, %function
@@ -1658,7 +1663,7 @@ L_08046000:
 	and	r0, r0, #0x80000000
 	bx	lr
 .L0804600c:
-	.inst.n 0x4800	@ ldr r0, .L08046010
+	ldr	r0, .L08046010	@ 0x7fc00000 (GAS forms the load: this unit shares float_ieee_remainder's word-aligned section)
 	bx	lr
 .L08046010:
 	.word 0x7fc00000

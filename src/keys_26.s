@@ -1246,9 +1246,9 @@ fn_080400b8:
 	ldrb.w r1, [r0, #0x2d]
 	cmp r1, #0x13
 	bhi.n .L080406b4
-	movw r3, #:lower16:d_0804d832+1
+	movw r3, #:lower16:d_0804d833	@ own label of the byte table at 0x0804d833 (was d_0804d832+1)
 	ldrh.w r2, [r0, #0xdb8]
-	movt r3, #:upper16:d_0804d832+1
+	movt r3, #:upper16:d_0804d833	@ own label of the byte table at 0x0804d833 (was d_0804d832+1)
 	ldrb r1, [r3, r1]
 	adds r2, #1
 	uxth r3, r2

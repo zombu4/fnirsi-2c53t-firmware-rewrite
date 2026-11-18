@@ -196,8 +196,8 @@ fn_0803e454:
 	.short	(.L0803e79c - .L0803e53a)/2
 .L0803e54c:
 	ldrb.w	r0, [r9, #0x2d]
-	movw	r1, #:lower16:d_0804d832+1
-	movt	r1, #:upper16:d_0804d832+1
+	movw	r1, #:lower16:d_0804d833	@ own label of the byte table at 0x0804d833 (was d_0804d832+1)
+	movt	r1, #:upper16:d_0804d833	@ own label of the byte table at 0x0804d833 (was d_0804d832+1)
 	ldrb	r1, [r1, r0]
 	ldrh.w	r2, [r9, #0xdb8]
 	adds	r1, #0x32

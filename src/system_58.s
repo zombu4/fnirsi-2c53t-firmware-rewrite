@@ -360,6 +360,7 @@
 @ the end.
 @ ----------------------------------------------------------------------------
 	.section .text.system_bring_up,"ax",%progbits
+	.p2align 2	@ 0x0802aa50 and the section end 0x0802e71c are word aligned; lets GAS form the adr in part 2
 	.global system_bring_up
 	.thumb_func
 	.type system_bring_up, %function
@@ -1555,18 +1556,18 @@ charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
 	bgt.n	.L0802b7c4
 .L0802b826:
 	ldr	r0, [sp, #0x1c]
-	movw	r2, #:lower16:d_0804d7c0+1
+	movw	r2, #:lower16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	add	r0, r4
 	movs	r4, #0
 	mov	r5, r1
-	movt	r2, #:upper16:d_0804d7c0+1
+	movt	r2, #:upper16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	movs	r7, #4
 	str	r0, [sp, #0x30]
 	b.n	.L0802b862
 .L0802b83c:
-	movw	r2, #:lower16:d_0804d7c0+1
+	movw	r2, #:lower16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	ldr.w	r12, [sp, #0x3c]
-	movt	r2, #:upper16:d_0804d7c0+1
+	movt	r2, #:upper16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	movs	r7, #4
 .L0802b84a:
 	adds	r0, r4, #2
@@ -1585,21 +1586,21 @@ charge_loop_exit:				@ exit of the start-up picture loop (charge_screen_or_skip)
 	cmp	r3, r0
 	ble.n	.L0802b84a
 	uxtb.w	r0, r12
-	movw	r9, #:lower16:d_0804d766+1
+	movw	r9, #:lower16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
 	cmp	r0, #0
-	movt	r9, #:upper16:d_0804d766+1
+	movt	r9, #:upper16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
 	beq.n	.L0802b918
 	cmp	r0, #1
 	bne.w	.L0802b9aa
 	uxth	r0, r5
 	ldr	r7, [sp, #0x2c]
-	movw	r9, #:lower16:d_0804d798+1
+	movw	r9, #:lower16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
 	lsrs	r6, r0, #8
 	uxtb	r5, r5
 	lsls	r0, r4, #2
 	mov.w	r12, #4
 	add.w	lr, sp, #0x40
-	movt	r9, #:upper16:d_0804d798+1
+	movt	r9, #:upper16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
 	nop
 .L0802b89c:
 	lsrs	r1, r4, #1

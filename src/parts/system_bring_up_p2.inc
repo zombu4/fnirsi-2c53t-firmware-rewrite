@@ -43,10 +43,10 @@
 	lsrs r6, r7, #0x8
 	uxtb r5, r1
 	ldr r7, [sp, #0x30]
-	movw r1, #:lower16:d_0804d798+1
+	movw r1, #:lower16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
 	lsls r4, r3, #0x2
 	add.w r12, sp, #0x40
-	movt r1, #:upper16:d_0804d798+1
+	movt r1, #:upper16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
 	mov.w r9, #0x4
 	nop
 .L0802bad0:
@@ -94,10 +94,10 @@
 	lsrs r6, r7, #0x8
 	uxtb r5, r1
 	ldr r7, [sp, #0x30]
-	movw r1, #:lower16:d_0804d766+1
+	movw r1, #:lower16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
 	lsls r4, r3, #0x2
 	add.w r12, sp, #0x40
-	movt r1, #:upper16:d_0804d766+1
+	movt r1, #:upper16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
 	mov.w r9, #0x4
 .L0802bb64:
 	lsrs r0, r3, #0x1
@@ -143,10 +143,10 @@
 	uxth r7, r1
 	uxtb r6, r1
 	ldr r5, [sp, #0x30]
-	movw r1, #:lower16:d_0804d7c0+1
+	movw r1, #:lower16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	lsr.w r12, r7, #0x8
 	lsls r4, r3, #0x2
-	movt r1, #:upper16:d_0804d7c0+1
+	movt r1, #:upper16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	movs r7, #0x4
 .L0802bbf4:
 	ldr r0, [sp, #0x3c]
@@ -273,7 +273,7 @@
 	adds r0, r7, r6
 	cmp r0, r3
 	ble.n .L0802bd08
-	.inst.n 0xa0da	@ adr r0, .L0802c0ac (halfword table, 4-aligned target)
+	adr r0, .L0802c0ac	@ halfword table (GAS forms the adr: the section is word aligned)
 	ldrh.w r0, [r0, r4, lsl #0x1]
 	bl fn_080092dc
 	ldr r3, [sp, #0x30]
@@ -299,8 +299,8 @@
 	nop
 .L0802bd88:
 	mla r6, r5, lr, r12
-	movw r4, #:lower16:d_0804d766+1
-	movt r4, #:upper16:d_0804d766+1
+	movw r4, #:lower16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
+	movt r4, #:upper16:d_0804d767	@ own label of the nibble array at 0x0804d767 (was d_0804d766+1)
 	ldrb r6, [r4, r6]
 	add r4, sp, #0x40
 	and r11, r6, #0xf
@@ -390,10 +390,10 @@
 	b.n .L0802bd08
 .L0802bea2:
 	ldrh.w r9, [r0]
-	movw r7, #:lower16:d_0804d7c0+1
+	movw r7, #:lower16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	movs r6, #0x0
 	movs r0, #0x0
-	movt r7, #:upper16:d_0804d7c0+1
+	movt r7, #:upper16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	b.n .L0802bf42
 .L0802beb4:
 	add r5, r7
@@ -432,12 +432,12 @@
 	lsrs r1, r1, #0x8
 	strh.w r1, [r10]
 	ldrh.w r1, [r8, #0x2]
-	movw r7, #:lower16:d_0804d7c0+1
+	movw r7, #:lower16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	uxtb r1, r1
 	strh.w r1, [r10]
 	ldrh.w r1, [r8, #0x8]
 	sxth r6, r0
-	movt r7, #:upper16:d_0804d7c0+1
+	movt r7, #:upper16:d_0804d7c1	@ own label of the byte table at 0x0804d7c1 (was d_0804d7c0+1)
 	cmp r6, r9
 	strh r1, [r10, #-0x2]
 	strh.w r5, [r10]
@@ -449,8 +449,8 @@
 	ldr r7, [sp, #0x38]
 	cmp r4, #0x2
 	bne.n .L0802bebc
-	movw r1, #:lower16:d_0804d798+1
-	movt r1, #:upper16:d_0804d798+1
+	movw r1, #:lower16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
+	movt r1, #:upper16:d_0804d799	@ own label of the data at 0x0804d799 (was d_0804d798+1)
 	add r5, r1
 	b.n .L0802beb8
 .L0802bf5c:

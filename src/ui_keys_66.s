@@ -665,9 +665,9 @@ fn_0800bd60:
 	movw r2, #0x1759
 	movt r2, #0xd1b7
 	umull r1, r2, r1, r2
-	movw r1, #0x65a4
+	movw r1, #:lower16:d_080465a4	@ 9-word threshold table 19..7999 (symbolic so it follows the table)
 	sxtb r0, r0
-	movt r1, #0x804
+	movt r1, #:upper16:d_080465a4
 	ldr.w r0, [r1, r0, lsl #2]
 	mov.w r1, #0xffffffff
 	add.w r1, r1, r2, lsr #13

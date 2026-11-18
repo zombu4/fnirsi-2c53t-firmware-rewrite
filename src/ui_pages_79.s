@@ -862,10 +862,10 @@ draw_bottom_strip:
 	movt	r2, #:upper16:d_080bb40c
 	ldrb	r1, [r1, #0x18]
 	add.w	r0, r2, r0, lsl #2
-	movw	r2, #:lower16:d_0804d7d2+1
+	movw	r2, #:lower16:d_0804d7d3	@ own label of the 1-bit rows at 0x0804d7d3 (was d_0804d7d2+1)
 	ldrh.w	r11, [r0, r7, lsl #1]
 	sxth.w	r8, r3
-	movt	r2, #:upper16:d_0804d7d2+1
+	movt	r2, #:upper16:d_0804d7d3	@ own label of the 1-bit rows at 0x0804d7d3 (was d_0804d7d2+1)
 	movw	r10, #0x8350
 	str	r7, [sp, #0x14]
 	add.w	r7, r8, #0x10

@@ -511,8 +511,8 @@ draw_panels_by_selector_20001062:
 	movs	r2, #0x77
 	bl	decode_image_file_with_offset
 	ldrb	r0, [r5, #0x18]
-	movw	r2, #:lower16:d_0804d7d2+1
-	movt	r2, #:upper16:d_0804d7d2+1
+	movw	r2, #:lower16:d_0804d7d3	@ own label of the 1-bit rows at 0x0804d7d3 (was d_0804d7d2+1)
+	movt	r2, #:upper16:d_0804d7d3	@ own label of the 1-bit rows at 0x0804d7d3 (was d_0804d7d2+1)
 	add.w	r2, r2, r0, lsl #5
 	movw	r0, #0x8350
 	mov.w	r12, #0x78

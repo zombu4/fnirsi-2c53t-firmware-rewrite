@@ -45,8 +45,11 @@ How to install the two-part bootloader: **[FLASHING_BOOTLOADER.md](FLASHING_BOOT
 
 - Smaller and faster code
 - English-only texts and own fonts and pictures in place of the vendor data
-- Moving the fixed data: some pointers into it (texts, tables, `assets/rodata.bin`) are still plain
-  numbers, which is correct only while it stays at 0x08046254
+- Moving the fixed data: the link script no longer fixes its address and every code and data
+  reference into it is a symbol, except the text addresses (the text pointer tables in
+  `assets/rodata.bin` and the text literals of the draw routines) and the pointers inside the packed
+  initial RAM image (font data and code callbacks); those are still plain numbers, correct only
+  while code and data stay where they are
 
 ---
 

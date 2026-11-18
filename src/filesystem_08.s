@@ -1469,9 +1469,9 @@ path_resolve:
 	lsls r0, r0, #0x18
 	orr.w r11, r11, #0x2
 	bpl.n .L08036a4c
-	movw r1, #:lower16:d_0804bcec+1
+	movw r1, #:lower16:d_0804bced	@ own label of the 128-byte table at 0x0804bced (was d_0804bcec+1)
 	and.w r0, r6, #0x7f
-	movt r1, #:upper16:d_0804bcec+1
+	movt r1, #:upper16:d_0804bced	@ own label of the 128-byte table at 0x0804bced (was d_0804bcec+1)
 	ldrb r6, [r1, r0]
 .L08036a4c:
 	mov r3, r4

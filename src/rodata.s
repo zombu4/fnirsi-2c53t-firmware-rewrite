@@ -1,7 +1,11 @@
 @ rodata.s - fixed data 0x08046254..0x080BE67F: format tables, number constants, function pointer
 @ tables, text in every language, fonts and glyph bitmaps, pictures, the scatter-load region table
 @ (0x080BE314) and the packed initial RAM image (0x080BE480, unpacked to 0x20000000 at reset).
-@ The bytes come from assets/rodata.bin; words that hold code addresses are written as symbols.
+@ The bytes come from assets/rodata.bin; words that hold code addresses are written as symbols, and so
+@ are the data addresses (font key array pointers, scatter-load table), except the text pointer
+@ tables 0x0804bf28..0x0804c9fb, which still hold their text addresses as vendor bytes.
+@ Where code reaches several objects from one label with fixed offsets, a .if/.error guard keeps
+@ those offsets.
 @ Labels d_<address> are the addresses the code refers to.
 @ Part of the FNIRSI 2C53T firmware rewrite (hand-written Thumb-2 assembly).
 	.syntax unified
@@ -11,6 +15,9 @@
 	.section .rodata.fixed,"a",%progbits
 	.global rodata_start
 rodata_start:
+@ d_08046254: upper case digit text '0123456789ABCDEF@0X', target of the distance word of format_hex_u64 (src/format_10.s .L080075b0)
+	.global d_08046254
+d_08046254:
 	.incbin "assets/rodata.bin", 0x0, 1
 @ UNREF_08046255: 5 bytes ASCII '12345' (31..35), index 1..5 of the digit text '0123456789ABCDEF' at 0x08046254 | READ: in format_hex_u64, ldr r4,[pc,#132] at 0x0800752a plus add r4,pc at 0x0800752c (word 0x0003ed24 at 0x080075b0 + 0x08007530) gives r4 = 0x08046254, taken when bit 11 of the halfword [r0] is set (lsls #20 / bpl at 0x08007526 / 0x08007528); ldrb r7,[r4,r7] at 0x08007544 with r7 = r2 & 15 (and.w at 0x0800753e), so the index is 0..15
 	.global UNREF_08046255
@@ -21,7 +28,14 @@ UNREF_08046255:
 DATA_0804625a:
 	.global d_0804625a
 d_0804625a:
-	.incbin "assets/rodata.bin", 0x6, 34
+	.incbin "assets/rodata.bin", 0x6, 14
+@ d_08046268: lower case digit text '0123456789abcdef@0x'; format_hex_u64 reaches it as d_08046254 + 6 + 14 (second add r4,pc 6 bytes after the first, then adds r4,#14), so these 0x14 bytes stay fixed
+	.global d_08046268
+d_08046268:
+	.incbin "assets/rodata.bin", 0x14, 20
+	.if (d_08046268 - d_08046254) != 0x14
+	.error "format_hex_u64 (src/format_10.s) needs the lower case digit text 0x14 bytes after d_08046254"
+	.endif
 @ DATA_0804627c: 20 bytes 04 00 00 08 00 00 00 00 00 00 00 02 00 01 00 00 10 00 00 00: flag table of the format parser 080075b4, indexed by (character - 0x20): ' '=0x04, '#'=0x08, '+'=0x02, '-'=0x01, '0'=0x10 | address built by ldr r11 from the literal 0x0003ECB4 at 0x08007738 and add r11,pc at 0x080075c4 (0x0003ECB4 + 0x080075c8 = 0x0804627c)
 	.global DATA_0804627c
 DATA_0804627c:
@@ -84,10 +98,18 @@ d_080463d8:
 DATA_08046418:
 	.global d_08046418
 d_08046418:
-	.incbin "assets/rodata.bin", 0x1c4, 88
-	.global d_08046470
-d_08046470:
-	.incbin "assets/rodata.bin", 0x21c, 16
+	.incbin "assets/rodata.bin", 0x1c4, 64
+@ d_08046458: lower case digit text '0123456789abcdefxp' of format_float_hex; reached as d_0804646b + 6 - 0x19 (src/format_10.s .L08007e98)
+	.global d_08046458
+d_08046458:
+	.incbin "assets/rodata.bin", 0x204, 19
+@ d_0804646b: upper case digit text '0123456789ABCDEFXP' of format_float_hex, target of its distance word (src/format_10.s .L08008080); then 2 zero bytes
+	.global d_0804646b
+d_0804646b:
+	.incbin "assets/rodata.bin", 0x217, 21
+	.if (d_0804646b - d_08046458) != 0x13
+	.error "format_float_hex (src/format_10.s) needs the upper case digit text 0x13 bytes after the lower case one"
+	.endif
 	.global d_08046480
 d_08046480:
 	.incbin "assets/rodata.bin", 0x22c, 8
@@ -97,10 +119,14 @@ d_08046488:
 @ DATA_08046490: 60 bytes = 5 entries of 12 bytes (stride 0xc), each three 32-bit words: (0x00004002, 0xa0000000, 0x0), (0x00004005, 0xc8000000, 0x0), (0x0000400c, 0x9c400000, 0x0), (0x00004019, 0xbebc2000, 0x0), (0x00004034, 0x8e1bc9bf, 0x04000000) | with word0 as exponent (bias 0x3fff) and words 1,2 as the 64-bit mantissa the entries equal 10, 100, 10000, 1e8, 1e16 | add.w r1,r10,r1,lsl #2 at 0x080084ac | fn_08008448: combines 12-byte table entries with 0804356a and divides with 08043540 when n is negative
 	.global DATA_08046490
 DATA_08046490:
+	.global d_08046490
+d_08046490:			@ reached by fn_08008448 as d_0804650c - 0x7c (src/format_10.s .L08008496)
 	.incbin "assets/rodata.bin", 0x23c, 60
 @ DATA_080464cc: 4 bytes b5 40 00 00 = word 0x000040b5, word 0 (exponent word) of the 16-byte entry at 0x080464cc | ldm.w r0,{r1,r2,r3} at 0x080084d4 loads words 0..2 of the entry | entry words (0x000040b5, 0xd0cf4b50, 0xcfe20766, 0x00000001) equal 1e55 with the same reading as the table at 0x08046490 | fn_08008448: combines 12-byte table entries with 0804356a
 	.global DATA_080464cc
 DATA_080464cc:
+	.global d_080464cc
+d_080464cc:			@ reached by fn_08008448 as d_0804650c - 0x40 (src/format_10.s .L080084c2)
 	.incbin "assets/rodata.bin", 0x278, 4
 @ DATA_080464d0: 4 bytes 50 4b cf d0 = word 0xd0cf4b50, word 1 of the 16-byte entry at 0x080464cc (high mantissa word) | loaded by ldm.w r0,{r1,r2,r3} at 0x080084d4 in fn_08008448
 	.global DATA_080464d0
@@ -113,7 +139,26 @@ DATA_080464d4:
 @ DATA_080464d8: 52 bytes = word 0x00000001 (word 3 of the entry at 0x080464cc, read by ldr r0,[r0,#0xc] at 0x080084dc) followed by three 16-byte entries (0x0000416c, 0xaa51823e, 0x34a7eedf, 0x00000001), (0x000042d9, 0xe2a0b5dc, 0x971f303a, 0xffffffff), (0x000045b4, 0xc8a025fd, 0x4fc1a3e9, 0xffffffff) = 1e110, 1e220, 1e440 with the exponent/mantissa reading used for 0x08046490 | stride 0x10 | fn_08008448: combines 12-byte table entries with 0804356a
 	.global DATA_080464d8
 DATA_080464d8:
-	.incbin "assets/rodata.bin", 0x284, 80
+	.incbin "assets/rodata.bin", 0x284, 52
+@ d_0804650c: 12-byte extended value 1.0 (words 0x00003fff, 0x80000000, 0), target of fn_08008448's distance word (src/format_10.s .L08008528)
+	.global d_0804650c
+d_0804650c:
+	.incbin "assets/rodata.bin", 0x2b8, 12
+@ d_08046518: 12-byte extended value 1.0 again plus a zero word; reached by fn_08008448 as d_0804650c + 0xc (src/format_10.s .L0800845e)
+	.global d_08046518
+d_08046518:
+	.incbin "assets/rodata.bin", 0x2c4, 16
+@ fn_08008448 reaches four tables from one distance word, each through its own fixed place in the code:
+@ the block 0x08046490..0x08046527 keeps these distances to d_0804650c
+	.if (d_08046518 - d_0804650c) != 0xc
+	.error "fn_08008448 (src/format_10.s) needs d_08046518 = d_0804650c + 0xc"
+	.endif
+	.if (d_0804650c - d_08046490) != 0x7c
+	.error "fn_08008448 (src/format_10.s) needs d_08046490 = d_0804650c - 0x7c"
+	.endif
+	.if (d_0804650c - d_080464cc) != 0x40
+	.error "fn_08008448 (src/format_10.s) needs d_080464cc = d_0804650c - 0x40"
+	.endif
 	.global d_08046528
 d_08046528:
 	.incbin "assets/rodata.bin", 0x2d4, 7
@@ -157,8 +202,6 @@ d_08046548:
 	.word fn_0800a900                                  @ 0x08046574 = 0x0800a901
 .Lsw_08046578:
 	.word fn_0800b1f8                                  @ 0x08046578 = 0x0800b1f9
-	.global d_0804657a
-	.set d_0804657a, .Lsw_08046578 + 2
 .Lsw_0804657c:
 	.word fn_0800b7cc                                  @ 0x0804657c = 0x0800b7cd
 .Lsw_08046580:
@@ -238,12 +281,12 @@ UNREF_0804bce2:
 	.global d_0804bce8
 d_0804bce8:
 	.incbin "assets/rodata.bin", 0x5a94, 4
-	.global d_0804bcec
-d_0804bcec:
-	.incbin "assets/rodata.bin", 0x5a98, 1
+	.incbin "assets/rodata.bin", 0x5a98, 1		@ 0x0804bcec, the byte before the table (the code addresses the table by its own label d_0804bced)
 @ DATA_0804bced: 129 bytes: 128 entries 80 9a 45 41 8e 41 8f 80 45 45 45 49 49 49 8e 8f 90 92 92 4f 99 4f 55 55 59 99 9a 9b 9c 9d 9e 9f 41 49 4f 55 a5 a5 a6 a7 a8 a9 aa ab ac ad ae af ... through ff (byte 127 = 0xff), plus a trailing 00 | ldrb r6,[r1,r0] at 0x08036a4a with r1 = 0x0804bced (movw/movt at 0x08036a3e/0x08036a46) and r0 = result & 0x7f (and.w at 0x08036a42), taken when bit 7 of the result of bl 0x08035908 is set (bpl at 0x08036a3c) | path_resolve: walks a path string against a directory object
 	.global DATA_0804bced
 DATA_0804bced:
+	.global d_0804bced
+d_0804bced:
 	.incbin "assets/rodata.bin", 0x5a99, 129
 	.global d_0804bd6e
 d_0804bd6e:
@@ -921,30 +964,32 @@ DATA_0804d6ce:
 	.global DATA_0804d6d0
 DATA_0804d6d0:
 	.incbin "assets/rodata.bin", 0x747c, 150
-	.global d_0804d766
-d_0804d766:
-	.incbin "assets/rodata.bin", 0x7512, 1
+	.incbin "assets/rodata.bin", 0x7512, 1		@ 0x0804d766, the byte before the array (the code addresses it by its own label d_0804d767)
 @ DATA_0804d767: 1 byte 00 | ldrb r6,[r4,r6] at 0x0802bd94 with r4 = 0x0804d767 (movw/movt at 0x0802bd8c/0x0802bd90) and r6 = r5*lr+ip (mla at 0x0802bd88); the nibble selected by r3 (and.w r3,r3,#1 at 0x0802bd70; cmp r3,#0 at 0x0802bd9c: low nibble from and.w fp,r6,#15 at 0x0802bd98 when r3 != 0, high nibble from moveq.w fp,r6,lsr #4 at 0x0802bda0 when r3 == 0) indexes the halfword array on the stack (add r4,sp,#0x40; ldrh.w r6,[r4,fp,lsl #1] at 0x0802bda4) | system_bring_up: bring-up routine
 	.global DATA_0804d767
 DATA_0804d767:
+	.global d_0804d767
+d_0804d767:
 	.incbin "assets/rodata.bin", 0x7513, 2
 @ UNREF_0804d769: 43 bytes fe b3 00 09 ff ff ff 60 6f ff ff ff f2 df ff ff ff f9 ff ff ff ff fc ff ff ff ff fb bf ff ff ff f8 3f ff ff ff f1 06 ff ff ff 40 = offsets 2.. of the byte array whose base 0x0804d767 is built at 0x0802bd8c/0x0802bd90 in system_bring_up (nibble selected at 0x0802bd98 / 0x0802bda0 by r3 & 1, see 0x0802bd70 and 0x0802bd9c) | no reference found for this address itself
 	.global UNREF_0804d769
 UNREF_0804d769:
 	.incbin "assets/rodata.bin", 0x7515, 47
-	.global d_0804d798
-d_0804d798:
-	.incbin "assets/rodata.bin", 0x7544, 2
+	.incbin "assets/rodata.bin", 0x7544, 1		@ 0x0804d798
+@ d_0804d799: base address that system_bring_up loads (movw/movt, then add r5,r1); own label instead of d_0804d798+1
+	.global d_0804d799
+d_0804d799:
+	.incbin "assets/rodata.bin", 0x7545, 1
 @ UNREF_0804d79a: 39 bytes 3a dc 70 00 04 ff ff fb 00 0e ff ff ff 51 3f ff ff ff 95 2f ff ff ff 84 0d ff ff ff 30 02 ef ff f7 00 00 18 ba 40 00 | lies 1 byte after base 0x0804d799 (movw #0xd799 at 0x0802bf50 + movt at 0x0802bf54, add r5,r1 at 0x0802bf58 in system_bring_up) | no reference found for this address itself
 	.global UNREF_0804d79a
 UNREF_0804d79a:
 	.incbin "assets/rodata.bin", 0x7546, 38
-	.global d_0804d7c0
-d_0804d7c0:
-	.incbin "assets/rodata.bin", 0x756c, 1
+	.incbin "assets/rodata.bin", 0x756c, 1		@ 0x0804d7c0, the byte before the table (the code addresses it by its own label d_0804d7c1)
 @ DATA_0804d7c1: 1 byte 2a | ldrbeq.w fp,[r1,r0] at 0x0802bbfc with r1 = 0x0804d7c1 (movw #0xd7c1 at 0x0802bbe4, movt at 0x0802bbee) and r0 = r3>>1 (lsreq at 0x0802bbfa) when [sp+0x3c] == 2 (cmp r0,#2 at 0x0802bbf6) | system_bring_up: bring-up routine
 	.global DATA_0804d7c1
 DATA_0804d7c1:
+	.global d_0804d7c1
+d_0804d7c1:
 	.incbin "assets/rodata.bin", 0x756d, 2
 @ UNREF_0804d7c3: 3 bytes 00 ef ff | lies at offset 2..4 after base 0x0804d7c1 (movw #0xd7c1 at 0x0802bbe4 / 0x0802bea6 in system_bring_up) | no reference found for this address itself
 	.global UNREF_0804d7c3
@@ -954,12 +999,12 @@ UNREF_0804d7c3:
 	.global DATA_0804d7c8
 DATA_0804d7c8:
 	.incbin "assets/rodata.bin", 0x7574, 10
-	.global d_0804d7d2
-d_0804d7d2:
-	.incbin "assets/rodata.bin", 0x757e, 1
+	.incbin "assets/rodata.bin", 0x757e, 1		@ 0x0804d7d2, the byte before the rows (the code addresses them by their own label d_0804d7d3)
 @ DATA_0804d7d3: 1 byte 00 = byte 0 of the array at 0x0804d7d3 (base 0x0804d7d3 + 32*index: add.w r5,r2,r1,lsl #5 at 0x0801ec74 after movw #0xd7d3 at 0x0801ec54) | ldrb r6,[r5,r6] at 0x0801ecb6 in draw_bottom_strip with a bit test (rsb r1,r1,#7 at 0x0801ecba, lsr.w at 0x0801ecbe, lsls r1,r1,#31 at 0x0801ecc2: most significant bit first) | 16-pixel-wide 1-bit rows of 2 bytes: bit counter r0 counts 0..7 then r4 advances by 1 (cmp r1,#7 at 0x0801eca6, addhi r4,#1 at 0x0801ecac), the bitmap index byte comes from ldrb r1,[r1,#24] at 0x0801ec4e and is multiplied by 32 (lsl #5 at 0x0801ec74) | ldrb r4,[r2,r4] at 0x08013808 and ldrb r1,[r2,r1] at 0x08013866 in draw_panels_by_selector_20001062 use the same style of bit test (lsr by 7-n at 0x08013810, 0x0801386e) | draw_bottom_strip: draws the bottom status strip at y=0xdd; draw_panels_by_selector_20001062: menu-panel drawing routine
 	.global DATA_0804d7d3
 DATA_0804d7d3:
+	.global d_0804d7d3
+d_0804d7d3:
 	.incbin "assets/rodata.bin", 0x757f, 1
 @ DATA_0804d7d4: 27 bytes 00 01 f8 01 f8 01 80 01 80 01 80 03 c0 03 c0 07 e0 0f f0 0f f0 01 80 01 80 1f 80 = bytes 1..27 of the 1-bit array at 0x0804d7d3 | ldrb r1,[r5,r1] at 0x0801ed40 in draw_bottom_strip and ldrb r1,[r2,r1] at 0x08013866 in draw_panels_by_selector_20001062, bit test most significant bit first | draw_bottom_strip: draws the bottom status strip at y=0xdd; draw_panels_by_selector_20001062: menu-panel drawing routine
 	.global DATA_0804d7d4
@@ -977,17 +1022,20 @@ DATA_0804d7fa:
 	.global DATA_0804d822
 DATA_0804d822:
 	.incbin "assets/rodata.bin", 0x75ce, 16
-	.global d_0804d832
-d_0804d832:
-	.incbin "assets/rodata.bin", 0x75de, 1
+	.incbin "assets/rodata.bin", 0x75de, 1		@ 0x0804d832, the byte before the table (the code addresses it by its own label d_0804d833)
 @ DATA_0804d833: 13 bytes all 01 | ldrb r1,[r1,r0] at 0x0803e558 with r1 = 0x0804d833 (movw #0xd833 at 0x0803e550, movt at 0x0803e554) and r0 = byte [r9+0x2d] (ldrb.w at 0x0803e54c); r1+0x32 is compared with the halfword [r9+0xdb8] (cmp r1,r2 at 0x0803e560) | the code at 0x0803e54c..0x0803e562 lies inside fn_0803e454 (0x0803e454..0x08040007)
 	.global DATA_0804d833
 DATA_0804d833:
+	.global d_0804d833
+d_0804d833:
 	.incbin "assets/rodata.bin", 0x75df, 14
 @ UNREF_0804d841: 7 bytes 03 05 09 15 29 52 00 | READ: ldrb r1,[r1,r0] at 0x0803e558 with r1 = 0x0804d833 (movw/movt at 0x0803e550/0x0803e554) and r0 = ldrb.w [r9,#45] at 0x0803e54c (no compare shown between them), and ldrb r1,[r3,r1] at 0x0804067c with r3 = 0x0804d833 (movw/movt at 0x08040670/0x08040678) and r1 = ldrb [r0,#45] at 0x08040668 limited by cmp r1,#19 / bhi at 0x0804066c / 0x0804066e (0..19); this region is index 14..20 (0x0804d841 = 0x0804d833 + 14), index 14..19 reachable at 0x0804067c
 	.global UNREF_0804d841
 UNREF_0804d841:
 	.incbin "assets/rodata.bin", 0x75ed, 7
+@ d_0804d848: anchor of the 1600-byte waveform block 0x0804d848..0x0804de87 (8 tables of 100 halfwords, 200-byte
+@ stride). fill_output_waveform_table (src/siggen_55.s) reaches every table as d_0804d848 + 200*case minus
+@ 0x3d6..0x3e8, so the block is one unit: only d_0804d848 is a label, the inner layout stays (guard after the block).
 	.global d_0804d848
 d_0804d848:
 	.incbin "assets/rodata.bin", 0x75f4, 28
@@ -1008,6 +1056,9 @@ UNREF_0804d9d8:
 DATA_0804de88:
 	.global d_0804de88
 d_0804de88:
+	.if (d_0804de88 - d_0804d848) != 1600
+	.error "fill_output_waveform_table (src/siggen_55.s) needs the 8 waveform tables as one 1600-byte block at d_0804d848"
+	.endif
 	.incbin "assets/rodata.bin", 0x7c34, 7800
 @ DATA_0804fd00: 8217 bytes = 0xc6*0x53/2 (width 0xc6, height 0x53 passed to 0x0801ffcc), first bytes all 00 ... | the address is passed as the fifth argument: str r0,[sp,#0x0] at 0x0801c7a4, 0x08011f1e and 0x0801f2d4 for calls 0801ffcc(0x3d,0x50,0xc6,0x53,bitmap,0x55f) | fn_08011e84: draws a region 0x3d,0x50,0xc6,0x53 with 0801ffcc; draw_bitmap_and_text: draws a message box; draw_waveform_display: scope-view drawing routine
 	.global DATA_0804fd00
@@ -1015,9 +1066,11 @@ DATA_0804fd00:
 	.global d_0804fd00
 d_0804fd00:
 	.incbin "assets/rodata.bin", 0x9aac, 8216
-	.global d_08051d18
-d_08051d18:
-	.incbin "assets/rodata.bin", 0xbac4, 5
+	.incbin "assets/rodata.bin", 0xbac4, 1		@ 0x08051d18, the last byte before the FPGA stream
+@ d_08051d19: start of the FPGA configuration stream (115638 bytes to 0x0806e0ce, read as triples by system_bring_up); own label instead of d_08051d18+1
+	.global d_08051d19
+d_08051d19:
+	.incbin "assets/rodata.bin", 0xbac5, 4
 @ UNREF_08051d1d: 115619 bytes, first bytes ff x18 then a5 c3 06 00 00 00 01 20 68 1b 10 00 ...; 89285 of the bytes are 00 | READ: the loop at 0x0802db74..0x0802dc30 loads ldrb.w r3,[r1,r0] at 0x0802db7c, ldrb r7,[r3,#1] at 0x0802dbba (r3 = r0 + r1) and ldrb r3,[r3,#2] at 0x0802dbf4, advances r0 by 3 (adds r0,#3 at 0x0802db74) from 0 (movs at 0x0802db30) until r0 == r2 (cmp at 0x0802db78, beq at 0x0802db7a) with r1 = 0x08051d19 (movw/movt at 0x0802db28/0x0802db32) and r2 = 0x0001c3b6 (movw/movt at 0x0802db2c/0x0802db36), so the bytes 0x08051d19..0x0806e0ce are read, which includes this whole region (0x08051d1d..0x0806e0bf); the two words 0x0805f000 found at 0x080088ac and 0x08008a60 are bytes inside instructions (tbb at 0x080088aa and 0x08008a5e) and not pointers
 	.global UNREF_08051d1d
 UNREF_08051d1d:
@@ -1113,11 +1166,46 @@ UNREF_0806eef6:
 DATA_0806ef34:
 	.global d_0806ef34
 d_0806ef34:
-	.incbin "assets/rodata.bin", 0x28ce0, 71894
+	.incbin "assets/rodata.bin", 0x28ce0, 3500
+@ 0x0806fce0: word +8 of the 12 px font range descriptor (0x0806fcd8): pointer to its sorted u16 key array, written as a symbol so it follows the array
+	.word d_0806fcec                                   @ 0x0806fce0 = 0x0806fcec
+	.incbin "assets/rodata.bin", 0x29a90, 8
+@ d_0806fcec: key array of the 12 px font (descriptor + 0x14)
+	.global d_0806fcec
+d_0806fcec:
+	.incbin "assets/rodata.bin", 0x29a98, 32300
+@ 0x08077b18: word +8 of the 15 px font range descriptor (0x08077b10): pointer to its key array
+	.word d_08077b24                                   @ 0x08077b18 = 0x08077b24
+	.incbin "assets/rodata.bin", 0x318c8, 8
+@ d_08077b24: key array of the 15 px font (descriptor + 0x14)
+	.global d_08077b24
+d_08077b24:
+	.incbin "assets/rodata.bin", 0x318d0, 36070
 @ UNREF_0808080a: 107066 bytes; the first 92 8-byte records are (u16, u8, u8, u8, u8, u16) = (0x0080, 8, 9, 0, 3, 0x0044), (0x0070, 8, 13, 0, 1, 0x0078), (0x00a0, 10, 10, 0, 2, 0x00aa), (0x0090, 10, 11, 0, 2, 0x00e1), (0x0030, 4, 4, 0, 9, 0x00e9), (0x0050, 6, 12, 0, 1, 0x010d) ... with the last halfword non-decreasing 68, 120, 170, 225, 233, 269, ... 3110 | READ: the record table of the glyph descriptor at 0x200010f8 (words 0x08077f9c data base, 0x080807f0 record table, 0x080819a8 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x200010e4 with callback words 0x0802f809 and 0x0802f429) continues here: the callback 0x0802f428 loads the 8-byte records with ldr.w r0,[r0,r4,lsl #3] (word 0 holds a 12-bit field in bits 20..31 and the glyph offset in bits 0..19; bytes 4..7 = columns, rows, two signed offsets, copied to the caller by the fields callback 0x0802f808); the range table of that descriptor (0x080819a8..0x08081e2b), the glyph data, record tables (0x0808b214, 0x08098fdc) and range tables (0x0808c3cc, 0x0809a194) of the descriptors at 0x20001128 (words 0x08081e2c, 0x0808b214, 0x0808c3cc) and 0x20001158 (words 0x0808c850, 0x08098fdc, 0x0809a194) and the first glyph bitmaps of the descriptor at 0x20001188 (data base 0x0809a618) lie inside this region; blend_glyph_into_region_buffer (0x0800fb90) reads bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48 after the pointer callback (blx r2 at 0x0800fba4); 1182 record offsets give bitmap start addresses inside this region (first 0x08081e2c, last 0x0809aa3f); the words 0x08080878 at 0x08008e20 and 0x0808f04f at 0x08040188 are bytes inside instructions and not pointers
 	.global UNREF_0808080a
 UNREF_0808080a:
-	.incbin "assets/rodata.bin", 0x3a5b6, 107078
+	.incbin "assets/rodata.bin", 0x3a5b6, 4518
+@ 0x080819b0: word +8 of the 16 px font range descriptor (0x080819a8): pointer to its key array
+	.word d_080819bc                                   @ 0x080819b0 = 0x080819bc
+	.incbin "assets/rodata.bin", 0x3b760, 8
+@ d_080819bc: key array of the 16 px font (descriptor + 0x14)
+	.global d_080819bc
+d_080819bc:
+	.incbin "assets/rodata.bin", 0x3b768, 43544
+@ 0x0808c3d4: word +8 of the 18 px font range descriptor (0x0808c3cc): pointer to its key array
+	.word d_0808c3e0                                   @ 0x0808c3d4 = 0x0808c3e0
+	.incbin "assets/rodata.bin", 0x46184, 8
+@ d_0808c3e0: key array of the 18 px font (descriptor + 0x14)
+	.global d_0808c3e0
+d_0808c3e0:
+	.incbin "assets/rodata.bin", 0x4618c, 56764
+@ 0x0809a19c: word +8 of the 20 px font range descriptor (0x0809a194): pointer to its key array
+	.word d_0809a1a8                                   @ 0x0809a19c = 0x0809a1a8
+	.incbin "assets/rodata.bin", 0x53f4c, 8
+@ d_0809a1a8: key array of the 20 px font (descriptor + 0x14)
+	.global d_0809a1a8
+d_0809a1a8:
+	.incbin "assets/rodata.bin", 0x53f54, 2216
 @ UNREF_0809aa50: 44 bytes 1c 60 18 30 18 38 30 1f f0 0f c0 3f 00 3f c0 30 e0 30 60 30 60 30 60 30 e0 3f c0 3f 00 30 00 30 00 30 00 30 00 30 00 0f c0 1f f0 38 (even byte count) | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); 2 record offsets give bitmap start addresses inside this region (first 0x0809aa5b, last 0x0809aa77)
 	.global UNREF_0809aa50
 UNREF_0809aa50:
@@ -1173,7 +1261,14 @@ UNREF_0809b3b8:
 @ UNREF_0809b460: 84897 bytes (odd count), first bytes c0 7f e0 7f e0 00 20 00 20 00 20 61 80 61 80 61 80 61 80 61 80 7f 80 3f 80 01 80 01 80 01 80 61 8c 61 8c 61 8c ... | READ: glyph bitmap data: blend_glyph_into_region_buffer (0x0800fb90) calls the pointer callback with blx r2 at 0x0800fba4 and loads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; the callback for the glyph descriptor at 0x20001188 (words 0x0809a618 data base, 0x080a0468 record table, 0x080a1630 range table, from the initial RAM image (unpacked from 0x080BE480); font object 0x20001174 with callback word 0x0802f585) is the function at 0x0802f584, which loads the 8-byte record with ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 and returns the data base plus the low 20 bits of the record word (bfc r0,#20,#12 at 0x0802f5be, add r0,r0,r1 at 0x0802f5c2); glyph data of that descriptor and of the descriptor at 0x200011b8 (words 0x080a1ab8, 0x080b9000, 0x080ba1b8, font object 0x200011a4 with callback words 0x0802fa59 and 0x0802f5f9) continue through this region: 801 record offsets give bitmap start addresses inside it (first 0x0809b46b, last 0x080affe2); its record table 0x080a0468..0x080a162f and range table 0x080a1630.. are read by the same callback (ldr.w r0,[r0,r4,lsl #3] at 0x0802f5b6 for the records, ldr r2,[r0,#0], ldrh r2,[r0,#4], ldr.w lr,[r0,#8] at 0x0802f58e..0x0802f5cc for the range table)
 	.global UNREF_0809b460
 UNREF_0809b460:
-	.incbin "assets/rodata.bin", 0x5520c, 84897
+	.incbin "assets/rodata.bin", 0x5520c, 25048
+@ 0x080a1638: word +8 of the 25 px font range descriptor (0x080a1630): pointer to its key array
+	.word d_080a1644                                   @ 0x080a1638 = 0x080a1644
+	.incbin "assets/rodata.bin", 0x5b3e8, 8
+@ d_080a1644: key array of the 25 px font (descriptor + 0x14)
+	.global d_080a1644
+d_080a1644:
+	.incbin "assets/rodata.bin", 0x5b3f0, 59837
 @ DATA_080b0001: 36425 bytes from the odd address 0x080b0001, first bytes fe 80 00 0a fe 8e c3 0c fa 3e ec 30 00 00 5e e5 | the reference movt.eq r0,#0x80b at 0x0801dfee in draw_page_by_selector_nibble follows movweq r0,#0xc4f2 at 0x0801dfea, so the value built is 0x080bc4f2 (text '3:/System file/74.jpg'; the ne path builds 0x080bc5cf, '3:/System file/77.jpg'), then bl 0x08039f6c; the address 0x080b0001 comes from r0 = 1 and is not loaded by any instruction | draw_page_by_selector_nibble: draws one of seven option pages with radio-style rows
 	.global DATA_080b0001
 DATA_080b0001:
@@ -1181,7 +1276,21 @@ DATA_080b0001:
 @ UNREF_080b8e54: 9624 bytes, first bytes 08 aa aa aa aa aa aa aa cf e5 00 00 00 00 00 00 00 00 00 8e e5 00 00 00 00 00 00 00 00 00 8e e5 (the pattern 8e e5 followed by 9 zero bytes repeats at 11-byte distance at the start) | READ: glyph data of the descriptors at 0x200011b8 (words 0x080a1ab8 data base, 0x080b9000 record table, 0x080ba1b8 range table, font object 0x200011a4 with callback words 0x0802fa59 and 0x0802f5f9) and 0x200011e8 (words 0x080ba63c, 0x080bb2f0, 0x080bb3a8, font object 0x200011d4 with callback words 0x0802faed and 0x0802f66d): the pointer callbacks (0x0802f5f8 and 0x0802f66c) load the 8-byte records with ldr.w r0,[r0,r4,lsl #3] and return the data base plus the low 20 bits of the record word, blend_glyph_into_region_buffer (0x0800fb90) reads the bitmap bytes with ldrb.w ip,[r0] at 0x0800fc48; 27 record offsets give bitmap start addresses inside this region (first 0x080b8e8a, last 0x080bb249), and the record tables 0x080b9000..0x080ba1b7 and 0x080bb2f0..0x080bb3a7 lie inside it
 	.global UNREF_080b8e54
 UNREF_080b8e54:
-	.incbin "assets/rodata.bin", 0x72c00, 9624
+	.incbin "assets/rodata.bin", 0x72c00, 4972
+@ 0x080ba1c0: word +8 of the 28 px font range descriptor (0x080ba1b8): pointer to its key array
+	.word d_080ba1cc                                   @ 0x080ba1c0 = 0x080ba1cc
+	.incbin "assets/rodata.bin", 0x73f70, 8
+@ d_080ba1cc: key array of the 28 px font (descriptor + 0x14)
+	.global d_080ba1cc
+d_080ba1cc:
+	.incbin "assets/rodata.bin", 0x73f78, 4580
+@ 0x080bb3b0: word +8 of the 63 px font range descriptor (0x080bb3a8): pointer to its key array
+	.word d_080bb3bc                                   @ 0x080bb3b0 = 0x080bb3bc
+	.incbin "assets/rodata.bin", 0x75160, 8
+@ d_080bb3bc: key array of the 63 px font (descriptor + 0x14)
+	.global d_080bb3bc
+d_080bb3bc:
+	.incbin "assets/rodata.bin", 0x75168, 48
 	.global d_080bb3ec
 d_080bb3ec:
 	.incbin "assets/rodata.bin", 0x75198, 1
@@ -1597,15 +1706,25 @@ UNREF_080be30e:
 @ UNREF_080be312: 2 bytes 00 00 | no reference found
 	.global UNREF_080be312
 UNREF_080be312:
-	.incbin "assets/rodata.bin", 0x780be, 14
+	.incbin "assets/rodata.bin", 0x780be, 2
+@ d_080be314: scatter-load region table, 2 entries {source, destination, length, handler}, read by
+@ scatter_load_regions (src/startup_56.s) from d_080be314 up to d_080be334 (distance words at .L080071b8)
+	.global d_080be314
+d_080be314:
+	.word DATA_080be480                                @ 0x080be314 = 0x080be480: region 1 source, the packed initial RAM image
+	.incbin "assets/rodata.bin", 0x780c4, 8              @ destination 0x20000000, length 0x00001240
 .Lsw_080be320:
 	.word unpack_token_stream_addr                     @ 0x080be320 = 0x080071c0
-@ UNREF_080be324: 20 bytes = 5 words 0x080be680, 0x20001240, 0x00035d50, 0x0800721c, 0x0000001c; the words before it at 0x080be314 are 0x080be480, 0x20000000, 0x00001240, 0x080071c0, i.e. the same source/destination/length as the table entry read by the routine at 0x0800718c (ldm.w at 0x080071a6), and 0x080be680 is the byte after DATA_080be480 | no reference found
+@ UNREF_080be324: 12 bytes = 3 words 0x080be680, 0x20001240, 0x00035d50 (region 2 source, destination, length; its handler word 0x0800721c at 0x080be330 follows) | ldm.w r10!,{r0,r1,r2,r3} at 0x080071a6 loads them, and zero_fill_words does not read r0 (the source)
 	.global UNREF_080be324
 UNREF_080be324:
-	.incbin "assets/rodata.bin", 0x780d0, 12
+	.word rodata_end                                   @ 0x080be324 = 0x080be680: region 2 source = the byte after the packed RAM image (DATA_080be480 + 512); here also the start of .text_added
+	.incbin "assets/rodata.bin", 0x780d4, 8              @ destination 0x20001240, length 0x00035d50
 .Lsw_080be330:
 	.word zero_fill_words_addr                         @ 0x080be330 = 0x0800721c
+@ d_080be334: end of the scatter-load region table (the word here, 0x0000001c, is not part of it)
+	.global d_080be334
+d_080be334:
 	.incbin "assets/rodata.bin", 0x780e0, 4
 	.global d_080be338
 d_080be338:

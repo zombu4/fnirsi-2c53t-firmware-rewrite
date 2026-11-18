@@ -20,8 +20,10 @@ fn_08007184:
 
 @ ----------------------------------------------------------------------------
 @ scatter_load_regions - scatter loader.
-@ adr r0 at 0800718c gives 0x080071b8, whose two words 0x000b715c and 0x000b717c
-@ make r10=0x080be314 and r11=0x080be334. The table has two 16-byte entries
+@ adr r0 at 0800718c gives 0x080071b8, whose two words are the distances to the
+@ table start d_080be314 and end d_080be334 (V1.2.0 values 0x000b715c and
+@ 0x000b717c); added to r0 they make r10=0x080be314 and r11=0x080be334 in
+@ V1.2.0's layout. The table (src/rodata.s) has two 16-byte entries
 @ {r0,r1,r2,r3}: {0x080be480,0x20000000,0x1240,0x080071c0} and
 @ {0x080be680,0x20001240,0x35d50,0x0800721c}. Per entry lr=0x0800719d (subw lr,pc,#9
 @ at 080071a2), ldm r10!,{r0-r3} at 080071a6, tst r3,#1; if set r3=(r10start-1)-r3,
@@ -52,8 +54,8 @@ scatter_load_regions:
 	orr.w	r3, r3, #1
 	bx	r3
 .L080071b8:
-	.word	0x000b715c
-	.word	0x000b717c
+	.word	d_080be314 - .L080071b8	@ scatter-load region table start, distance from here (V1.2.0: 0x000B715C)
+	.word	d_080be334 - .L080071b8	@ scatter-load region table end (V1.2.0: 0x000B717C); both follow the table when code or data move
 
 @ ----------------------------------------------------------------------------
 @ unpack_token_stream - token-stream unpacker (group 1).

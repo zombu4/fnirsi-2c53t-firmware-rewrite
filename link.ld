@@ -2,8 +2,10 @@
  * Below 0x08007000 are the bootloader and the settings / calibration page at 0x08006000; this image
  * starts at 0x08007000 and never covers them.  RAM addresses are absolute in the code
  * (0x20000000..0x20036F8F: initial values unpacked at reset, the rest zeroed; stack top 0x20036F90).
- * Layout: vector table, then the original functions in their original order, then the fixed data at
- * 0x08046254 (the ASSERTs keep this part identical to V1.2.0), then code added by this rewrite.
+ * Layout: vector table at 0x08007000 (the only fixed address), then the original functions in their
+ * original order, then the data of src/rodata.s, then code added by this rewrite; each section follows
+ * the one before it.  Code and data refer to each other only through symbols, so they may move.  The
+ * address comments of the KEEP lines name each unit's address in V1.2.0's layout, not a required one.
  * FLASH ends at APP_END 0x080E7000: above it are the record pages and the bootloader slots of the
  * two-part bootloader (common/layout.inc); the flash is 1024 KB (word 0x00000400 at 0x1FFFF7E0, SYSINFO). */
 MEMORY
@@ -13,8 +15,8 @@ MEMORY
 ENTRY(Reset_Handler)
 SECTIONS
 {
-  .vectors 0x08007000 : { KEEP(*(.vectors)) } > FLASH
-  .text 0x08007184 :
+  .vectors 0x08007000 : { KEEP(*(.vectors)) } > FLASH            /* fixed: the bootloader starts the application here */
+  .text :                                                          /* right after the vector table */
   {
     KEEP(*(.text.fn_08007184))                                 /* 0x08007184 */
     KEEP(*(.text.__scatterload))                               /* 0x0800718c */
@@ -45,8 +47,7 @@ SECTIONS
     KEEP(*(.text.fn_0800740c))                                 /* 0x0800740c */
     KEEP(*(.text.fn_0800742e))                                 /* 0x0800742e */
     KEEP(*(.text.format_decimal_32))                           /* 0x08007480 */
-    KEEP(*(.text.format_hex_u64))                              /* 0x08007520 */
-    KEEP(*(.text.format_hex_u32))                              /* 0x08007576 */
+    KEEP(*(.text.format_hex_u64))                              /* 0x08007520, with format_hex_u32 0x08007576 */
     KEEP(*(.text.fn_080075b4))                                 /* 0x080075b4 */
     KEEP(*(.text.compare_bytes))                               /* 0x0800773c */
     KEEP(*(.text.find_byte))                                   /* 0x08007794 */
@@ -65,15 +66,13 @@ SECTIONS
     KEEP(*(.text.fn_08007a10))                                 /* 0x08007a10 */
     KEEP(*(.text.format_float_efg))                            /* 0x08007b20 */
     KEEP(*(.text.format_float_hex))                            /* 0x08007d8c */
-    KEEP(*(.text.read_byte_advance))                           /* 0x08008088 */
-    KEEP(*(.text.fn_08008092))                                 /* 0x08008092 */
+    KEEP(*(.text.read_byte_advance))                           /* 0x08008088, with fn_08008092 0x08008092 */
     KEEP(*(.text.store_byte_advance))                          /* 0x080080b8 */
     KEEP(*(.text.emit_text_conversion))                        /* 0x080080c2 */
     KEEP(*(.text.fn_080080f0))                                 /* 0x080080f0 */
     KEEP(*(.text.fn_08008114))                                 /* 0x08008114 */
     KEEP(*(.text.format_decimal_64))                           /* 0x080081d0 */
-    KEEP(*(.text.format_octal_64))                             /* 0x0800824c */
-    KEEP(*(.text.format_octal_32))                             /* 0x08008290 */
+    KEEP(*(.text.format_octal_64))                             /* 0x0800824c, with format_octal_32 0x08008290 */
     KEEP(*(.text.zero_bytes))                                  /* 0x080082bc */
     KEEP(*(.text.fill_bytes_body))                             /* 0x080082c0 */
     KEEP(*(.text.fn_08008300))                                 /* 0x08008300 */
@@ -535,17 +534,14 @@ SECTIONS
     KEEP(*(.text.uint64_to_float_core))                        /* 0x08045e34 */
     KEEP(*(.text.float_special_dispatch))                      /* 0x08045e7a */
     KEEP(*(.text.fpscr_set_fz_dn_round_nearest))               /* 0x08045f06 */
-    KEEP(*(.text.float_ieee_remainder))                        /* 0x08045f20 */
-    KEEP(*(.text.float_remainder_special_case))                /* 0x08045ff6 */
+    KEEP(*(.text.float_ieee_remainder))                        /* 0x08045f20, with float_remainder_special_case 0x08045ff6 */
     KEEP(*(.text.double_to_i64))                               /* 0x08046020 */
     KEEP(*(.text.double_to_u64))                               /* 0x080460e4 */
     KEEP(*(.text.double_to_u64_special_case))                  /* 0x08046146 */
     KEEP(*(.text.double_scale_by_pow2))                        /* 0x080461c8 */
   } > FLASH
-  ASSERT(. == 0x08046254, "code does not end at 0x08046254")
-  .rodata 0x08046254 : { KEEP(*(.rodata.fixed)) } > FLASH
-  ASSERT(. == 0x080BE680, "fixed data does not end at 0x080BE680")
-  .text_added 0x080BE680 :                                         /* code added by this rewrite */
+  .rodata : { KEEP(*(.rodata.fixed)) } > FLASH                     /* data of src/rodata.s, right after the code */
+  .text_added :                                                    /* code added by this rewrite, right after the data */
   {
     KEEP(*(.text.boot_dump))
     KEEP(*(.text.boot_install))
