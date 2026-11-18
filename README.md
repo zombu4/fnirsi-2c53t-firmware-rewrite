@@ -164,9 +164,13 @@ ignores "._" files by their content.
 | `link.ld`, `Makefile` | memory layout, build |
 | `.github/workflows/` | continuous build |
 
-## Legal
+## License
+
+Free for **personal, home, hobby and enthusiast** use that is not commercial: use, study, modify and
+share free of charge, with the license kept. **Not permitted without written authorization** from the
+author: use by companies or for commercial purposes, selling or reselling, bundling or pre-installing
+with hardware or other products, and paid flashing services. Full terms: [LICENSE](LICENSE).
 
 This is an independent project, not affiliated with or endorsed by FNIRSI. FNIRSI and the product
-names are trademarks of their owners. The assembly source (written from the disassembly of the
-vendor application) and the binary data in `assets/` (fonts, pictures, text) are derived from the
-vendor's firmware; no licence for that vendor-derived content is granted here.
+names are trademarks of their owners. Content derived from the vendor's firmware (the application
+port, the stock bootloader port and `assets/`) is not licensed by this project.
