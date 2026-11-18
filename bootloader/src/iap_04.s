@@ -627,24 +627,31 @@ fn_08001ed8:
 	movw	r1, #:lower16:RAM_LO
 	movt	r1, #:upper16:RAM_LO
 	cmp	r0, r1
-	bls	fn_08002018
+	bls	.Lacc_reject
 	movw	r1, #:lower16:RAM_HI
 	movt	r1, #:upper16:RAM_HI
 	cmp	r0, r1
-	bhi	fn_08002018
+	bhi	.Lacc_reject
 	ldr	r0, .L08002038
 	ldr	r0, [r0]		@ word 1
 	tst	r0, #1
-	beq	fn_08002018
+	beq	.Lacc_reject
 	movw	r1, #:lower16:APP_BASE
 	movt	r1, #:upper16:APP_BASE
 	cmp	r0, r1
-	blo	fn_08002018
+	blo	.Lacc_reject
 	movw	r1, #:lower16:APP_END
 	movt	r1, #:upper16:APP_END
 	cmp	r0, r1
-	bhs	fn_08002018
+	bhs	.Lacc_reject
 	b	.L08001f3a
+.Lacc_reject:
+	movs	r0, #0			@ refused: the next write is judged by its own first words (the
+	ldr	r1, .L08002034		@ words 0x20000080 / 0x20000084 latch again), so data the host
+	str	r0, [r1]		@ writes before the firmware file does not lock the firmware out
+	ldr	r1, .L08002038
+	str	r0, [r1]
+	b	fn_08002018
 .Lacc_stock:
 .endif
 	movs	r2, #3

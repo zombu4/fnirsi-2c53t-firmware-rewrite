@@ -47,8 +47,11 @@
 	.equ	STOCK_REST_CRC,	0x64266A45	@ CRC-32 of 0x08000800..0x08005873 of the stock bootloader
 	.equ	STOCK_END,	0x08005874	@ end of the stock bootloader image (0x5874 bytes)
 	.equ	LOG_SIZE,	1024		@ report buffer, first word = write pointer
-	.equ	BATTERY_MIN_RAW, 2128		@ lowest battery reading accepted for a first install, see
-						@ battery_read
+	.equ	BATTERY_MIN_RAW, 2128		@ lowest battery reading accepted for a first install: the
+						@ application's level 30 (v > 3.74), see battery_read
+	.equ	BATTERY_MAX_RAW, 2560		@ highest accepted: v = 4.5 in the application's units, above
+						@ its level-100 limit 4.06 (a reading above is not a battery)
+	.equ	BATTERY_SPREAD,	32		@ largest accepted difference of the four readings
 
 	.section .text.boot_install,"ax",%progbits
 	.p2align 2
@@ -169,18 +172,29 @@ boot_install:
 1:	ldr	r0, =s_stock
 	bl	log_str
 	bl	battery_read		@ the page 0 step must not lose power: battery first
-	mov	r5, r0
+	mov	r5, r0			@ r5 = lowest of four readings
+	mov	r6, r1			@ r6 = highest
 	ldr	r0, =s_battery
 	bl	log_str
 	mov	r0, r5
+	bl	log_hex
+	ldr	r0, =s_battery_to
+	bl	log_str
+	mov	r0, r6
 	bl	log_hex
 	ldr	r0, =s_crlf
 	bl	log_str
 	cmp	r5, #0x10000		@ 0x10000: the converter did not finish
 	bhs	2f
-	movw	r0, #BATTERY_MIN_RAW
+	movw	r0, #BATTERY_MIN_RAW	@ lowest at least the application's level 30
 	cmp	r5, r0
-	bhs	3f
+	blo	2f
+	movw	r0, #BATTERY_MAX_RAW	@ highest not above a plausible battery
+	cmp	r6, r0
+	bhi	2f
+	subs	r0, r6, r5		@ the four readings agree
+	cmp	r0, #BATTERY_SPREAD
+	bls	3f
 2:	ldr	r0, =s_battery_low
 	bl	log_str
 	b	.Li_finish
@@ -230,7 +244,7 @@ boot_install:
 	ldr	r0, =s_dry_page0	@ dry run: page 0 is not touched
 	bl	log_str
 	b	.Li_finish
-4:	bl	page0_install		@ r0 = result 0..4
+4:	bl	page0_install		@ r0 = result 0..5
 	ldr	r1, =page0_texts
 	ldr	r0, [r1, r0, lsl #2]
 	bl	log_str
@@ -277,6 +291,18 @@ boot_install:
 	cmp	r6, #SLOT_ID_A
 	it	eq
 	moveq	r7, #SLOT_ID_B
+	mov	r0, r7			@ the target already holds this image and was tried and rolled
+	bl	slot_holds_image	@ back (TRIAL newer than its last OK): do not try it again
+	cbz	r0, 4f
+	mov	r0, r7
+	bl	slot_rolled_back
+	cbz	r0, 4f
+	ldr	r1, =slot_names
+	ldr	r0, [r1, r7, lsl #2]
+	bl	log_str
+	ldr	r0, =s_rolled_back_ab
+	bl	log_str
+	b	.Li_finish
 4:	cmp	r10, #0
 	beq	5f
 	ldr	r1, =slot_names		@ dry run: report the slot, write nothing
@@ -375,9 +401,9 @@ log_hex:
 	pop	{r4, r5, r6, pc}
 
 @ ----------------------------------------------------------------------------
-@ battery_read - one reading of the converter the application uses for its battery level, taken
-@ the way the application takes it; returns the 16-bit reading, or 0x10000 when the converter does
-@ not finish.  At this point of the start-up the application has not set the converter up yet
+@ battery_read - four readings of the converter the application uses for its battery level, each
+@ taken the way the application takes it; returns r0 = the lowest and r1 = the highest reading, or
+@ r0 = r1 = 0x10000 when the converter does not finish.  At this point of the start-up the application has not set the converter up yet
 @ (its set-up, decompiled.c 32290..32340, runs after the logo open this hook replaces), so this
 @ makes the same writes in the same order: 0x40021018 |= 0x200; 0x40021004 bits 15:14 = 2, bit 28
 @ clear; 0x40012404 &= ~0xF0000, |= 0x100; 0x40012408 |= 2, &= ~0x800; 0x4001242C &= ~0xF00000;
@@ -385,16 +411,18 @@ log_hex:
 @ |= 0x100000, |= 0x100, |= 1, |= 8 (wait until bit 3 reads clear), |= 4 (wait until bit 2 reads
 @ clear).  The reading as FUN_08009c78 (0x08009D14..0x08009D3E): 0x40012408 |= 0x400000, wait until
 @ bit 1 of 0x40012400 is set, low 16 bits of 0x4001244C.  Afterwards every register it changed gets
-@ its value from before back (converter registers saved after their clock is on).
+@ its value from before back (converter registers saved after their clock is on; the status
+@ register 0x40012400 is cleared to its reset value 0).
 @ The application turns the reading into its battery level with v = reading * 0.0017578125 and
 @ the limits 4.06 .. 3.68 (FUN_08009c78): level 30 needs v > 3.74, i.e. a reading of 2128 or more
 @ (BATTERY_MIN_RAW); its "battery low" dialog comes at level 5 (v <= 3.68).
-@ Registers: r4 0x40021018, r5 converter base 0x40012400, r6 / r7 saved clock words, r8 reading.
+@ Registers: r4 0x40021018, r5 converter base 0x40012400, r6 / r7 saved clock words, r8 / r9 lowest
+@ / highest reading, r3 readings left.
 @ Frame: saved 0x40012404, 0x40012408, 0x40012410, 0x4001242C, 0x40012434.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 battery_read:
-	push	{r4, r5, r6, r7, r8, lr}
+	push	{r3, r4, r5, r6, r7, r8, r9, lr}
 	sub	sp, #24
 	ldr	r4, =0x40021018
 	ldr	r5, =0x40012400
@@ -476,7 +504,10 @@ battery_read:
 	subs	r1, #1
 	bne	3b
 	b	.Lbat_timeout
-4:	ldr	r0, [r5, #0x08]
+4:	movw	r8, #0xFFFF		@ r8 = lowest reading
+	movs	r9, #0			@ r9 = highest reading
+	movs	r3, #4			@ r3 = readings left
+7:	ldr	r0, [r5, #0x08]
 	orr	r0, r0, #0x400000
 	str	r0, [r5, #0x08]
 	mov	r1, #0x100000
@@ -487,13 +518,24 @@ battery_read:
 	bne	5b
 	b	.Lbat_timeout
 6:	ldr	r0, [r5, #0x4C]
-	uxth	r8, r0
+	uxth	r0, r0
+	cmp	r0, r8
+	it	lo
+	movlo	r8, r0
+	cmp	r0, r9
+	it	hi
+	movhi	r9, r0
+	subs	r3, #1
+	bne	7b
 	b	.Lbat_restore
 .Lbat_timeout:
 	mov	r8, #0x10000
+	mov	r9, #0x10000
 .Lbat_restore:
 	ldr	r0, [sp, #4]		@ 0x40012408 first: the converter stops with its old value
 	str	r0, [r5, #0x08]
+	movs	r0, #0			@ status register: flags cleared (reset value)
+	str	r0, [r5, #0x00]
 	ldr	r0, [sp, #0]
 	str	r0, [r5, #0x04]
 	ldr	r0, [sp, #8]
@@ -512,8 +554,9 @@ battery_read:
 	str	r0, [r4, #-0x14]
 	str	r6, [r4]		@ 0x40021018 as found
 	mov	r0, r8
+	mov	r1, r9
 	add	sp, #24
-	pop	{r4, r5, r6, r7, r8, pc}
+	pop	{r3, r4, r5, r6, r7, r8, r9, pc}
 
 @ ----------------------------------------------------------------------------
 @ iwdg_feed - reloads the independent watchdog (0xAAAA to 0x40003000; no effect on a watchdog
@@ -562,21 +605,71 @@ mem_erased:
 	bx	lr
 
 @ ----------------------------------------------------------------------------
-@ page0_is_starter - returns 1 when page 0 holds the embedded starter and the rest of the page is
-@ erased, else 0.
+@ page0_is_starter - returns 1 when page 0 holds a starter: its signature words STARTER_SIG,
+@ STARTER_SIG_FORMAT at STARTER_SIG_ADDR (any starter version: the update path never rewrites page
+@ 0), and the initial stack pointer word 0x20001A08 at 0x08000000; else 0.
 @ ----------------------------------------------------------------------------
 	.thumb_func
 page0_is_starter:
-	push	{r4, lr}
-	ldr	r0, =0x08000000
-	ldr	r1, =img_starter
-	ldr	r2, =STARTER_LEN
-	bl	mem_equal
-	cbz	r0, 1f
-	ldr	r0, =STARTER_END_ADDR
-	ldr	r1, =STARTER_PAD_LEN
-	bl	mem_erased
-1:	pop	{r4, pc}
+	movs	r0, #0
+	ldr	r1, =0x08000000
+	ldr	r2, [r1]
+	ldr	r3, =0x20001A08
+	cmp	r2, r3
+	bne	1f
+	ldr	r1, =STARTER_SIG_ADDR
+	ldr	r2, [r1]
+	ldr	r3, =STARTER_SIG
+	cmp	r2, r3
+	bne	1f
+	ldr	r2, [r1, #4]
+	cmp	r2, #STARTER_SIG_FORMAT
+	bne	1f
+	movs	r0, #1
+1:	bx	lr
+
+@ ----------------------------------------------------------------------------
+@ slot_rolled_back - r0 = slot id; returns 1 when the records hold a valid TRIAL record of that
+@ slot with a higher sequence number than every valid OK record of that slot (the starter started
+@ it once, it never confirmed, and the starter recorded OK for another slot), else 0.
+@ ----------------------------------------------------------------------------
+	.thumb_func
+slot_rolled_back:
+	push	{r4, r5, r6, r7, r8, lr}
+	mov	r8, r0			@ r8 = slot id
+	movs	r6, #0			@ r6 = newest TRIAL sequence + 1 (0: none)
+	movs	r7, #0			@ r7 = newest OK sequence + 1 (0: none)
+	ldr	r4, =REC_PAGE0
+	add	r5, r4, #(2 * REC_PAGE_SIZE)
+1:	cmp	r4, r5
+	bhs	5f
+	mov	r0, r4
+	bl	rec_valid
+	cbz	r0, 4f
+	ldrb	r0, [r4, #REC_SLOT_OFS]
+	cmp	r0, r8
+	bne	4f
+	ldr	r1, [r4, #REC_SEQ_OFS]
+	adds	r1, r1, #1
+	ldrb	r0, [r4, #REC_STATE_OFS]
+	cmp	r0, #ST_TRIAL
+	bne	2f
+	cmp	r1, r6
+	it	hi
+	movhi	r6, r1
+	b	4f
+2:	cmp	r0, #ST_OK
+	bne	4f
+	cmp	r1, r7
+	it	hi
+	movhi	r7, r1
+4:	adds	r4, #16
+	b	1b
+5:	movs	r0, #0
+	cmp	r6, r7
+	it	hi
+	movhi	r0, #1
+	pop	{r4, r5, r6, r7, r8, pc}
 
 @ ----------------------------------------------------------------------------
 @ slot_info - r0 = slot id; returns r0 = slot base, r1 = embedded image, r2 = image length, or
@@ -797,7 +890,7 @@ records_fresh:
 
 @ ----------------------------------------------------------------------------
 @ page0_install - copies p0_code, the starter and the stock page 0 into one heap block (RAM) and
-@ runs p0_code there.  Returns its result 0..3, or 4 when there is no memory (page 0 not touched).
+@ runs p0_code there.  Returns its result 0..3 or 5, or 4 when there is no memory (page 0 not touched).
 @ ----------------------------------------------------------------------------
 	.thumb_func
 page0_install:
@@ -856,14 +949,18 @@ copy_words:
 @ Returns 0: page 0 erased, starter programmed and compared.
 @         1: the erase was refused (error flags) and page 0 still holds the stock page: unchanged.
 @         2: the starter could not be written; the stock page 0 is back (programmed and compared).
-@         3: neither: page 0 is not usable (three restore attempts failed).
+@         3: neither: page 0 is not usable (three stock and three starter attempts failed).
+@         5: the stock page could not be written back (three attempts), the starter then was.
+@ The interrupt mask (PRIMASK) is restored as found.
 @ ----------------------------------------------------------------------------
 	.p2align 2
 p0_code:
-	push	{r4, r5, r6, r7, r8, r9, r10, lr}
+	push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
+	sub	sp, #4			@ 8-byte stack alignment (9 registers pushed)
 	mov	r4, r0			@ r4 = starter words
 	mov	r5, r1			@ r5 = starter word count
 	mov	r6, r2			@ r6 = stock page words
+	mrs	r11, primask		@ r11 = interrupt mask as found
 	cpsid	i
 	movw	r7, #0x2000
 	movt	r7, #0x4002		@ r7 = flash controller, bank 1
@@ -913,7 +1010,21 @@ p0_code:
 	cbz	r0, 3f
 	subs	r9, r9, #1
 	bne	2b
+	movs	r9, #3			@ the stock page did not come back: the starter is the other
+6:	bl	.Lp0_feed		@ image that starts the meter (the slots are written by now)
+	bl	.Lp0_erase
+	mov	r0, r4
+	mov	r1, r5
+	bl	.Lp0_prog
+	mov	r0, r4
+	mov	r1, r5
+	bl	.Lp0_cmp
+	cbz	r0, 7f
+	subs	r9, r9, #1
+	bne	6b
 	movs	r0, #3
+	b	.Lp0_out
+7:	movs	r0, #5
 	b	.Lp0_out
 3:	movs	r0, #2
 .Lp0_out:
@@ -922,9 +1033,10 @@ p0_code:
 	orr	r1, r1, #0x80		@ LOCK
 	str	r1, [r7, #0x10]
 	bl	.Lp0_feed
-	cpsie	i
+	msr	primask, r11		@ interrupt mask as found
 	mov	r0, r10
-	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
+	add	sp, #4
+	pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 
 @ .Lp0_feed - watchdog reload.  Clobbers r0.
 .Lp0_feed:
@@ -1037,7 +1149,7 @@ p0_end:
 @ ----------------------------------------------------------------------------
 	.p2align 2
 page0_texts:
-	.word	s_p0_ok, s_p0_refused, s_p0_restored, s_p0_broken, s_p0_nomem
+	.word	s_p0_ok, s_p0_refused, s_p0_restored, s_p0_broken, s_p0_nomem, s_p0_late
 slot_names:
 	.word	s_slot_f, s_slot_a, s_slot_b
 slot_results:
@@ -1054,9 +1166,10 @@ s_flash_size:		.asciz	"flash size is not 1024 KB: nothing written\r\n"
 s_page0_unknown:	.asciz	"page 0 holds neither the stock bootloader nor the starter: nothing written\r\n"
 s_stock_differs:	.asciz	"stock bootloader 0x08000800..0x08005873 has another CRC-32: nothing written\r\n"
 s_stock:		.asciz	"page 0: stock bootloader: first install\r\n"
-s_battery:		.asciz	"battery reading: 0x"
+s_battery:		.asciz	"battery readings: 0x"
+s_battery_to:		.asciz	" .. 0x"
 s_crlf:			.asciz	"\r\n"
-s_battery_low:		.asciz	"battery reading below 0x00000850 (the application's level 30) or no reading: charge, nothing written\r\n"
+s_battery_low:		.asciz	"battery readings not all in 0x00000850..0x00000A00 within 0x20 of each other (or none): charge, nothing written\r\n"
 s_starter:		.asciz	"page 0: starter: bootloader update\r\n"
 s_pending:		.asciz	"newest record is INSTALL or TRIAL: restart the meter first; nothing written\r\n"
 s_rolled_back:		.asciz	"running slot F after a roll-back; slot A already holds this image: nothing written\r\n"
@@ -1076,6 +1189,8 @@ s_p0_ok:		.asciz	"page 0: starter written and compared: the new chain runs from 
 s_p0_refused:		.asciz	"page 0: erase refused by the flash controller: stock bootloader unchanged\r\n"
 s_p0_restored:		.asciz	"page 0: starter not written, stock page 0 written back and compared\r\n"
 s_p0_broken:		.asciz	"page 0: FAILED, neither starter nor stock page: keep the meter powered, report this\r\n"
+s_p0_late:		.asciz	"page 0: stock page could not be written back, starter written and compared instead\r\n"
+s_rolled_back_ab:	.asciz	"holds this image, which was tried and rolled back: nothing written\r\n"
 s_p0_nomem:		.asciz	"page 0: no memory for the RAM routine: not touched\r\n"
 
 @ ----------------------------------------------------------------------------

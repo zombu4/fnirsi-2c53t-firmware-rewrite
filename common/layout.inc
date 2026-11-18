@@ -60,6 +60,12 @@
 	.equ	FLASH_KEY1,	0x45670123
 	.equ	FLASH_KEY2,	0xCDEF89AB
 
+@ starter signature: two words right after the starter's vector table (the installer's test for a
+@ starter in page 0, independent of the starter's version)
+	.equ	STARTER_SIG_ADDR, 0x08000184
+	.equ	STARTER_SIG,	0x54525453	@ "STRT"
+	.equ	STARTER_SIG_FORMAT, 1
+
 @ fault flag: a RAM word the starter's fault handler sets before it resets the core; on the next
 @ start the starter clears it and starts slot F without reading the records
 	.equ	FAULT_FLAG_ADDR, 0x20000000

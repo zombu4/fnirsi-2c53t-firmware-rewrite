@@ -41,6 +41,12 @@ vectors:
 	.word	starter_fault
 	.endr
 
+@ Signature right after the vector table (STARTER_SIG_ADDR): the installer recognises page 0 as a
+@ starter by it, whatever starter version is installed (the starter is never rewritten).
+	.section .signature,"a",%progbits
+	.word	STARTER_SIG
+	.word	STARTER_SIG_FORMAT
+
 	.section .text.starter,"ax",%progbits
 	.p2align 2
 
@@ -258,6 +264,8 @@ key_pressed:
 	ldr	r5, [r4]		@ r5 = clock word as found
 	orr	r0, r5, #0x40
 	str	r0, [r4]
+	ldr	r0, [r4]		@ read back and wait: the port is clocked before it is read
+	dsb
 	ldr	r6, =GPIOE_CFGLR
 	ldr	r7, [r6]		@ r7 = configuration as found
 	ldr	r3, [r6, #(GPIOE_ODR - GPIOE_CFGLR)]
