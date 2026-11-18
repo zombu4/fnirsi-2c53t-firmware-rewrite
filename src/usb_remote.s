@@ -1211,21 +1211,78 @@ tx_room_or_timeout:
 @ path_arg - r0 = text, r1 = its length (from the payload). Zero-terminates it in place (the frame
 @ buffer has room after the payload: the CRC is already checked). Returns r0 = the path, or 0 when
 @ it is empty or the drive is not "2:" (drive 3: holds the firmware's system files; 0: and 1: are
-@ not mounted).
+@ not mounted). Used by FILE_DELETE and FILE_WRITE.
+@ path_arg_read - the same, but drive "3:" is allowed too (FILE_LIST, FILE_READ: reading the system
+@ files changes nothing).
+@ Both change r0..r3 only.
 	.thumb_func
 path_arg:
-	cbz	r1, 9f
-	movs	r2, #0
-	strb	r2, [r0, r1]
-	ldrb	r2, [r0, #0]
-	cmp	r2, #'2'
-	bne	9f
-	ldrb	r2, [r0, #1]
-	cmp	r2, #':'
+	movs	r2, #'2'			@ r2 = highest drive digit allowed
+	b	1f
+	.thumb_func
+path_arg_read:
+	movs	r2, #'3'
+1:	cbz	r1, 9f
+	movs	r3, #0
+	strb	r3, [r0, r1]
+	ldrb	r3, [r0, #0]
+	cmp	r3, #'2'
+	blo	9f
+	cmp	r3, r2
+	bhi	9f
+	ldrb	r3, [r0, #1]
+	cmp	r3, #':'
 	bne	9f
 	bx	lr
 9:	movs	r0, #0
 	bx	lr
+
+@ path_arg_write - FILE_WRITE's path check: r0 = text, r1 = its length. Returns r0 = the path when
+@ path_arg accepts it (drive 2:) or when it is exactly "3:/System file/" followed by 1 to 3 decimal
+@ digits and ".jpg" (the user-interface pictures the firmware draws, NNN.jpg; nothing else on
+@ drive 3: can be written, so the directory, 9999.bin and the volume itself stay as they are);
+@ else 0. Changes r0..r3, r12.
+	.thumb_func
+path_arg_write:
+	push	{r4, r5, r6, lr}
+	mov	r4, r0				@ r4 = scan pointer
+	mov	r5, r0				@ r5 = the text
+	bl	path_arg			@ zero-terminates the text
+	cbnz	r0, 8f
+	ldr	r1, =sysjpg_prefix		@ r1 = "3:/System file/", compared up to its zero
+1:	ldrb	r2, [r1], #1
+	cbz	r2, 2f
+	ldrb	r3, [r4], #1
+	cmp	r2, r3
+	bne	9f
+	b	1b
+2:	mov	r12, #0				@ r12 = digits
+3:	ldrb	r3, [r4]
+	sub	r2, r3, #'0'
+	cmp	r2, #9
+	bhi	4f
+	adds	r4, #1
+	add	r12, r12, #1
+	b	3b
+4:	cmp	r12, #1
+	blo	9f
+	cmp	r12, #3
+	bhi	9f
+	ldr	r1, =sysjpg_suffix		@ ".jpg" and the terminating zero
+5:	ldrb	r2, [r1], #1
+	ldrb	r3, [r4], #1
+	cmp	r2, r3
+	bne	9f
+	cmp	r2, #0
+	bne	5b
+	mov	r0, r5				@ r0 = the path
+8:	pop	{r4, r5, r6, pc}
+9:	movs	r0, #0
+	pop	{r4, r5, r6, pc}
+
+sysjpg_prefix:	.asciz	"3:/System file/"
+sysjpg_suffix:	.asciz	".jpg"
+	.p2align 1
 
 @ files_ready - 0 when file access is allowed, else 3 (drive shared with the host).
 	.thumb_func
@@ -1252,7 +1309,7 @@ cmd_file_list:
 	ldrh	r9, [r5, #0]			@ r9 = entries to skip
 	add	r0, r5, #2
 	sub	r1, r6, #2
-	bl	path_arg
+	bl	path_arg_read
 	cmp	r0, #0
 	beq	92f
 	mov	r10, r0				@ r10 = path
@@ -1360,7 +1417,7 @@ cmd_file_read:
 	cmp	r1, #PATH_BUF_SIZE
 	bhs	92f
 	add	r0, r5, #4
-	bl	path_arg
+	bl	path_arg_read
 	cmp	r0, #0
 	beq	92f
 	mov	r6, r0				@ r6 = path
@@ -1512,7 +1569,7 @@ cmd_file_write:
 	cbnz	r0, 4f
 	mov	r0, r7				@ offset 0: open
 	mov	r1, r2
-	bl	path_arg
+	bl	path_arg_write			@ drive 2:, or 3:/System file/NNN.jpg
 	cmp	r0, #0
 	beq	96f
 	bl	write_close

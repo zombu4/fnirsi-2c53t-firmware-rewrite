@@ -180,18 +180,20 @@ the physical keys are not part of the firmware; this table gives the function on
 |---|---|---|---|
 | 0x60 | SCREENSHOT | - | first 480 stream frames (cmd 0x60): offset (u32) + 320 bytes, half a row each, rows top to bottom, RGB565 little-endian per pixel, read back from the display; then the answer: total (u32, 153600), width (u16, 320), height (u16, 240), format (u8, 0 = RGB565). The display is not drawn while it is read, so the picture is consistent. |
 
-### 4.10 Files and drive (drive 2: only; status 3 while the drive is shared)
+### 4.10 Files and drive (drive 2:, system pictures on 3:; status 3 while the drive is shared)
 
 | cmd | Name | Request | Answer data |
 |---|---|---|---|
-| 0x70 | FILE_LIST | first entry (u16), directory path (text, e.g. `2:/`) | next entry (u16, 0xFFFF = no more), then entries {size u32, attribute u8, name length u8, name} as many as fit |
+| 0x70 | FILE_LIST | first entry (u16), directory path (text, e.g. `2:/` or `3:/System file`) | next entry (u16, 0xFFFF = no more), then entries {size u32, attribute u8, name length u8, name} as many as fit |
 | 0x71 | FILE_READ | offset (u32), path (at most 95 characters) | file size (u32), then up to 500 bytes from the offset; the file stays open while the host reads it in order (same path, next offset) and is closed at its end or by any other command |
-| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path not on `2:` |
-| 0x73 | FILE_DELETE | path (at most 95 characters) | - (a file or an empty directory; status 5 when it is still there afterwards) |
+| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path that is neither on `2:` nor exactly `3:/System file/` + 1 to 3 digits + `.jpg` |
+| 0x73 | FILE_DELETE | path (at most 95 characters) | - (a file or an empty directory on `2:`; status 5 when it is still there afterwards, 6 for any other drive) |
 | 0x74 | DRIVE | on (u8) | - (shares the drive with the host: UI page 7 and the configuration with mass storage) |
 
-Paths: `2:/DIR/NAME.EXT`, long names allowed. Drive 3: holds the meter's own system files and is not
-accessible.
+Paths: `2:/DIR/NAME.EXT`, long names allowed. Drive 3: holds the meter's own system files: FILE_LIST
+and FILE_READ may read all of it; FILE_WRITE may only replace or add the user-interface pictures
+`3:/System file/NNN.jpg` (baseline JPEG; what the meter's decoder accepts is in `src/image_20.s`);
+nothing on 3: can be deleted.
 
 While the drive is shared the host owns it: the meter writes nothing into it (its own writes to that
 drive are refused) and re-reads it from the flash when it gets it back. Eject the drive on the host
