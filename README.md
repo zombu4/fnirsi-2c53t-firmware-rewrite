@@ -17,7 +17,7 @@ The project contains:
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.3.4**). It started as a byte-identical
+- Runs on the meter as assembly firmware (About shows **V1.3.7**). It started as a byte-identical
   port of the vendor application V1.2.0 and is now developed on its own.
 - **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
   no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,
@@ -29,6 +29,11 @@ The project contains:
   the host wrote to it, e.g. a Mac, or when the meter was switched off or restarted on USB).
 - No charging screen after a software restart; the power hold stays on until the meter is switched
   off.
+- **Own data**: English-only texts typed in `src/text.s`, own fonts (DejaVu Sans Condensed rendered at
+  4 bits per pixel, own 7-segment digits), own boot logo "F***NIRSi" with the falling-dot animation,
+  own pictures and computed tables; the language page and the language menu item are gone. Every
+  address between code and data is a symbol, so both can move freely. Only the FPGA configuration and
+  the filter coefficients are still the vendor's (`assets/vendor_kept/`).
 - Start-up hooks for the bootloader installer and the flash dump (`src/boot_install.s`,
   `src/boot_dump.s`).
 
@@ -44,11 +49,7 @@ How to install the two-part bootloader: **[FLASHING_BOOTLOADER.md](FLASHING_BOOT
 ### Next steps
 
 - Smaller and faster code
-- English-only texts and own fonts and pictures in place of the vendor data
-- Moving the fixed data: the link script no longer fixes its address and every code and data
-  reference into it is a symbol: the texts are English only, typed in `src/text.s`, and the text
-  pointer tables in `src/rodata.s` and the code name them by label; the initial RAM image is typed
-  source (`src/ram_init.s`, font data and code callbacks as symbols), copied to RAM at reset
+- Own FPGA configuration and filter coefficients
 
 ---
 
