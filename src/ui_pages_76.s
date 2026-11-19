@@ -88,9 +88,9 @@ draw_six_row_list_from_first_index:
 	movw	r9, #:lower16:d_0804c61c		@ English waveform names
 	movt	r9, #:upper16:d_0804c61c
 	ldr.w	r0, [r9, r7, lsl #2]			@ name of waveform first
-	movw	r10, #0x1114
-	movs	r1, #1
-	movt	r10, #0x2000				@ font block 0x20001114
+	movw	r10, #0x1144			@ 20 px font (this rewrite; V1.2.0 18 px 0x20001114): the
+	movs	r1, #1					@ longest name, "Step Down", is 73 px in the 0x64 box
+	movt	r10, #0x2000				@ font block 0x20001144
 	movw	r8, #0xffff				@ colour 0xffff
 	strd	r0, r10, [sp]
 	str	r1, [sp, #0xc]
@@ -241,14 +241,14 @@ draw_six_row_list_from_first_index:
 @ 1 for the other rows. Label colour = halfword at 0x080be30a + idx*2 (0x8c73,
 @ 0xffff, 0x055f, 0x0000 for idx 0..3); the unit colour uses idx with 3
 @ replaced by 1.
-@ Label: draw_wrapped_text_in_box (0800f154)(0x7a, y, 0x36, 0x16, word i of
-@ the English label table d_0804c5bc, font 0x200010b4 (15 px; V1.2.0: 0x20001114), label colour,
+@ Label: draw_wrapped_text_in_box (0800f154)(0x7a, y, 0x52, 0x16, word i of
+@ the English label table d_0804c5bc, font 0x20001144 (20 px; V1.2.0 0x20001114, box 0x36), label colour,
 @ flag 1); unit: 0800f154(0x10e, y, 0x14, 0x16, word at 0x08015be0 + i*4 ("Hz",
-@ "%", "V"), font 0x20001114, unit colour, flag 1).
+@ "%", "V"), font 0x20001144, unit colour, flag 1).
 @ Value text into 0x20008360 via format_to_buffer_080073b4: i=0 "%02d %03d" of
 @ (0x20000f54/1000, 0x20000f54%1000); i=1 "%03d" of 0x20000f58; i=2 "%d.%d" of
 @ (0x20000f59/10, 0x20000f59%10).
-@ Normal case: 0800f154(0xb0, y, 0x5e, 0x16, 0x20008360, font 0x20001114, unit
+@ Normal case: 0800f154(0xcc, y, 0x42, 0x16, 0x20008360, font 0x20001144, unit
 @ colour, 1). When edit == 2 and i == sel it calls 0800e64c(y, pos, unit
 @ colour) instead, pos = 0 for i=2 when nibble (0x20001063>>4) == 1 else
 @ 2-(0x20001063>>4); i=1: 2-(0x20001063>>4); i=0: 6-((0x20001063>>4)+1) when
@@ -271,12 +271,12 @@ draw_three_value_rows:
 	movw	r0, #0x8360
 	movt	r0, #0x2000				@ value text buffer 0x20008360
 	str	r0, [sp]
-	movw	r0, #0x1114
-	movt	r0, #0x2000				@ font block 0x20001114
+	movw	r0, #0x1144
+	movt	r0, #0x2000				@ font block 0x20001144 (20 px; V1.2.0 0x20001114)
 	strd	r0, r6, [sp, #4]
-	movs	r0, #0xb0
+	movs	r0, #0xcc			@ value box 0xcc..0x10d (V1.2.0 0xb0, 0x5e wide)
 	mov	r1, r10
-	movs	r2, #0x5e
+	movs	r2, #0x42
 	movs	r3, #0x16
 	movs	r7, #1
 	str	r7, [sp, #0xc]
@@ -334,16 +334,14 @@ draw_three_value_rows:
 	movt	r7, #:upper16:d_080be30a
 	ldr.w	r0, [r1, r8, lsl #2]			@ label of row i
 	ldrh.w	r1, [r7, r6, lsl #1]
-	movw	r11, #0x1114
+	movw	r11, #0x1144			@ labels and units: 20 px font (V1.2.0 18 px 0x20001114)
 	movt	r11, #0x2000
 	sxth.w	r10, r4
 	str	r0, [sp]
-	movw	r12, #0x10b4			@ label in the 15 px font (object 0x200010b4): "Frequency",
-	movt	r12, #0x2000			@ "Duty Cycle", "Amplitude" fit the 0x36-wide box; units and
-	strd	r12, r1, [sp, #4]		@ values keep the 18 px font (r11)
-	movs	r0, #0x7a
-	mov	r1, r10
-	movs	r2, #0x36
+	strd	r11, r1, [sp, #4]		@ label in the 20 px font (r11) as units and values: "Duty
+	movs	r0, #0x7a			@ Cycle" is 72 px wide, the box 0x7a..0xcb (0x52; V1.2.0 0x36
+	mov	r1, r10				@ with the value box from 0xb0); pictures 116 / 117 have their
+	movs	r2, #0x52			@ divider at 0x52
 	movs	r3, #0x16
 	movs	r4, #1
 	str	r4, [sp, #0xc]

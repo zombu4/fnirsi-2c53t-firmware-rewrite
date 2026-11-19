@@ -383,9 +383,9 @@
 	smmul	r1, r1, r2
 	movw	r2, #0xffff
 	add.w	r1, r1, r1, lsr #31
-	subs	r2, #0xe
+	subs	r2, #0x11			@ -0x12 per row above the last (this rewrite: 18 px rows; V1.2.0 -0xf)
 	muls	r1, r2, r1
-	add.w	r4, r1, #0xcc
+	add.w	r4, r1, #0xcb		@ last row at 0xcb..0xdc, right above the bottom strip (V1.2.0 0xcc, 15 px)
 	lsrs	r1, r3, #1
 	add.w	r1, r1, r1, lsl #1
 	subs	r1, r7, r1
@@ -415,7 +415,7 @@
 	add.w	r2, r6, #1
 	itt	eq
 	moveq	r5, r1
-	addeq	r4, #0xf
+	addeq	r4, #0x12			@ next row (V1.2.0 0xf)
 	uxtb	r1, r2
 	cmp	r1, #0x20
 	mov	r1, r6
@@ -572,7 +572,7 @@
 	vstr	d0, [sp]
 	bl	format_to_buffer_080073b4
 	str	r4, [sp]
-	movw	r0, #0x10b4
+	movw	r0, #0x1114			@ measurement texts in the 18 px font (V1.2.0 15 px 0x200010b4)
 	ldr	r5, [sp, #0x28]
 	ldr	r4, [sp, #0x2c]
 	movt	r0, #0x2000
@@ -580,7 +580,7 @@
 	sxth	r0, r5
 	sxth	r1, r4
 	movs	r2, #0x64
-	movs	r3, #0xf
+	movs	r3, #0x12
 	movs	r7, #0
 	str	r7, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
@@ -595,7 +595,7 @@
 	movt	r9, #0x2000
 	cmp.w	r5, #0x138
 	it	ge
-	addge	r4, #0xf
+	addge	r4, #0x12
 	ldr.w	r0, [r9, #0x4c]
 	it	ge
 	movge	r5, #0xc

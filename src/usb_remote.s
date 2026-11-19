@@ -1943,6 +1943,29 @@ cmd_meter_send:
 	add	sp, #8
 	pop	{r4, pc}
 
+@ TEXT_COLOUR (display): colour (u16, RGB565) in which every text the firmware draws in white
+@ (0xFFFF) appears from the next redraw on; 0 = the default warm white 0xFF9A (RGB 255 / 240 / 215),
+@ 0xFFFF = pure white. blend_glyph_into_region_buffer (src/gfx_12.s) reads it. Kept until the meter
+@ restarts.
+	.global	text_colour
+	.set	text_colour, V + V_TXTCOL
+	.global	cmd_text_colour
+	.thumb_func
+cmd_text_colour:
+	push	{r4, lr}
+	cmp	r6, #2
+	bne	92f
+	ldrb	r0, [r5, #0]
+	ldrb	r1, [r5, #1]
+	orr	r0, r0, r1, lsl #8
+	ldr	r1, =text_colour
+	strh	r0, [r1]
+	movs	r0, #0
+	b	90f
+92:	movs	r0, #2
+90:	bl	answer_status
+	pop	{r4, pc}
+
 @ meter_log_byte - r2 = a byte received from the multimeter chip (USART2 receive interrupt): stored
 @ when METER_LOG records and the buffer has room. Keeps every register; changes the flags (the
 @ caller sets them again with adds before it tests any).

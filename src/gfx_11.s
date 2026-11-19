@@ -270,9 +270,11 @@ fn_080092dc:
 @ result of 0, counting n. Allocates 4*n bytes (code points) and 12*n bytes (metric
 @ records) with alloc_units_of_32_bytes (0803acfc); returns if the first allocation
 @ fails, frees it if the second fails. Second pass fills the arrays.
-@ Word-wraps at 0x5e pixels (break at space 0x20, a trailing space is dropped);
-@ each line is centred horizontally in the column starting at x=0xb0
-@ (x=0xb0+(0x5e-linewidth)/2), line step [0x2000111c]; when the whole text is lower
+@ Word-wraps at 0x42 pixels (break at space 0x20, a trailing space is dropped);
+@ each line is centred horizontally in the column starting at x=0xcc
+@ (x=0xcc+(0x42-linewidth)/2; this rewrite, V1.2.0: 0x5e from x=0xb0). Font: 0x20001144 (20 px;
+@ this rewrite, V1.2.0 0x20001114 18 px; the 0x2000111c / [0x20001114] below read 0x2000114c /
+@ [0x20001144] now), line step [0x2000111c]; when the whole text is lower
 @ than 0x16 pixels the first y is moved down by (0x16-height)/2. Draws each glyph
 @ with blend_glyph_into_region_buffer (0800fb90): (x, y, metric record, code point,
 @ 0x20001114, colour).
@@ -314,7 +316,7 @@ draw_text_column_with_char_highlight:
 	tst.w	r0, r9
 	bne.n	.L0800e6a2
 .L0800e68c:
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	movt	r0, #0x2000
 	ldr	r4, [r0, #0]
 	mov	r1, r10
@@ -347,7 +349,7 @@ draw_text_column_with_char_highlight:
 	movw	r9, #0x8360
 	ldr	r7, [sp, #0x38]
 	ldr	r4, [sp, #0x2c]
-	movw	r11, #0x1114
+	movw	r11, #0x1144
 	subs	r6, r0, #4
 	movt	r9, #0x2000
 	add.w	r10, sp, #0x4c
@@ -462,7 +464,7 @@ draw_text_column_with_char_highlight:
 	subne	r2, #1
 	b.n	.L0800e7bc
 .L0800e7ea:
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	movt	r0, #0x2000
 	ldrsh.w	r1, [r0, #8]
 	ldr.w	r11, [sp, #0x2c]
@@ -519,7 +521,7 @@ draw_text_column_with_char_highlight:
 	cmp	r2, #0x20
 	it	eq
 	moveq	r1, #1
-	cmp	r6, #0x5e
+	cmp	r6, #0x42			@ column width (this rewrite: 0x42 from x 0xcc; V1.2.0 0x5e from 0xb0)
 	bls.n	.L0800e858
 	cmp	r2, #0x20
 	mov	r4, r7
@@ -587,17 +589,17 @@ draw_text_column_with_char_highlight:
 	str	r4, [sp, #0x24]
 	bcs.n	.L0800e934
 	ldr.w	r10, [sp, #0x30]
-	movw	r8, #0x1114
+	movw	r8, #0x1144
 	ldr	r6, [sp, #0x48]
 	movt	r8, #0x2000
 	b.n	.L0800ead4
 .L0800e934:
 	uxth	r0, r0
 	ldr	r2, [sp, #0x20]
-	rsb.w	r0, r0, #0x5e
-	add.w	r0, r0, r0, lsr #31
+	rsb.w	r0, r0, #0x42			@ centred in the value column x 0xcc..0x10d (the generator rows'
+	add.w	r0, r0, r0, lsr #31		@ labels have 0x7a..0xcb, src/ui_pages_76.s)
 	cmp	r2, #0
-	mov.w	r2, #0xb0
+	mov.w	r2, #0xcc
 	add.w	r11, r2, r0, lsr #1
 	str	r3, [sp, #0x34]
 	bne.w	.L0800ea7c
@@ -615,7 +617,7 @@ draw_text_column_with_char_highlight:
 	ldr.w	r10, [sp, #0x30]
 	add.w	r4, r12, r12, lsl #1
 	ldr.w	r3, [r0, r12, lsl #2]
-	movw	r8, #0x1114
+	movw	r8, #0x1144
 	add.w	r2, r5, r4, lsl #2
 	sxth.w	r0, r11
 	sxth.w	r1, r10
@@ -640,7 +642,7 @@ draw_text_column_with_char_highlight:
 	mov	r10, r7
 	strd	r1, r3, [sp, #0x40]
 	bne.n	.L0800e95e
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	movt	r0, #0x2000
 	ldrh	r0, [r0, #8]
 	ldr	r1, [sp, #0x28]
@@ -727,7 +729,7 @@ draw_text_column_with_char_highlight:
 .L0800ea7c:
 	ldr	r5, [sp, #0x38]
 	ldr.w	r10, [sp, #0x30]
-	movw	r8, #0x1114
+	movw	r8, #0x1144
 	ldrd	r3, r6, [sp, #0x44]
 	movt	r8, #0x2000
 	nop
@@ -784,9 +786,9 @@ draw_text_column_with_char_highlight:
 	cmp	r12, r11
 	bcs.w	.L0800f0e4
 	uxth	r0, r0
-	rsb.w	r0, r0, #0x5e
+	rsb.w	r0, r0, #0x42			@ value column 0xcc..0x10d (V1.2.0 0x5e from 0xb0)
 	add.w	r0, r0, r0, lsr #31
-	movs	r1, #0xb0
+	movs	r1, #0xcc
 	add.w	r9, r1, r0, lsr #1
 	ldr	r1, [sp, #0x18]
 	mov	r3, r8
@@ -799,7 +801,7 @@ draw_text_column_with_char_highlight:
 	subs	r7, r0, #1
 	str	r7, [sp, #0x24]
 	ldr	r6, [sp, #0x48]
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	sxth	r0, r0
 	movt	r5, #0x2000
 	movt	r7, #0x2000
@@ -854,7 +856,7 @@ draw_text_column_with_char_highlight:
 	cmp	r1, r2
 	ble.n	.L0800ec00
 	ldr	r1, [sp, #0x30]
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	movt	r7, #0x2000
 .L0800ebd0:
 	adds	r2, r1, #1
@@ -920,7 +922,7 @@ draw_text_column_with_char_highlight:
 	strh.w	r7, [r0, r4, lsl #1]
 	b.n	.L0800ec08
 .L0800ec4e:
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	movs	r6, #0
 	movt	r7, #0x2000
 	b.n	.L0800eb56
@@ -944,7 +946,7 @@ draw_text_column_with_char_highlight:
 	sub.w	r0, r4, #0xc
 	str	r0, [sp, #0x10]
 	sub.w	r0, lr, #4
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	mov	r12, r4
 	str	r0, [sp, #0xc]
 	movs	r5, #0
@@ -1007,9 +1009,9 @@ draw_text_column_with_char_highlight:
 	str	r1, [sp, #0x34]
 	bcs.n	.L0800ecc4
 	uxth	r0, r0
-	rsb.w	r0, r0, #0x5e
+	rsb.w	r0, r0, #0x42			@ value column 0xcc..0x10d (V1.2.0 0x5e from 0xb0)
 	add.w	r0, r0, r0, lsr #31
-	movs	r1, #0xb0
+	movs	r1, #0xcc
 	add.w	r11, r1, r0, lsr #1
 	ldr	r0, [sp, #0x14]
 	str	r5, [sp, #0x20]
@@ -1067,7 +1069,7 @@ draw_text_column_with_char_highlight:
 	mov	r2, r6
 	ble.n	.L0800ee00
 	ldr	r6, [sp, #0x40]
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	ldr	r5, [sp, #0x38]
 	mov	r2, r6
 	movt	r7, #0x2000
@@ -1136,7 +1138,7 @@ draw_text_column_with_char_highlight:
 	strh.w	r4, [r5, r0, lsl #1]
 	b.n	.L0800ee08
 .L0800ee60:
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	ldr	r5, [sp, #0x38]
 	ldr	r6, [sp, #0x40]
 	movs	r1, #0
@@ -1161,7 +1163,7 @@ draw_text_column_with_char_highlight:
 	movne	r0, r1
 	ldr	r1, [sp, #0x40]
 	add.w	r9, r6, #0xc
-	movw	r4, #0x1114
+	movw	r4, #0x1144
 	str	r0, [sp, #4]
 	sxth.w	r0, r11
 	sxth	r1, r1
@@ -1177,7 +1179,7 @@ draw_text_column_with_char_highlight:
 	bne.n	.L0800ee88
 	ldr	r0, [sp, #0x28]
 	ldr	r1, [sp, #0x1c]
-	movw	r7, #0x1114
+	movw	r7, #0x1144
 	ldr.w	r11, [sp, #0x2c]
 	ldrd	r12, lr, [sp, #0x38]
 	ldr	r6, [sp, #0x40]
@@ -1194,9 +1196,9 @@ draw_text_column_with_char_highlight:
 	str	r6, [sp, #0x40]
 	bcs.w	.L0800f0e4
 	uxth	r0, r1
-	rsb.w	r0, r0, #0x5e
+	rsb.w	r0, r0, #0x42			@ value column 0xcc..0x10d (V1.2.0 0x5e from 0xb0)
 	add.w	r0, r0, r0, lsr #31
-	movs	r1, #0xb0
+	movs	r1, #0xcc
 	add.w	r9, r1, r0, lsr #1
 	ldr	r1, [sp, #0x18]
 	lsls	r0, r1, #24
@@ -1221,7 +1223,7 @@ draw_text_column_with_char_highlight:
 	ldr	r0, [sp, #0x3c]
 	ldr	r5, [sp, #0x38]
 	ldr.w	r3, [r0, r12, lsl #2]
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	mov	r7, r1
 	add.w	r10, r12, r12, lsl #1
 	movt	r0, #0x2000
@@ -1248,7 +1250,7 @@ draw_text_column_with_char_highlight:
 	mov	r1, r7
 	str	r3, [sp, #0x28]
 	bne.n	.L0800ef32
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	movt	r0, #0x2000
 	ldrh	r0, [r0, #8]
 	ldr	r2, [sp, #0x30]
@@ -1347,7 +1349,7 @@ draw_text_column_with_char_highlight:
 	ldr.w	r3, [r11, r12, lsl #2]
 	it	ne
 	movne	r7, r0
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	add.w	r4, r12, r12, lsl #1
 	movt	r0, #0x2000
 	ldr	r1, [sp, #0x30]
@@ -1381,7 +1383,7 @@ draw_text_column_with_char_highlight:
 	ldr.w	r3, [r4, r12, lsl #2]
 	it	ne
 	movne	r7, r0
-	movw	r0, #0x1114
+	movw	r0, #0x1144
 	add.w	r5, r12, r12, lsl #1
 	movt	r0, #0x2000
 	ldr	r1, [sp, #0x40]

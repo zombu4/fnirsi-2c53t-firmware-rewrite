@@ -418,7 +418,7 @@ draw_bottom_strip:
 	movt	r5, #:upper16:d_080bb40c
 	ldr.w	r0, [r7, r0, lsl #2]
 	ldrh.w	r1, [r5, r1, lsl #2]
-	movw	r6, #0x1114
+	movw	r6, #0x1144			@ 20 px font (this rewrite; V1.2.0 18 px 0x20001114): texts and their measuring
 	movt	r6, #0x2000
 	strd	r0, r6, [sp, #0x0]
 	str	r1, [sp, #8]

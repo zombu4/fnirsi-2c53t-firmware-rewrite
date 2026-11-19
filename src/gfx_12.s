@@ -1146,7 +1146,19 @@ draw_wrapped_text_in_box:
 blend_glyph_into_region_buffer:
 	push.w {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #0x14
-	ldr r6, [sp, #0x38]
+	ldr	r4, [sp, #0x3c]			@ this rewrite: white text (colour 0xFFFF) is drawn in the
+	uxth	r4, r4				@ halfword text_colour, or in TEXT_WARM when that is 0 (owner,
+	movw	r5, #0xFFFF			@ 2026-11-18: pure white smears on this LCD; TEXT_COLOUR,
+	cmp	r4, r5				@ src/usb_remote.s); every text routine draws its glyphs here
+	bne	1f
+	movw	r5, #:lower16:text_colour
+	movt	r5, #:upper16:text_colour
+	ldrh	r5, [r5]
+	cbnz	r5, 2f
+	movw	r5, #0xFF9A			@ TEXT_WARM: RGB 255 / 240 / 215 in RGB565
+2:	str	r5, [sp, #0x3c]
+	nop					@ 32 bytes added: the vldr literals below stay word-aligned
+1:	ldr r6, [sp, #0x38]
 	mov r4, r2
 	ldr r2, [r6, #4]
 	mov r7, r1

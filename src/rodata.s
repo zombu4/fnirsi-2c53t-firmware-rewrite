@@ -1115,7 +1115,7 @@ d_0808c3e0:
 	.endif
 
 @ ----------------------------------------------------------------------------
-@ 20 px font (font object 0x20001144, context 0x20001158): DejaVu Sans Condensed size 15, 4 bpp,
+@ 20 px font (font object 0x20001144, context 0x20001158): DejaVu Sans Condensed Bold size 14, 4 bpp,
 @ 100 glyphs. Font object loaded directly by menu and list pages, draw_value_panel, message boxes, the waveform display.
 @ ----------------------------------------------------------------------------
 	.p2align 2

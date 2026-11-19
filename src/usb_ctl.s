@@ -841,6 +841,8 @@ cmd_table:
 	.word	cmd_flash_id
 	.byte	0xF5, 0, 0, 0
 	.word	cmd_meter_send
+	.byte	0xF6, 0, 0, 0
+	.word	cmd_text_colour
 	.byte	0xFF, 0, 0, 0
 
 @ ----------------------------------------------------------------------------
