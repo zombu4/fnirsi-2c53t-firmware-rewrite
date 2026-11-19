@@ -770,7 +770,7 @@ d_0804c9fc:
 	.hword	0x00f0, 0x0066, 0x000a, 0x000a	@ record 2: sprite 0 to x 240, y 102, 10 x 10
 	.hword	0x00fa, 0x0067, 0x000a, 0x0008	@ record 3: sprite 1 to x 250, y 103, 10 x 8
 	.hword	0x0104, 0x0068, 0x0005, 0x0006	@ record 4: sprite 2 to x 260, y 104, 5 x 6
-@ d_0804ca24: boot logo (own picture), 194 x 35 4 bpp, 3395 bytes: "F***NIRS" and a dotless i
+@ d_0804ca24: boot logo (own picture), 194 x 35 4 bpp, 3395 bytes: "FU**NIRS" and a dotless i
 @ whose dot is sprite 0 (it lands at x 240..249, y 102..111, over logo columns 185..193, rows 0..8,
 @ which stay 0). Drawn by
 @ system_bring_up when 2:/LOGO/LOGO2C53T.jpg is missing: nibble = index into the fade palette.

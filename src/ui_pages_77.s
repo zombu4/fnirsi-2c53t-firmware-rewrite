@@ -404,7 +404,7 @@ draw_page_by_selector_nibble:
 .L0801d300:
 	@ The panel (x 0x72..0x13f, y 0x18..0xef) arrives zero-filled (colour 0x0000) from
 	@ fn_08011140 / save_screen_bmp; only our own pictures are drawn on it.
-	movw	r0, #:lower16:d_0804ca24	@ logo "F***NIRS" + dotless i, 194 x 35
+	movw	r0, #:lower16:d_0804ca24	@ logo "FU**NIRS" + dotless i, 194 x 35
 	movt	r0, #:upper16:d_0804ca24
 	movw	r1, #0x4d3f			@ logo colour of the boot colour sweep (table 0x0802c0ac, k 0)
 	strd	r0, r1, [sp, #0]		@ [sp] bitmap, [sp+4] colour

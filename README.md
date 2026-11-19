@@ -32,7 +32,7 @@ All 151 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screens
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.4.14**). It started as a byte-identical
+- Runs on the meter as assembly firmware (About shows **V1.4.15**). It started as a byte-identical
   port of the vendor application V1.2.0 and is now developed on its own.
 - **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
   no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,
@@ -46,7 +46,7 @@ All 151 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screens
   off.
 - **Own data**: English-only texts typed in `src/text.s`, own fonts (DejaVu Sans Condensed, the 20 px one Bold, rendered
   at 4 bits per pixel; own 7-segment digits; white text drawn in a warm white that reads better on
-  the meter's LCD), own boot logo "F***NIRSi" with the falling-dot animation,
+  the meter's LCD), own boot logo "FU**NIRSi" with the falling-dot animation,
   own pictures and computed tables; the language page and the language menu item are gone. Every
   address between code and data is a symbol, so both can move freely. Only the FPGA configuration and
   the filter coefficients are still the vendor's (`assets/vendor_kept/`).

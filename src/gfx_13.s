@@ -213,7 +213,8 @@ draw_line:
 @ 2026-11-18; V1.2.0 drew a hard vertical run in column x1 and one pixel at (x2,y2)).
 @ Parameters: x1 (r0), y1 (r1), x2 (r2), y2 (r3) (16-bit, signed) and the 16-bit colour (stack,
 @ first stack word). No return value. Callers: the live and persistence traces and the bar strip
-@ of draw_waveform_display.
+@ of draw_waveform_display, and draw_thumbnail_grid (src/ui_pages_79.s). Segments longer than 0x3fff
+@ in x or y are not drawn.
 @ Xiaolin Wu's method along the longer axis in 16.16 fixed point: n = the longer difference, n + 1
 @ steps from (x1,y1) to (x2,y2) (both end points included); at each step the position on the
 @ other axis has the integer part i and the fraction f (8 bits): pixel i gets the coverage
@@ -239,6 +240,9 @@ fn_0801fea8:
 	sub	r6, r6, r4, asr #31		@ r6 = |dx|
 	eor	r7, r5, r5, asr #31
 	sub	r7, r7, r5, asr #31		@ r7 = |dy|
+	orr	r8, r6, r7			@ a segment longer than 0x3fff (far off screen, e.g. a zoomed trace)
+	cmp	r8, #0x4000			@ is not drawn: dx << 16 would overflow and the loop would run
+	bhs	9f				@ |dx| times outside the region
 	cmp	r7, r6
 	blo	5f
 	@ steep (|dy| >= |dx|): y steps by sign(dy), x is the 16.16 position
@@ -301,7 +305,7 @@ fn_0801fea8:
 	add	r4, r4, r8
 	subs	r9, r9, #1
 	bpl	6b
-	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
+9:	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
 
 @ aa_plot - r0 = x, r1 = y (signed), r2 = coverage 0..256, r3 = colour: the pixel of the region
 @ buffer (record halfwords 0x20008350 x, 0x52 y, 0x54 width, 0x56 height, buffer word 0x20008358)
@@ -357,10 +361,10 @@ aa_plot:
 	strh	r0, [r1]
 8:	pop	{r4, r5}
 9:	bx	lr
-	.short	0x0000				@ padding: this section is 0x14c + 2 bytes, a multiple of 4 longer
-						@ than V1.2.0's, so every following function keeps its address
-						@ modulo 4 (their vldr / literal loads need that; a 2-byte shift
-						@ made draw_gradient_bar draw white bars)
+						@ this section's length minus V1.2.0's is a multiple of 4, so every following
+						@ function keeps its address modulo 4 (their vldr / literal loads need that; a
+						@ 2-byte shift made draw_gradient_bar draw white bars); checked by
+						@ tests/check_literal_alignment.py
 
 @ ----------------------------------------------------------------------------
 @ draw_4bpp_bitmap - draws a 4-bit-per-pixel bitmap in one colour, each pixel

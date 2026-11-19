@@ -981,9 +981,9 @@ draw_bottom_strip:
 	ldr.w	r0, [r0, r1, lsl #2]
 	movs	r7, #0x2
 	str	r0, [sp]
-	movw	r0, #0x1114
-	movt	r0, #0x2000
-	str	r0, [sp, #4]
+	str	r6, [sp, #4]			@ the strip's font (r6, 20 px), as it was measured (V1.2.0: 0x20001114 here,
+	nop					@ the same font as r6 then); nops keep the length (layout alignment)
+	nop
 	movw	r0, #0xffff
 	str	r0, [sp, #8]
 	movs	r0, #0x6c

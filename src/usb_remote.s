@@ -1246,7 +1246,10 @@ path_arg_read:
 	.equ	PIC_MAX,	167		@ highest picture number (V1.2.0's set: 1..167; start-up draws 162..167)
 	.thumb_func
 path_arg_write:
-	push	{r4, r5, r6, lr}
+	cbnz	r1, 1f				@ an empty path is refused before anything is read (path_arg
+	movs	r0, #0				@ returns 0 then without zero-terminating, and the scan below
+	bx	lr				@ would read stale frame bytes)
+1:	push	{r4, r5, r6, lr}
 	mov	r4, r0				@ r4 = scan pointer
 	mov	r5, r0				@ r5 = the text
 	bl	path_arg			@ zero-terminates the text

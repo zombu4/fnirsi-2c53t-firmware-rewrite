@@ -57,7 +57,7 @@ fn_08015740:
 @ ("3:/System file/89.jpg", 0, y), otherwise draw_gradient_bar (08020134)
 @ (y, y+0x23) (e.g. 0x18, 0x3b).
 @ Then draw_wrapped_text_in_box (0800f154)(0, y, 100, 0x24, word first+i of the
-@ English waveform name table d_0804c61c, font block 0x20001114, colour 0xffff,
+@ English waveform name table d_0804c61c, font block 0x20001144 (V1.2.0 0x20001114), colour 0xffff,
 @ flag 1).
 @ ----------------------------------------------------------------------------
 	.section .text.draw_six_row_list_from_first_index,"ax",%progbits
@@ -89,7 +89,7 @@ draw_six_row_list_from_first_index:
 	movt	r9, #:upper16:d_0804c61c
 	ldr.w	r0, [r9, r7, lsl #2]			@ name of waveform first
 	movw	r10, #0x1144			@ 20 px font (this rewrite; V1.2.0 18 px 0x20001114): the
-	movs	r1, #1					@ longest name, "Step Down", is 73 px in the 0x64 box
+	movs	r1, #1					@ longest name, "Step Down", is 77 px in the 0x64 box
 	movt	r10, #0x2000				@ font block 0x20001144
 	movw	r8, #0xffff				@ colour 0xffff
 	strd	r0, r10, [sp]
@@ -339,7 +339,7 @@ draw_three_value_rows:
 	sxth.w	r10, r4
 	str	r0, [sp]
 	strd	r11, r1, [sp, #4]		@ label in the 20 px font (r11) as units and values: "Duty
-	movs	r0, #0x7a			@ Cycle" is 72 px wide, the box 0x7a..0xcb (0x52; V1.2.0 0x36
+	movs	r0, #0x7a			@ Cycle" is 74 px wide, the box 0x7a..0xcb (0x52; V1.2.0 0x36
 	mov	r1, r10				@ with the value box from 0xb0); pictures 116 / 117 have their
 	movs	r2, #0x52			@ divider at 0x52
 	movs	r3, #0x16

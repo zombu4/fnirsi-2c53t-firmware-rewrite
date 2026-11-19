@@ -1785,9 +1785,9 @@ fn_08011d08:
 	movs r6, #1
 	strd r4, r1, [sp]
 	str r0, [sp, #8]
-	mov.w r0, #0x11e
-	movs r1, #0x14
-	movs r2, #0x18
+	movw r0, #0x119	@ box 0x119..0x13a centred on the old one (0x11e, 0x18 wide): three digits are
+	movs r1, #0x14	@ 29 px in the 20 px font (this rewrite)
+	movs r2, #0x22
 	movs r3, #0x14
 	str r6, [sp, #0xc]
 	bl draw_wrapped_text_in_box
