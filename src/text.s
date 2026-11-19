@@ -114,9 +114,9 @@ t_080bc04f:	.asciz "Save failed"
 	.global t_080bb712
 t_080bb712:	.asciz "Await Trigger..."
 	.global t_080bb779
-t_080bb779:	.asciz "Awaiting Auto Measurement..."
+t_080bb779:	.asciz "Auto setting up..."	@ fits the 0xc2-wide pop-up on one line in the 25 px font (148 px; the old text wrapped inside a word)
 	.global t_080bb6c7
-t_080bb6c7:	.asciz "Awaiting auto-correction..."
+t_080bb6c7:	.asciz "Auto-correcting..."	@ 148 px, one line (as above)
 	.global t_080bcde0
 t_080bcde0:	.asciz "Exceeded Limit"
 	.global t_080bc87a

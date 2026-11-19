@@ -209,126 +209,158 @@ draw_line:
 	b.n .L0801fe24
 
 @ ----------------------------------------------------------------------------
-@ fn_0801fea8 - draws a vertical run in column x1 closed by a pixel at (x2,y2).
-@ Parameters: x1 (r0), y1 (r1), x2 (r2), y2 (r3) and 16-bit colour param_5 (stack,
-@ [sp,#0x18] after the push). No return value.
-@ Writes one pixel at (x1,y1), then steps y by +1 or -1 from y1 (16-bit compare of
-@ low halfwords) until it equals y2, writing each intermediate pixel at column x1
-@ (y2 itself is not written in the loop), then writes one pixel at (x2,y2).
-@ Every write is clipped against word 0x20008350/52/54/56 and goes to buffer
-@ word 0x20008358.
+@ fn_0801fea8 - draws the trace segment (x1,y1)-(x2,y2), anti-aliased (this rewrite, owner
+@ 2026-11-18; V1.2.0 drew a hard vertical run in column x1 and one pixel at (x2,y2)).
+@ Parameters: x1 (r0), y1 (r1), x2 (r2), y2 (r3) (16-bit, signed) and the 16-bit colour (stack,
+@ first stack word). No return value. Callers: the live and persistence traces and the bar strip
+@ of draw_waveform_display.
+@ Xiaolin Wu's method along the longer axis in 16.16 fixed point: n = the longer difference, n + 1
+@ steps from (x1,y1) to (x2,y2) (both end points included); at each step the position on the
+@ other axis has the integer part i and the fraction f (8 bits): pixel i gets the coverage
+@ 256 - f, pixel i + 1 the coverage f (not drawn when f is 0). aa_plot blends each one into the
+@ region buffer. Equal end points give one full pixel; a vertical or horizontal segment gives
+@ full pixels only.
 @ ----------------------------------------------------------------------------
 	.section .text.fn_0801fea8,"ax",%progbits
 	.global fn_0801fea8
 	.thumb_func
 	.type fn_0801fea8, %function
 fn_0801fea8:
-	push {r4, r5, r6, r7, r8, lr}
-	movw lr, #0x8350
-	movt lr, #0x2000
-	ldrh.w r4, [lr, #0x0]
-	ldr.w r12, [sp, #0x18]
-	cmp r0, r4
-	blt.n .L0801ff00
-	ldrh.w r4, [lr, #0x0]
-	ldrh.w r5, [lr, #0x4]
-	add r4, r5
-	cmp r4, r0
-	ble.n .L0801ff00
-	ldrh.w r4, [lr, #0x2]
-	cmp r1, r4
-	blt.n .L0801ff00
-	ldrh.w r4, [lr, #0x2]
-	ldrh.w r5, [lr, #0x6]
-	add r4, r5
-	cmp r4, r1
-	ble.n .L0801ff00
-	ldr.w r4, [lr, #0x8]
-	ldrh.w r5, [lr, #0x0]
-	ldrh.w r6, [lr, #0x2]
-	ldrh.w r7, [lr, #0x4]
-	subs r5, r0, r5
-	subs r6, r1, r6
-	mla r5, r6, r7, r5
-	strh.w r12, [r4, r5, lsl #0x1]
-.L0801ff00:
-	movs r5, #0x0
-	uxth r4, r3
-	cmp r1, r3
-	it lt
-	movlt r5, #0x1
-	it gt
-	movgt.w r5, #0xffffffff
-	b.n .L0801ff26
-	.byte 0x00, 0xbf @ padding
-.L0801ff14:
-	sxth r5, r1
-	cmp r5, r3
-	mov.w r5, #0x0
-	it lt
-	movlt r5, #0x1
-	it gt
-	movwgt r5, #0xffff
-.L0801ff26:
-	add r1, r5
-	uxth r5, r1
-	cmp r5, r4
-	beq.n .L0801ff7a
-	ldrh.w r5, [lr, #0x0]
-	cmp r0, r5
-	blt.n .L0801ff14
-	ldrh.w r5, [lr, #0x0]
-	ldrh.w r6, [lr, #0x4]
-	add r5, r6
-	cmp r5, r0
-	ble.n .L0801ff14
-	ldrh.w r6, [lr, #0x2]
-	sxth r5, r1
-	cmp r5, r6
-	blt.n .L0801ff14
-	ldrh.w r6, [lr, #0x2]
-	ldrh.w r7, [lr, #0x6]
-	add r6, r7
-	cmp r6, r5
-	ble.n .L0801ff14
-	ldr.w r8, [lr, #0x8]
-	ldrh.w r7, [lr, #0x0]
-	ldrh.w r6, [lr, #0x2]
-	subs r7, r0, r7
-	subs r5, r5, r6
-	ldrh.w r6, [lr, #0x4]
-	mla r5, r5, r6, r7
-	strh.w r12, [r8, r5, lsl #0x1]
-	b.n .L0801ff14
-.L0801ff7a:
-	ldrh.w r0, [lr, #0x0]
-	cmp r2, r0
-	blt.n .L0801ffc6
-	ldrh.w r0, [lr, #0x0]
-	ldrh.w r1, [lr, #0x4]
-	add r0, r1
-	cmp r0, r2
-	ble.n .L0801ffc6
-	ldrh.w r0, [lr, #0x2]
-	cmp r3, r0
-	blt.n .L0801ffc6
-	ldrh.w r0, [lr, #0x2]
-	ldrh.w r1, [lr, #0x6]
-	add r0, r1
-	cmp r0, r3
-	it le
-	pople.w {r4, r5, r6, r7, r8, pc}
-	ldr.w r0, [lr, #0x8]
-	ldrh.w r1, [lr, #0x0]
-	subs r1, r2, r1
-	ldrh.w r2, [lr, #0x2]
-	ldrh.w r7, [lr, #0x4]
-	subs r2, r3, r2
-	mla r1, r2, r7, r1
-	strh.w r12, [r0, r1, lsl #0x1]
-.L0801ffc6:
-	pop.w {r4, r5, r6, r7, r8, pc}
-	.short 0x0000 @ padding
+	push	{r4, r5, r6, r7, r8, r9, r10, lr}
+	ldr	r10, [sp, #32]			@ r10 = colour (8 registers pushed)
+	uxth	r10, r10
+	sxth	r0, r0
+	sxth	r1, r1
+	sxth	r2, r2
+	sxth	r3, r3
+	subs	r4, r2, r0			@ r4 = dx
+	subs	r5, r3, r1			@ r5 = dy
+	eor	r6, r4, r4, asr #31
+	sub	r6, r6, r4, asr #31		@ r6 = |dx|
+	eor	r7, r5, r5, asr #31
+	sub	r7, r7, r5, asr #31		@ r7 = |dy|
+	cmp	r7, r6
+	blo	5f
+	@ steep (|dy| >= |dx|): y steps by sign(dy), x is the 16.16 position
+	mov	r9, r7				@ r9 = steps left after this one
+	movs	r8, #0
+	cmp	r5, #0
+	it	gt
+	movgt	r8, #1
+	it	lt
+	movlt	r8, #-1			@ r8 = y step
+	movs	r6, #0				@ r6 = x step (0 when dy is 0)
+	cbz	r7, 1f
+	lsls	r6, r4, #16
+	sdiv	r6, r6, r7
+1:	lsls	r4, r0, #16			@ r4 = x (16.16)
+	mov	r5, r1				@ r5 = y
+2:	asrs	r0, r4, #16
+	mov	r1, r5
+	ubfx	r7, r4, #8, #8			@ r7 = f
+	rsb	r2, r7, #256
+	mov	r3, r10
+	bl	aa_plot
+	cbz	r7, 3f
+	asrs	r0, r4, #16
+	adds	r0, #1
+	mov	r1, r5
+	mov	r2, r7
+	mov	r3, r10
+	bl	aa_plot
+3:	add	r4, r4, r6
+	add	r5, r5, r8
+	subs	r9, r9, #1
+	bpl	2b
+	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
+	@ shallow (|dx| > |dy|): x steps by sign(dx), y is the 16.16 position
+5:	mov	r9, r6
+	movs	r8, #1
+	cmp	r4, #0
+	it	lt
+	movlt	r8, #-1			@ r8 = x step
+	lsls	r7, r5, #16
+	sdiv	r7, r7, r6			@ r7 = y step (|dx| > 0 here)
+	mov	r6, r7				@ r6 = y step
+	lsls	r5, r1, #16			@ r5 = y (16.16)
+	mov	r4, r0				@ r4 = x
+6:	mov	r0, r4
+	asrs	r1, r5, #16
+	ubfx	r7, r5, #8, #8
+	rsb	r2, r7, #256
+	mov	r3, r10
+	bl	aa_plot
+	cbz	r7, 7f
+	mov	r0, r4
+	asrs	r1, r5, #16
+	adds	r1, #1
+	mov	r2, r7
+	mov	r3, r10
+	bl	aa_plot
+7:	add	r5, r5, r6
+	add	r4, r4, r8
+	subs	r9, r9, #1
+	bpl	6b
+	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
+
+@ aa_plot - r0 = x, r1 = y (signed), r2 = coverage 0..256, r3 = colour: the pixel of the region
+@ buffer (record halfwords 0x20008350 x, 0x52 y, 0x54 width, 0x56 height, buffer word 0x20008358)
+@ at (x, y), when inside: coverage above 240 writes the colour, below 16 leaves the pixel, else
+@ the RGB565 blend of blend_glyph_into_region_buffer (src/gfx_12.s) with coverage c:
+@ ((bg & 0xf81f) + (((fg & 0xf81f) - (bg & 0xf81f)) * (c >> 2) >> 6) & 0xf81f)
+@ + ((bg & 0x7e0) + (((fg & 0x7e0) - (bg & 0x7e0)) * c >> 8) & 0x7e0). Changes r0..r3, r12.
+	.global	aa_plot
+	.thumb_func
+	.type	aa_plot, %function
+aa_plot:
+	cmp	r2, #16
+	blo	9f
+	push	{r4, r5}
+	movw	r12, #0x8350
+	movt	r12, #0x2000
+	ldrh	r4, [r12, #0]			@ region x
+	subs	r0, r0, r4			@ r0 = x - region x
+	bmi	8f
+	ldrh	r4, [r12, #4]			@ width
+	cmp	r0, r4
+	bhs	8f
+	ldrh	r5, [r12, #2]			@ region y
+	subs	r1, r1, r5
+	bmi	8f
+	ldrh	r5, [r12, #6]			@ height
+	cmp	r1, r5
+	bhs	8f
+	mla	r0, r1, r4, r0			@ index
+	ldr	r1, [r12, #8]
+	add	r1, r1, r0, lsl #1		@ r1 = pixel address
+	cmp	r2, #240
+	bls	1f
+	strh	r3, [r1]
+	b	8f
+1:	ldrh	r0, [r1]			@ r0 = bg
+	movw	r12, #0xf81f
+	and	r4, r0, r12			@ bg red / blue
+	and	r5, r3, r12			@ fg red / blue
+	subs	r5, r5, r4
+	lsrs	r12, r2, #2
+	mul	r5, r5, r12
+	add	r4, r4, r5, asr #6
+	movw	r12, #0xf81f
+	and	r4, r4, r12
+	and	r0, r0, #0x7e0			@ bg green
+	and	r5, r3, #0x7e0			@ fg green
+	subs	r5, r5, r0
+	mul	r5, r5, r2
+	add	r0, r0, r5, asr #8
+	and	r0, r0, #0x7e0
+	orr	r0, r0, r4
+	strh	r0, [r1]
+8:	pop	{r4, r5}
+9:	bx	lr
+	.short	0x0000				@ padding: this section is 0x14c + 2 bytes, a multiple of 4 longer
+						@ than V1.2.0's, so every following function keeps its address
+						@ modulo 4 (their vldr / literal loads need that; a 2-byte shift
+						@ made draw_gradient_bar draw white bars)
 
 @ ----------------------------------------------------------------------------
 @ draw_4bpp_bitmap - draws a 4-bit-per-pixel bitmap in one colour, each pixel

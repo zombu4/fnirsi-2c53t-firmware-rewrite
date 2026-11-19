@@ -124,8 +124,8 @@
 @ (0x3f,0x76,0xc2,0x19,flag 1), byte 0x20000f08=0xff, byte 0x20001060=10, then
 @ 08041cf0(word 0x20002d6c, &byte, -1) with byte 0x24 and again with byte 3;
 @ byte 0x2000010f==2 and 0x20000126!=0: "Await Trigger..." at
-@ (0x3f,0x50,0xc2,0x53,1); byte 0x20000127: "Awaiting Auto Measurement...", byte
-@ 0x20000128: "Awaiting auto-correction...", (0x20000126==0 and 0x20000f04==0 and
+@ (0x3f,0x50,0xc2,0x53,1); byte 0x20000127: "Auto setting up...", byte
+@ 0x20000128: "Auto-correcting...", (0x20000126==0 and 0x20000f04==0 and
 @ 0x20000f00<10): "Exceeded Limit", byte 0x2000012b: "Waiting for automatic
 @ amplitude calibration", each at (0x3f,0x58,0xc2,0x4b,flag 0x81).
 @ ----------------------------------------------------------------------------

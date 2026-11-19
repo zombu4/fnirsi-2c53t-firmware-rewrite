@@ -288,7 +288,7 @@
 .L0801c8fe:
 	ldrb.w	r0, [r9, #0x2f]
 	cbz	r0, .L0801c93a
-	movw	r0, #:lower16:t_080bb779	@ "Awaiting Auto Measurement..."
+	movw	r0, #:lower16:t_080bb779	@ "Auto setting up..."
 	movt	r0, #:upper16:t_080bb779
 	movw	r2, #0x1174
 	movw	r1, #0x55f
@@ -305,7 +305,7 @@
 .L0801c93a:
 	ldrb.w	r0, [r9, #0x30]
 	cbz	r0, .L0801c976
-	movw	r0, #:lower16:t_080bb6c7	@ "Awaiting auto-correction..."
+	movw	r0, #:lower16:t_080bb6c7	@ "Auto-correcting..."
 	movt	r0, #:upper16:t_080bb6c7
 	movw	r2, #0x1174
 	movw	r1, #0x55f
