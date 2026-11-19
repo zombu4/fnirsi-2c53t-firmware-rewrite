@@ -73,6 +73,8 @@
 	.equ	V_LBATT,	0x63		@ 1: BATTERY_LOW reported for the current low-battery state
 	.equ	V_EVKH,		0x64		@ key event ring head (key task)
 	.equ	V_EVKT,		0x65		@ key event ring tail (usb task)
+	.equ	V_ANFRAME,	0x66		@ main-menu icon animation: frame shown last (src/menu_anim.s)
+	.equ	V_ANENTRY,	0x67		@ and the entry it belongs to
 	.equ	V_EVK,		0x68		@ 8 bytes: key event ring
 	.equ	V_WOBJ,		0x70		@ file object of FILE_WRITE (0 = none)
 	.equ	V_WPOS,		0x74		@ bytes written to it

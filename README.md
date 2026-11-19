@@ -17,8 +17,12 @@ The project contains:
 
 <p align="center"><img src="docs/screenshots/boot_animation.gif" alt="Boot animation"></p>
 
+<p align="center"><img src="docs/screenshots/menu_animation.gif" alt="Main menu with animated icons"></p>
+
 The boot animation, rendered by running the firmware's own start-up code in an emulator and
 recording what it writes to the display (timing from its delay calls; drawing time not included).
+Below it the main menu with its animated icons: screenshots of the meter's menu with the eight
+frames of each icon (pictures 168..199) at the firmware's 125 ms frame time.
 
 Taken from the meter over USB (SCREENSHOT command), application V1.4.12 with our own pictures,
 fonts and texts; shown at twice the size.
@@ -29,7 +33,7 @@ fonts and texts; shown at twice the size.
 | ![Oscilloscope](docs/screenshots/3_scope.png) | ![Oscilloscope settings](docs/screenshots/4_scope_settings.png) |
 | ![Signal generator](docs/screenshots/5_generator.png) | ![System settings](docs/screenshots/6_settings.png) |
 
-All 151 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screenshots/ui_pictures.png).
+All user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screenshots/ui_pictures.png).
 
 ---
 
@@ -37,7 +41,7 @@ All 151 user-interface pictures: [docs/screenshots/ui_pictures.png](docs/screens
 
 ### Application
 
-- Runs on the meter as assembly firmware (About shows **V1.4.15**). It started as a byte-identical
+- Runs on the meter as assembly firmware (About shows **V1.4.17**). It started as a byte-identical
   port of the vendor application V1.2.0 and is now developed on its own.
 - **USB control channel** (`src/usb_ctl.s`, `src/usb_remote.s`): a serial port next to the drive,
   no menu setting needed: every function of the meter (multimeter, oscilloscope, generator,
@@ -176,7 +180,8 @@ ignores "._" files by their content.
 The menus, buttons and dialogs are JPEG pictures that the firmware loads from the meter's own drive
 `3:/System file/NNN.jpg`; the meter keeps them there, they are not part of the application image.
 `assets/ui/` holds our own set (151 pictures: the numbers and sizes the firmware draws; the vendor's 1, 81,
-83, 85, 121, 141, 144, 151 and 152 are never drawn and are not kept). With
+83, 85, 121, 141, 144, 151 and 152 are never drawn and are not kept), plus 168..199: eight frames
+per main-menu icon, played on the main menu (`src/menu_anim.s`). With
 application 1.4.0 or later each one can be written over USB with FILE_WRITE to
 `3:/System file/NNN.jpg` and read back with FILE_READ to check it (`PROTOCOL.md` 4.10).
 

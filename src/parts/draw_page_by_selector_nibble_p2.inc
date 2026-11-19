@@ -204,7 +204,7 @@
 .L0801e11c:
 	.global	firmware_version_text	@ also reported by the USB control channel (usb_ctl.s INFO)
 firmware_version_text:
-	.asciz	"1.4.16"		@ version shown in About as "V%s": this rewrite
+	.asciz	"1.4.17"		@ version shown in About as "V%s": this rewrite
 	.space	8 - (. - firmware_version_text)	@ fixed 8-byte field: the code below must stay 2-byte aligned
 	.if	. - firmware_version_text != 8		@ (V1.4.10..V1.4.14 had a 7-byte text + 2 bytes here, which
 	.error	"version text longer than 7 characters"	@ put the code after .L0801e17c on odd addresses)

@@ -1170,7 +1170,8 @@ send_state_message_sequence:
 @ the byte 0x20001060 is 2, calls queue_send_timeout(*0x20002d80,0,0); then
 @ receives again with queue_receive_timeout(*0x20002d6c,&local,0xffffffff)
 @ (wait forever) and dispatches the byte when it returns 1, repeating
-@ otherwise.
+@ otherwise. This rewrite: the wait is menu_anim_wait's (ANIM_TICKS on the main menu) and a wait
+@ that ends without a byte draws the next frame of the menu icon (menu_anim_frame, src/menu_anim.s).
 @ Purpose: task body that runs the handler selected by each queued byte.
 @ This firmware: the table call is display_task_dispatch (usb_remote.s), which runs USB remote jobs
 @ for code 0x80 and calls the same table entry for every other code (same size: bl, nop).
@@ -1214,11 +1215,14 @@ fn_0803da50:
 	movs r2, #0
 	bl queue_send_timeout
 .L0803daaa:
+	bl	menu_anim_wait			@ this rewrite: wait forever as V1.2.0, or ANIM_TICKS on the main
+	mov	r2, r0				@ menu (src/menu_anim.s)
 	ldr r0, [r5, #0x0]
 	mov r1, r4
-	mov.w r2, #0xffffffff
 	bl queue_receive_timeout
 	cmp r0, #1
-	bne.n .L0803da82
-	b.n .L0803da78
+	beq.n .L0803da78
+	bl	menu_anim_frame			@ no message within the wait: next frame of the menu icon
+	b.n .L0803da82
+	nop					@ the section stays a multiple of 4 bytes longer than V1.2.0's
 	.word 0x00000000	@ padding

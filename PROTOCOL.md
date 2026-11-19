@@ -187,13 +187,13 @@ the physical keys are not part of the firmware; this table gives the function on
 |---|---|---|---|
 | 0x70 | FILE_LIST | first entry (u16), directory path (text, e.g. `2:/` or `3:/System file`) | next entry (u16, 0xFFFF = no more), then entries {size u32, attribute u8, name length u8, name} as many as fit |
 | 0x71 | FILE_READ | offset (u32), path (at most 95 characters) | file size (u32), then up to 500 bytes from the offset; the file stays open while the host reads it in order (same path, next offset) and is closed at its end or by any other command |
-| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path that is neither on `2:` nor exactly `3:/System file/` + a picture number 1..167 without leading zero + `.jpg` |
+| 0x72 | FILE_WRITE | offset (u32), total (u32), path (zero-terminated), data | - ; offset 0 creates or truncates the file; each further chunk continues at the bytes written so far; the file is closed when the total is reached; status 6 for a path that is neither on `2:` nor exactly `3:/System file/` + a picture number 1..199 without leading zero + `.jpg` |
 | 0x73 | FILE_DELETE | path (at most 95 characters) | - (a file or an empty directory on `2:`, or a picture `3:/System file/NNN.jpg` named as for FILE_WRITE; status 5 when it is still there afterwards, 6 for any other path) |
 | 0x74 | DRIVE | on (u8) | - (shares the drive with the host: UI page 7 and the configuration with mass storage) |
 
 Paths: `2:/DIR/NAME.EXT`, long names allowed. Drive 3: holds the meter's own system files: FILE_LIST
 and FILE_READ may read all of it; FILE_WRITE and FILE_DELETE may only write or delete the user-interface pictures
-`3:/System file/NNN.jpg` (NNN 1..167, no leading zero; baseline JPEG, what the meter's decoder accepts
+`3:/System file/NNN.jpg` (NNN 1..199: 1..167 the pictures the firmware draws, 168..199 the main-menu icon frames; no leading zero; baseline JPEG, what the meter's decoder accepts
 is in `src/image_20.s`). Nothing else on 3: can be written or deleted: `3:/System file/9999.bin` must
 stay, because at start-up its presence selects drive 2: as the USB drive (`filesystem_startup_setup`,
 src/filesystem_08.s); without it the computer would get drive 3:.

@@ -550,6 +550,7 @@ SECTIONS
     KEEP(*(.text.boot_dump))
     KEEP(*(.text.boot_install))
     KEEP(*(.text.usb_ctl))                                         /* USB control channel */
+    KEEP(*(.text.menu_anim))                                       /* main-menu icon animation */
     KEEP(*(.rodata.boot_install))                                  /* starter and slot images */
     app_image_end = .;
   } > FLASH

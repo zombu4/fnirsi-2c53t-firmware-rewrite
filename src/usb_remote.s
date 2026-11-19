@@ -1243,7 +1243,8 @@ path_arg_read:
 @ one name per number, so at most PIC_MAX files; nothing else on drive 3: can be written or deleted:
 @ the directory, the volume and 9999.bin, whose presence selects drive 2: for the USB drive in
 @ filesystem_startup_setup, stay as they are); else 0. Changes r0..r3, r12.
-	.equ	PIC_MAX,	167		@ highest picture number (V1.2.0's set: 1..167; start-up draws 162..167)
+	.equ	PIC_MAX,	199		@ highest picture number (V1.2.0's set: 1..167; 168..199 the menu icon
+						@ frames, src/menu_anim.s)
 	.thumb_func
 path_arg_write:
 	cbnz	r1, 1f				@ an empty path is refused before anything is read (path_arg
