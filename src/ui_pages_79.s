@@ -362,6 +362,10 @@ draw_page_position_bar:
 
 @ ----------------------------------------------------------------------------
 @ draw_bottom_strip - no parameters, no return value.
+@ This rewrite (V1.4.14): cells for the 20 px font: left x 0 width 0x69, centre x 0x6c width 0x67,
+@ right x 0xd7 width 0x69 (V1.2.0: 0 / 0x5d, 0x7f / 0x56, 0xe3 / 0x5d; "500mV X10 DC" is 97 px,
+@ "Normal" + icon + "CH2" 96 px); 3.jpg has its separators in the gaps. The coordinates below are
+@ V1.2.0's.
 @ Calls decode_image_file_with_offset("3:/System file/3.jpg", 0, 0xdd).
 @ Left cell (x 0, width 0x5d, y 0xdd, h 0x13, font block 0x20001114, flag 0):
 @ word at 0x0804c954+(byte 0x200000fe*3+byte 0x200000fa)*4, colour halfword at
@@ -424,7 +428,7 @@ draw_bottom_strip:
 	str	r1, [sp, #8]
 	movs	r0, #0x0
 	movs	r1, #0xdd
-	movs	r2, #0x5d
+	movs	r2, #0x69
 	movs	r3, #0x13
 	str.w	r8, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
@@ -438,9 +442,9 @@ draw_bottom_strip:
 	ldrh	r1, [r1, #2]
 	strd	r0, r6, [sp, #0x0]
 	str	r1, [sp, #8]
-	movs	r0, #0xe3
+	movs	r0, #0xd7
 	movs	r1, #0xdd
-	movs	r2, #0x5d
+	movs	r2, #0x69
 	movs	r3, #0x13
 	str.w	r8, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
@@ -512,7 +516,7 @@ draw_bottom_strip:
 	add	r4, r0
 	b.n	.L0801e890
 .L0801e8bc:
-	rsb.w	r0, r4, #0x5d
+	rsb.w	r0, r4, #0x69
 	str	r0, [sp, #0x18]
 	movw	r0, #0xf8
 	movt	r0, #0x2000
@@ -601,7 +605,7 @@ draw_bottom_strip:
 	b.n	.L0801e97c
 .L0801e9a8:
 	movw	r1, #0xf8
-	add.w	r0, r4, #0xe3
+	add.w	r0, r4, #0xd7
 	movt	r1, #0x2000
 	str	r0, [sp, #0x18]
 	ldrb	r0, [r1, #7]
@@ -640,7 +644,7 @@ draw_bottom_strip:
 .L0801ea0c:
 	movw	r0, #0xf8
 	movt	r0, #0x2000
-	rsb.w	r1, r4, #0x5d
+	rsb.w	r1, r4, #0x69
 	ldrb	r0, [r0, #1]
 	str	r1, [sp, #0x14]
 	movw	r1, #:lower16:d_0804c7c4
@@ -700,7 +704,7 @@ draw_bottom_strip:
 	stm.w	sp, {r0, r6, r9}
 	movs	r0, #0x0
 	movs	r1, #0xdd
-	movs	r2, #0x5d
+	movs	r2, #0x69
 	movs	r3, #0x13
 	str.w	r8, [sp, #0xc]
 	movs	r4, #0x0
@@ -708,9 +712,9 @@ draw_bottom_strip:
 	ldrb	r0, [r7, #0x1]
 	movs	r1, #0xdd
 	ldr.w	r0, [r5, r0, lsl #2]
-	movs	r2, #0x5d
+	movs	r2, #0x69
 	strd	r0, r6, [sp, #0x0]
-	movs	r0, #0xe3
+	movs	r0, #0xd7
 	movs	r3, #0x13
 	str.w	r8, [sp, #0xc]
 	str.w	r9, [sp, #8]
@@ -721,8 +725,8 @@ draw_bottom_strip:
 	ldr.w	r0, [r5, r0, lsl #2]
 	movs	r1, #0xdd
 	stm.w	sp, {r0, r6, r9}
-	movs	r0, #0x7f
-	movs	r2, #0x56
+	movs	r0, #0x6c
+	movs	r2, #0x67
 	movs	r3, #0x13
 	str	r4, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
@@ -754,7 +758,7 @@ draw_bottom_strip:
 	add	r4, r0
 	b.n	.L0801eb30
 .L0801eb5c:
-	movs	r0, #0x7f
+	movs	r0, #0x6c
 	uxtah	r0, r0, r4
 	str	r0, [sp, #0x18]
 	movw	r0, #0xf8
@@ -792,7 +796,7 @@ draw_bottom_strip:
 	b.n	.L0801eb98
 .L0801ebc4:
 	uxth	r0, r4
-	rsb.w	r0, r0, #0x56
+	rsb.w	r0, r0, #0x67
 	str	r0, [sp, #0x14]
 	movw	r0, #0xf8
 	movt	r0, #0x2000
@@ -982,9 +986,9 @@ draw_bottom_strip:
 	str	r0, [sp, #4]
 	movw	r0, #0xffff
 	str	r0, [sp, #8]
-	movs	r0, #0x7f
+	movs	r0, #0x6c
 	movs	r1, #0xdd
-	movs	r2, #0x56
+	movs	r2, #0x67
 	movs	r3, #0x13
 	str	r7, [sp, #0xc]
 	bl	draw_wrapped_text_in_box
