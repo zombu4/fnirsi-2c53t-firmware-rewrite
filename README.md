@@ -15,6 +15,11 @@ The project contains:
 
 ## Screenshots
 
+![Boot animation](docs/screenshots/boot_animation.gif)
+
+The boot animation, rendered by running the firmware's own start-up code in an emulator and
+recording what it writes to the display (timing from its delay calls; drawing time not included).
+
 Taken from the meter over USB (SCREENSHOT command), application V1.4.12 with our own pictures,
 fonts and texts; shown at twice the size.
 
