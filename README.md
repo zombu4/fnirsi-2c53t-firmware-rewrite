@@ -15,7 +15,7 @@ The project contains:
 
 ## Screenshots
 
-![Boot animation](docs/screenshots/boot_animation.gif)
+<p align="center"><img src="docs/screenshots/boot_animation.gif" alt="Boot animation"></p>
 
 The boot animation, rendered by running the firmware's own start-up code in an emulator and
 recording what it writes to the display (timing from its delay calls; drawing time not included).
